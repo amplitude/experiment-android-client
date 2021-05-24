@@ -1,5 +1,5 @@
-# skylab-android-client
-Android Client SDK for Skylab
+# experiment-android-client
+Android Client SDK for Experiment
 
 ## Getting Started
 

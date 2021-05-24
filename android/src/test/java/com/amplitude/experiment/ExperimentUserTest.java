@@ -1,16 +1,16 @@
-package com.amplitude.skylab;
+package com.amplitude.experiment;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class SkylabUserTest {
+public class ExperimentUserTest {
 
     @Test
     public void toJSONObject() throws JSONException {
-        SkylabUser user =
-                SkylabUser.builder().setUserId("user_id").setDeviceId("device_id").setCountry(
+        ExperimentUser user =
+                ExperimentUser.builder().setUserId("user_id").setDeviceId("device_id").setCountry(
                         "country").setVersion(null).setUserProperty("userPropertyKey", "value").build();
         JSONObject expected = new JSONObject();
         expected.put("user_id", "user_id");
@@ -25,8 +25,8 @@ public class SkylabUserTest {
 
     @Test
     public void builder_copy() {
-        SkylabUser.Builder builder =
-                SkylabUser.builder()
+        ExperimentUser.Builder builder =
+                ExperimentUser.builder()
                         .setUserId("user_id")
                         .setDeviceId("device_id")
                         .setCountry("country")
@@ -45,16 +45,16 @@ public class SkylabUserTest {
                         .setCarrier("test")
                         .setUserProperty("userPropertyKey", "value");
 
-        SkylabUser user2 =
-                SkylabUser.builder()
+        ExperimentUser user2 =
+                ExperimentUser.builder()
                         .setCountry("newCountry")
                         .setVersion("newVersion")
                         .setUserProperty("userPropertyKey2", "value2")
                         .build();
 
-        SkylabUser user = builder.copyUser(user2).build();
-        SkylabUser expected =
-                SkylabUser.builder()
+        ExperimentUser user = builder.copyUser(user2).build();
+        ExperimentUser expected =
+                ExperimentUser.builder()
                         .setUserId("user_id")
                         .setDeviceId("device_id")
                         .setCountry("newCountry") // overwrites value

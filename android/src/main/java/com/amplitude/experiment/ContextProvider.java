@@ -1,13 +1,13 @@
-package com.amplitude.skylab;
+package com.amplitude.experiment;
 
 import org.jetbrains.annotations.Nullable;
 
 /**
  *  Classes can implement this interface to provide a User ID and Device ID to the
- *  {@link SkylabUser} context object. This allows for connecting with Amplitude's
+ *  {@link ExperimentUser} context object. This allows for connecting with Amplitude's
  *  identity system.
  *
- *  Also see {@link SkylabClient#setContextProvider(ContextProvider)}
+ *  Also see {@link ExperimentClient#setContextProvider(ContextProvider)}
  */
 public interface ContextProvider {
 

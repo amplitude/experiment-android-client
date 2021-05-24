@@ -1,4 +1,4 @@
-package com.amplitude.skylab;
+package com.amplitude.experiment;
 
 import android.util.Log;
 
@@ -8,12 +8,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * The Skylab user context object. This is an immutable object that can be created using
- * a {@link SkylabUser.Builder}. Example usage:
+ * The Experiment user context object. This is an immutable object that can be created using
+ * a {@link ExperimentUser.Builder}. Example usage:
  *
- * {@code SkylabUser.builder().setLanguage("en").build()}
+ * {@code ExperimentUser.builder().setLanguage("en").build()}
  */
-public class SkylabUser {
+public class ExperimentUser {
 
     public static final String USER_ID = "user_id";
     public static final String DEVICE_ID = "device_id";
@@ -54,7 +54,7 @@ public class SkylabUser {
 
     @NotNull JSONObject userProperties;
 
-    private SkylabUser(
+    private ExperimentUser(
             @Nullable String userId,
             @Nullable String deviceId,
             @Nullable String country,
@@ -187,7 +187,7 @@ public class SkylabUser {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        SkylabUser that = (SkylabUser) o;
+        ExperimentUser that = (ExperimentUser) o;
 
         if (userId != null ? !userId.equals(that.userId) : that.userId != null) return false;
         if (deviceId != null ? !deviceId.equals(that.deviceId) : that.deviceId != null)
@@ -223,7 +223,7 @@ public class SkylabUser {
     @NotNull
     @Override
     public String toString() {
-        return "SkylabUser{" +
+        return "ExperimentUser{" +
                 "userId='" + userId + '\'' +
                 ", deviceId='" + deviceId + '\'' +
                 ", country='" + country + '\'' +
@@ -291,14 +291,14 @@ public class SkylabUser {
             object.put(CARRIER, carrier);
             object.put(LIBRARY, library);
         } catch (JSONException e) {
-            Log.w(Skylab.TAG, "Error converting SkylabUser to JSONObject", e);
+            Log.w(Experiment.TAG, "Error converting ExperimentUser to JSONObject", e);
         }
         return object;
     }
 
     @NotNull
-    public static SkylabUser.Builder builder() {
-        return new SkylabUser.Builder();
+    public static ExperimentUser.Builder builder() {
+        return new ExperimentUser.Builder();
     }
 
     public static class Builder {
@@ -322,7 +322,7 @@ public class SkylabUser {
         private String library;
 
         /**
-         * Sets the user id on the SkylabUser for connecting with Amplitude's identity
+         * Sets the user id on the ExperimentUser for connecting with Amplitude's identity
          *
          * @param userId The User ID used in Amplitude
          */
@@ -333,7 +333,7 @@ public class SkylabUser {
         }
 
         /**
-         * Sets the device id on the SkylabUser for connecting with Amplitude's identity
+         * Sets the device id on the ExperimentUser for connecting with Amplitude's identity
          *
          * @param deviceId The Device ID used in Amplitude
          */
@@ -447,20 +447,20 @@ public class SkylabUser {
             try {
                 this.userProperties.put(property, value);
             } catch (JSONException e) {
-                Log.e(Skylab.TAG, e.toString());
+                Log.e(Experiment.TAG, e.toString());
             }
             return this;
         }
 
         /**
-         * Performs a clone of an existing SkylabUser into the builder,
+         * Performs a clone of an existing ExperimentUser into the builder,
          * ignoring nulls. This will overwrite all user properties with the copied
          * user's user properties if the copied user contains user properties.
          * @param user
          * @return
          */
         @NotNull
-        public Builder copyUser(@Nullable SkylabUser user) {
+        public Builder copyUser(@Nullable ExperimentUser user) {
             if (user == null) {
                 return this;
             }
@@ -520,15 +520,15 @@ public class SkylabUser {
                     setUserProperties(new JSONObject(user.userProperties.toString()));
                 } catch (JSONException e) {
                     // shouldn't happen
-                    Log.w(Skylab.TAG, "Could not copy JSON: " + user.userProperties.toString());
+                    Log.w(Experiment.TAG, "Could not copy JSON: " + user.userProperties.toString());
                 }
             }
             return this;
         }
 
         @NotNull
-        public SkylabUser build() {
-            return new SkylabUser(userId, deviceId, country, region, dma, city, language, platform,
+        public ExperimentUser build() {
+            return new ExperimentUser(userId, deviceId, country, region, dma, city, language, platform,
                     version, os, deviceFamily, deviceType, deviceManufacturer, deviceBrand,
                     deviceModel, carrier, library, userProperties);
         }

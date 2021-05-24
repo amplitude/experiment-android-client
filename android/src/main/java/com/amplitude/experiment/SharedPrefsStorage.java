@@ -1,4 +1,4 @@
-package com.amplitude.skylab;
+package com.amplitude.experiment;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -24,9 +24,9 @@ class SharedPrefsStorage implements Storage {
     public SharedPrefsStorage(@NotNull Context appContext, @Nullable String instanceName) {
         this.appContext = appContext;
         if (TextUtils.isEmpty(instanceName)) {
-            this.sharedPrefsKey = SkylabConfig.SHARED_PREFS_STORAGE_NAME;
+            this.sharedPrefsKey = ExperimentConfig.SHARED_PREFS_STORAGE_NAME;
         } else {
-            this.sharedPrefsKey = SkylabConfig.SHARED_PREFS_STORAGE_NAME + "-" + instanceName;
+            this.sharedPrefsKey = ExperimentConfig.SHARED_PREFS_STORAGE_NAME + "-" + instanceName;
         }
         sharedPrefs = appContext.getSharedPreferences(sharedPrefsKey, Context.MODE_PRIVATE);
     }

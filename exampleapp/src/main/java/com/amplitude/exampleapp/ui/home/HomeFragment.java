@@ -14,10 +14,10 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.amplitude.exampleapp.R;
-import com.amplitude.skylab.Skylab;
-import com.amplitude.skylab.SkylabClient;
-import com.amplitude.skylab.SkylabUser;
-import com.amplitude.skylab.Variant;
+import com.amplitude.experiment.Experiment;
+import com.amplitude.experiment.ExperimentClient;
+import com.amplitude.experiment.ExperimentUser;
+import com.amplitude.experiment.Variant;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -40,14 +40,14 @@ public class HomeFragment extends Fragment {
         });
         final Button button = root.findViewById(R.id.button);
         button.setOnClickListener(v -> {
-            SkylabUser user = SkylabUser.builder()
-                    .copyUser(Skylab.getInstance().getUser())
+            ExperimentUser user = ExperimentUser.builder()
+                    .copyUser(Experiment.getInstance().getUser())
                     .setUserProperty("newProperty", "value")
                     .build();
-            Future<SkylabClient> future = Skylab.getInstance().setUser(user);
+            Future<ExperimentClient> future = Experiment.getInstance().setUser(user);
             new Thread(() -> {
                 try {
-                    final SkylabClient client = future.get();
+                    final ExperimentClient client = future.get();
                     v.post(() -> {
                         Variant variant = client.getVariant("android-demo");
                         homeViewModel.setText("Variant: " + variant.toJson() +

@@ -1,4 +1,4 @@
-package com.amplitude.skylab;
+package com.amplitude.experiment;
 
 import android.text.TextUtils;
 
@@ -7,11 +7,11 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Configuration options. This is an immutable object that can be created using
- *  * a {@link SkylabConfig.Builder}. Example usage:
+ *  * a {@link ExperimentConfig.Builder}. Example usage:
  *  *
- *  * {@code SkylabConfig.builder().setServerUrl("https://api.lab.amplitude.com/").build()}
+ *  * {@code ExperimentConfig.builder().setServerUrl("https://api.lab.amplitude.com/").build()}
  */
-public class SkylabConfig {
+public class ExperimentConfig {
 
     /**
      * Common SharedPreferences name from which all Client instances can share
@@ -22,7 +22,7 @@ public class SkylabConfig {
     static final String SHARED_PREFS_STORAGE_NAME = "amplitude-flags-saved";
 
     /**
-     * Defaults for {@link SkylabConfig}
+     * Defaults for {@link ExperimentConfig}
      */
     public static final class Defaults {
 
@@ -52,7 +52,7 @@ public class SkylabConfig {
     private final int pollIntervalSecs;
     @NotNull private final String serverUrl;
 
-    private SkylabConfig(
+    private ExperimentConfig(
             @Nullable Variant fallbackVariant,
             @NotNull String instanceName,
             int pollIntervalSecs,
@@ -94,8 +94,8 @@ public class SkylabConfig {
         private int pollIntervalSecs = Defaults.POLL_INTERVAL_SECS;
         private String serverUrl = Defaults.SERVER_URL;
 
-        public SkylabConfig build() {
-            return new SkylabConfig(fallbackVariant, instanceName, pollIntervalSecs, serverUrl);
+        public ExperimentConfig build() {
+            return new ExperimentConfig(fallbackVariant, instanceName, pollIntervalSecs, serverUrl);
         }
 
         /**
@@ -150,7 +150,7 @@ public class SkylabConfig {
     @NotNull
     static String normalizeInstanceName(@Nullable String instance) {
         if (TextUtils.isEmpty(instance)) {
-            instance = SkylabConfig.Defaults.INSTANCE_NAME;
+            instance = ExperimentConfig.Defaults.INSTANCE_NAME;
         }
         return instance.toLowerCase();
     }

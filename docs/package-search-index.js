@@ -1,1 +1,1 @@
-packageSearchIndex = [{"l":"All Packages","url":"allpackages-index.html"},{"l":"com.amplitude.api"},{"l":"com.amplitude.skylab"}]
+packageSearchIndex = [{"l":"All Packages","url":"allpackages-index.html"},{"l":"com.amplitude.api"},{"l":"com.amplitude.experiment"}]

@@ -7,8 +7,8 @@ import android.os.Build;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
-import com.amplitude.skylab.ContextProvider;
-import com.amplitude.skylab.Skylab;
+import com.amplitude.experiment.ContextProvider;
+import com.amplitude.experiment.Experiment;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +46,7 @@ public class AmplitudeContextProvider implements ContextProvider {
         cacheCarrier();
         initialized = true;
         long end = System.nanoTime();
-        Log.d(Skylab.TAG, String.format("Waited %.3f ms for Amplitude SDK initialization",
+        Log.d(Experiment.TAG, String.format("Waited %.3f ms for Amplitude SDK initialization",
                 (end - start) / 1000000.0));
     }
 

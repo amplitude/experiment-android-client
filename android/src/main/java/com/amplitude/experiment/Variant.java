@@ -1,4 +1,4 @@
-package com.amplitude.skylab;
+package com.amplitude.experiment;
 
 import android.util.Log;
 
@@ -73,7 +73,7 @@ public class Variant {
                 jsonObj.put("payload", payload);
             }
         } catch (JSONException e) {
-            Log.w(Skylab.TAG, "Error converting Variant to json string", e);
+            Log.w(Experiment.TAG, "Error converting Variant to json string", e);
         }
 
         return jsonObj.toString();

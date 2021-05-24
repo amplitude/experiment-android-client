@@ -56,8 +56,8 @@ task docs(type: Javadoc) {
     source = android.sourceSets.main.java.srcDirs
     classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
     classpath += project.files('build/generated/source/buildConfig/release')
-    options.docTitle = "Skylab Android SDK v$version API"
-    options.windowTitle = "Skylab Android SDK v$version API"
+    options.docTitle = "Experiment Android SDK v$version API"
+    options.windowTitle = "Experiment Android SDK v$version API"
     destinationDir = file("../docs/")
 
     options {

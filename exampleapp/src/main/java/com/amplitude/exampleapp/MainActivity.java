@@ -3,9 +3,9 @@ package com.amplitude.exampleapp;
 import android.os.Bundle;
 import android.widget.TextView;
 
-import com.amplitude.skylab.Skylab;
-import com.amplitude.skylab.SkylabClient;
-import com.amplitude.skylab.Variant;
+import com.amplitude.experiment.Experiment;
+import com.amplitude.experiment.ExperimentClient;
+import com.amplitude.experiment.Variant;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -39,11 +39,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        Future<SkylabClient> refetchFuture = Skylab.getInstance().refetchAll();
+        Future<ExperimentClient> refetchFuture = Experiment.getInstance().refetchAll();
         TextView tv = (TextView)findViewById(R.id.text_home);
         new Thread(() -> {
             try {
-                final SkylabClient client = refetchFuture.get();
+                final ExperimentClient client = refetchFuture.get();
                 runOnUiThread(() -> {
                     Variant variant = client.getVariant("android-demo");
                     tv.setText("Variant: " + variant.toJson() +
