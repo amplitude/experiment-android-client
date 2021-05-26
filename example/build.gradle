@@ -41,7 +41,7 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
     implementation 'com.amplitude:android-sdk:2.30.0'
 //    implementation("com.amplitude:experiment-android-client:$ARTIFACT_VERSION") {changing = true}
-    implementation project(path: ':android')
+    implementation project(path: ':sdk')
     implementation 'com.squareup.okhttp3:okhttp:4.2.2'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'

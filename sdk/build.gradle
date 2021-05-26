@@ -33,7 +33,7 @@ afterEvaluate {
     publishing {
         publications {
             release(MavenPublication) {
-                artifactId = "$rootProject.name-$project.name-client"
+                artifactId = ARTIFACT_ID
                 from components.release
             }
         }
