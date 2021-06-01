@@ -4,22 +4,54 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.amplitude.experiment.Experiment;
+import com.amplitude.exampleapp.ExampleApplication;
+import com.amplitude.experiment.ExperimentClient;
+import com.amplitude.experiment.ExperimentUser;
+import com.amplitude.experiment.Variant;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class HomeViewModel extends ViewModel {
 
-    private MutableLiveData<String> mText;
+    private static final String KEY = "android-demo";
+
+    private final MutableLiveData<Variant> mVariant;
+
+    private final ExperimentClient client = ExampleApplication.experimentClient;
 
     public HomeViewModel() {
-        mText = new MutableLiveData<>();
-        setText(Experiment.getInstance().getUser().toJSONObject().toString());
+        mVariant = new MutableLiveData<>();
+        setVariant(client.variant(KEY, null));
     }
 
-    public LiveData<String> getText() {
-        return mText;
+    public LiveData<Variant> getVariant() {
+        return mVariant;
     }
 
-    public void setText(String text) {
-        mText.setValue(text);
+    public void setVariant(Variant text) {
+        mVariant.postValue(text);
+    }
+
+    public ExperimentUser getUser() {
+        return client.getUser();
+    }
+
+    public void refresh() {
+        ExperimentUser user = client.getUser().copyToBuilder()
+            .userProperty("newProperty", "value")
+            .build();
+        final Future<ExperimentClient> future = client.fetch(user);
+        new Thread(() -> {
+            try {
+                final ExperimentClient client = future.get();
+                final Variant variant = client.variant(KEY, null);
+                setVariant(variant);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 }

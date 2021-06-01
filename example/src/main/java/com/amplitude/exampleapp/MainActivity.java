@@ -21,6 +21,8 @@ public class MainActivity extends AppCompatActivity {
 
     BottomNavigationView navView;
 
+    final ExperimentClient client = ExampleApplication.experimentClient;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,15 +41,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        Future<ExperimentClient> refetchFuture = Experiment.getInstance().refetchAll();
-        TextView tv = (TextView)findViewById(R.id.text_home);
+        Future<ExperimentClient> fetch = client.fetch(null);
+        TextView tv = findViewById(R.id.text_home);
         new Thread(() -> {
             try {
-                final ExperimentClient client = refetchFuture.get();
+                final ExperimentClient client = fetch.get();
                 runOnUiThread(() -> {
-                    Variant variant = client.getVariant("android-demo");
-                    tv.setText("Variant: " + variant.toJson() +
-                            "\nUser: " + client.getUser().toJSONObject().toString());
+                    Variant variant = client.variant("android-demo", null);
+                    String str = "Variant: " + variant + "\n\nUser: " + client.getUser();
+                    tv.setText(str);
                 });
             } catch (InterruptedException e) {
                 e.printStackTrace();

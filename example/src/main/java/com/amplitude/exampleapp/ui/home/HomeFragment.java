@@ -14,13 +14,7 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.amplitude.exampleapp.R;
-import com.amplitude.experiment.Experiment;
-import com.amplitude.experiment.ExperimentClient;
-import com.amplitude.experiment.ExperimentUser;
 import com.amplitude.experiment.Variant;
-
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 public class HomeFragment extends Fragment {
 
@@ -32,34 +26,16 @@ public class HomeFragment extends Fragment {
                 ViewModelProviders.of(this).get(HomeViewModel.class);
         View root = inflater.inflate(R.layout.fragment_home, container, false);
         final TextView textView = root.findViewById(R.id.text_home);
-        homeViewModel.getText().observe(getViewLifecycleOwner(), new Observer<String>() {
+        homeViewModel.getVariant().observe(getViewLifecycleOwner(), new Observer<Variant>() {
             @Override
-            public void onChanged(@Nullable String s) {
-                textView.setText(s);
+            public void onChanged(@Nullable Variant variant) {
+                String text = "Variant: " + variant +
+                    "\n\nUser: " + homeViewModel.getUser();
+                textView.setText(text);
             }
         });
         final Button button = root.findViewById(R.id.button);
-        button.setOnClickListener(v -> {
-            ExperimentUser user = ExperimentUser.builder()
-                    .copyUser(Experiment.getInstance().getUser())
-                    .setUserProperty("newProperty", "value")
-                    .build();
-            Future<ExperimentClient> future = Experiment.getInstance().setUser(user);
-            new Thread(() -> {
-                try {
-                    final ExperimentClient client = future.get();
-                    v.post(() -> {
-                        Variant variant = client.getVariant("android-demo");
-                        homeViewModel.setText("Variant: " + variant.toJson() +
-                                "\nUser: " + client.getUser().toJSONObject().toString());
-                    });
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
-            }).start();
-        });
+        button.setOnClickListener(v -> {homeViewModel.refresh();});
         return root;
     }
 }
