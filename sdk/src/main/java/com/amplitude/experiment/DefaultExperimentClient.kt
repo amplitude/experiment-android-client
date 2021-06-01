@@ -2,22 +2,21 @@ package com.amplitude.experiment
 
 import com.amplitude.experiment.storage.Storage
 import com.amplitude.experiment.util.Logger
-import com.amplitude.experiment.util.call
 import com.amplitude.experiment.util.merge
 import com.amplitude.experiment.util.toJson
 import com.amplitude.experiment.util.toVariant
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import okio.ByteString.Companion.toByteString
 import org.json.JSONObject
 import java.io.IOException
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
@@ -26,6 +25,7 @@ internal class DefaultExperimentClient internal constructor(
     private val config: ExperimentConfig,
     httpClient: OkHttpClient,
     private val storage: Storage,
+    private val executorService: ExecutorService,
 ) : ExperimentClient {
 
     private val serverUrl: HttpUrl = config.serverUrl.toHttpUrl()
@@ -33,8 +33,8 @@ internal class DefaultExperimentClient internal constructor(
         .callTimeout(config.fetchTimeoutMillis, TimeUnit.MILLISECONDS)
         .build()
 
-    private val supervisor = CoroutineScope(SupervisorJob())
-    private val storageMutex = Mutex()
+    private val storageLock = Any()
+
     private var user: ExperimentUser = ExperimentUser()
     private var userProvider: ExperimentUserProvider? = null
 
@@ -49,21 +49,11 @@ internal class DefaultExperimentClient internal constructor(
     override fun fetch(user: ExperimentUser?): Future<ExperimentClient> {
         this.user = user ?: this.user
         val fetchUser = this.user.merge(userProvider?.getUser())
-        val future = AsyncFuture<ExperimentClient>()
-        // Launch a coroutine to fetch and store the variants.
-        supervisor.async {
-            val variants = doFetch(fetchUser)
+        return executorService.submit(Callable {
+            val variants = doFetch(fetchUser).get()
             storeVariants(variants)
-        }.invokeOnCompletion { throwable ->
-            // Complete the future when the coroutine completes.
-            if (throwable != null) {
-                Logger.e("fetch failed", throwable)
-                future.completeExceptionally(throwable)
-            } else {
-                future.complete(this)
-            }
-        }
-        return future
+            this
+        })
     }
 
     override fun variant(key: String, fallback: Variant?): Variant? {
@@ -87,11 +77,14 @@ internal class DefaultExperimentClient internal constructor(
         return this
     }
 
-    private suspend fun doFetch(user: ExperimentUser): Map<String, Variant> {
+    private fun doFetch(
+        user: ExperimentUser,
+    ): Future<Map<String, Variant>> {
         if (user.userId == null && user.deviceId == null) {
             Logger.w("user id and device id are null; amplitude may not resolve identity")
         }
         Logger.d("Fetch variants for user: $user")
+        val future = AsyncFuture<Map<String, Variant>>()
         // Build request to fetch variants for the user
         val userJsonBytes = user.toJson().toByteArray(Charsets.UTF_8)
         val userBase64 = userJsonBytes.toByteString().base64Url()
@@ -105,27 +98,43 @@ internal class DefaultExperimentClient internal constructor(
             .build()
 
         // Execute request and handle response
-        httpClient.call(request).use { response ->
-            Logger.d("Received fetch response: $response")
-            if (!response.isSuccessful) {
-                throw IOException("fetch error response: $response")
+        httpClient.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                future.completeExceptionally(e)
             }
-            val body = response.body?.string() ?: ""
-            val json = JSONObject(body)
-            val variants = mutableMapOf<String, Variant>()
-            json.keys().forEach { key ->
-                val variant = json.getJSONObject(key).toVariant()
-                if (variant != null) {
-                    variants[key] = variant
+
+            override fun onResponse(call: Call, response: Response) {
+                try {
+                    Logger.d("Received fetch response: $response")
+                    val variants = parseResponse(response)
+                    Logger.d("Parsed variants: $variants")
+                    future.complete(variants)
+                } catch (e: Exception) {
+                    future.completeExceptionally(e)
                 }
             }
-            Logger.d("Received variants: $variants")
-            return variants
-        }
+        })
+        return future
     }
 
-    private suspend fun storeVariants(variants: Map<String, Variant>) {
-        storageMutex.withLock {
+    private fun parseResponse(response: Response): Map<String, Variant> = response.use {
+        if (!response.isSuccessful) {
+            throw IOException("fetch error response: $response")
+        }
+        val body = response.body?.string() ?: ""
+        val json = JSONObject(body)
+        val variants = mutableMapOf<String, Variant>()
+        json.keys().forEach { key ->
+            val variant = json.getJSONObject(key).toVariant()
+            if (variant != null) {
+                variants[key] = variant
+            }
+        }
+        return variants
+    }
+
+    private fun storeVariants(variants: Map<String, Variant>) {
+        synchronized(storageLock) {
             variants.forEach { (key, variant) ->
                 storage.put(key, variant)
             }

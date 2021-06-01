@@ -50,7 +50,6 @@ dependencies {
     implementation 'com.amplitude:android-sdk:2.26.1'
     implementation 'com.squareup.okhttp3:okhttp:4.9.1'
     implementation 'com.squareup.okio:okio:2.10.0'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.3'
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.json:json:20201115'
 }

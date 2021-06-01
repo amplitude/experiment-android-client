@@ -38,14 +38,16 @@ class ExperimentClientTest {
             initialVariants = initialVariants,
         ),
         OkHttpClient(),
-        InMemoryStorage()
+        InMemoryStorage(),
+        Experiment.executorService,
     )
 
     private val timeoutClient = DefaultExperimentClient(
         API_KEY,
         ExperimentConfig(debug = true, fetchTimeoutMillis = 1),
         OkHttpClient(),
-        InMemoryStorage()
+        InMemoryStorage(),
+        Experiment.executorService,
     )
 
     private val initialVariantSourceClient = DefaultExperimentClient(
@@ -56,7 +58,8 @@ class ExperimentClientTest {
             initialVariants = initialVariants
         ),
         OkHttpClient(),
-        InMemoryStorage()
+        InMemoryStorage(),
+        Experiment.executorService,
     )
 
     @Test

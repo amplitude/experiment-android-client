@@ -5,11 +5,21 @@ import com.amplitude.experiment.storage.SharedPrefsStorage
 import com.amplitude.experiment.util.AndroidLogger
 import com.amplitude.experiment.util.Logger
 import okhttp3.OkHttpClient
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.ThreadFactory
 
 object Experiment {
 
+    private val daemonThreadFactory =
+        ThreadFactory { r ->
+            Executors.defaultThreadFactory().newThread(r).apply {
+                isDaemon = true
+            }
+        }
+    internal val executorService = ScheduledThreadPoolExecutor(0, daemonThreadFactory)
+
     private const val DEFAULT_INSTANCE = "\$default_instance"
-    internal const val TAG = "Experiment"
     private val httpClient = OkHttpClient()
     private val instances = mutableMapOf<String, ExperimentClient>()
 
@@ -37,6 +47,7 @@ object Experiment {
                     config,
                     httpClient,
                     SharedPrefsStorage(application, apiKey, instanceName),
+                    executorService
                 )
                 instances[instanceName] = newInstance
                 newInstance
