@@ -1,9 +1,6 @@
 package com.amplitude.experiment.util
 
-import android.util.Log
-import com.amplitude.experiment.Experiment
 import com.amplitude.experiment.ExperimentUser
-import org.jetbrains.annotations.TestOnly
 import org.json.JSONException
 import org.json.JSONObject
 

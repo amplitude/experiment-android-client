@@ -1,7 +1,6 @@
 package com.amplitude.experiment
 
 import com.amplitude.experiment.storage.Storage
-import com.amplitude.experiment.util.*
 import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.call
 import com.amplitude.experiment.util.merge
@@ -44,7 +43,7 @@ internal class DefaultExperimentClient internal constructor(
     }
 
     override fun setUser(user: ExperimentUser) {
-        this.user = user;
+        this.user = user
     }
 
     override fun fetch(user: ExperimentUser?): Future<ExperimentClient> {

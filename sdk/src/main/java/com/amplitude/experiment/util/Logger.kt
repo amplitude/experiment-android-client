@@ -101,7 +101,7 @@ internal class SystemLogger(private val debug: Boolean) : ILogger {
         if (e == null) {
             println("ERROR [$tag] $msg")
         } else {
-            println("ERROR [$tag] $msg\n${e}")
+            println("ERROR [$tag] $msg\n$e")
         }
     }
 }

@@ -2,7 +2,6 @@ package com.amplitude.experiment.storage
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.amplitude.experiment.ExperimentConfig
 import com.amplitude.experiment.Variant
 import com.amplitude.experiment.util.toJson
 import com.amplitude.experiment.util.toVariant
@@ -53,5 +52,4 @@ internal class SharedPrefsStorage(
     override fun clear() {
         sharedPrefs.edit().clear().apply()
     }
-
 }

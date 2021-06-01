@@ -8,7 +8,7 @@ import android.telephony.TelephonyManager
 import com.amplitude.experiment.ExperimentUser
 import com.amplitude.experiment.ExperimentUserProvider
 import com.amplitude.experiment.util.Logger
-import java.util.*
+import java.util.Locale
 
 class AmplitudeUserProvider(private val amplitudeClient: AmplitudeClient) : ExperimentUserProvider {
 

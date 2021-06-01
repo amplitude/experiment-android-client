@@ -6,7 +6,6 @@ import com.amplitude.experiment.util.SystemLogger
 import okhttp3.OkHttpClient
 import org.junit.Assert
 import org.junit.Test
-import java.io.IOException
 import java.io.InterruptedIOException
 
 private const val API_KEY = "client-DvWljIjiiuqLbyjqdvBaLFfEBrAvGuA3"

@@ -3,7 +3,7 @@ package com.amplitude.experiment
 import android.os.Build
 import com.amplitude.api.Constants
 import com.amplitude.api.DeviceInfo
-import java.util.*
+import java.util.Locale
 
 class DefaultUserProvider(
     private val userId: String? = null,
