@@ -7,6 +7,7 @@ import okhttp3.OkHttpClient
 import org.junit.Assert
 import org.junit.Test
 import java.io.InterruptedIOException
+import java.util.concurrent.ExecutionException
 
 private const val API_KEY = "client-DvWljIjiiuqLbyjqdvBaLFfEBrAvGuA3"
 private const val KEY = "sdk-ci-test"
@@ -26,7 +27,7 @@ class ExperimentClientTest {
     private val initialVariants = mapOf(
         "initial1" to Variant("initial1", mapOf("abc" to "cdf")),
         "initial2" to Variant("initial2"),
-        KEY to Variant("off")
+        KEY to Variant("off"),
     )
 
     private val client = DefaultExperimentClient(
@@ -71,10 +72,10 @@ class ExperimentClientTest {
     fun `fetch timeout`() {
         try {
             timeoutClient.fetch(testUser).get()
-        } catch (e: InterruptedIOException) {
+        } catch (e: ExecutionException) {
             // Timeout is expected
             val variant = client.variant(KEY)
-            Assert.assertNull(variant)
+            Assert.assertEquals("off", variant?.value)
             return
         }
         Assert.fail("expected timeout exception")
@@ -105,5 +106,14 @@ class ExperimentClientTest {
         Assert.assertNotNull(variant)
         Assert.assertEquals("off", variant?.value)
         Assert.assertNull(variant?.payload)
+    }
+
+    @Test
+    fun `test fetch sets user and setUser overwrites`() {
+        client.fetch(testUser)
+        Assert.assertEquals(testUser, client.getUser())
+        val newUser = testUser.copyToBuilder().userId("different_user").build()
+        client.setUser(newUser)
+        Assert.assertEquals(newUser, client.getUser())
     }
 }
