@@ -4,13 +4,22 @@ plugins {
     id 'org.jetbrains.dokka'
 }
 
+ext {
+    PUBLISH_DESCRIPTION = 'Amplitude Experiment client-side SDK for Android'
+    PUBLISH_GROUP_ID = 'com.amplitude'
+    PUBLISH_VERSION = '0.0.1'
+    PUBLISH_ARTIFACT_ID = 'experiment-android-client'
+}
+
+apply from: "${rootDir}/gradle/publish-module.gradle"
+
 android {
     compileSdkVersion 30
 
     defaultConfig {
         minSdkVersion 14
         targetSdkVersion 30
-        versionName VERSION_NAME
+        versionName PUBLISH_VERSION
 
         consumerProguardFiles "consumer-rules.pro"
     }
@@ -31,5 +40,3 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.json:json:20201115'
 }
-
-apply from: rootProject.file('gradle/gradle-mvn-push.gradle')
