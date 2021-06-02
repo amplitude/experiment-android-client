@@ -1,67 +1,34 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     ext.kotlin_version = '1.4.30'
-
+    ext.dokka_version = '1.4.0-rc'
 
     repositories {
         google()
         jcenter()
+        mavenCentral()
     }
+
     dependencies {
         classpath "com.android.tools.build:gradle:4.0.1"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
-        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4+"
+        classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
     }
 }
 
 allprojects {
-    apply plugin: 'maven-publish'
-    apply plugin: 'com.jfrog.artifactory'
-
     repositories {
         google()
+        mavenCentral()
         jcenter()
-        repositories {
-            // add the following
-            maven {
-                name = 'AmplitudeArtifactory'
-                url 'https://amplitude.jfrog.io/artifactory/libs-release'
-            }
-        }
-    }
-
-    publishing {
-        repositories {
-            maven {
-                name = 'AmplitudeArtifactory'
-                url 'https://amplitude.jfrog.io/artifactory/libs-release-local'
-                credentials {
-                    username System.getenv('ARTIFACTORY_USER') ?: project.findProperty('artifactory_user')
-                    password System.getenv('ARTIFACTORY_ENCRYPTED_PASSWORD') ?: project.findProperty('artifactory_password')
-                }
-            }
-        }
-    }
-}
-
-artifactory {
-    contextUrl = 'https://amplitude.jfrog.io/artifactory/'
-    publish {
-        repository {
-            repoKey = 'libs-release-local'
-            username = "${artifactory_user}"
-            password = "${artifactory_password}"
-        }
-        defaults {
-            publishArtifacts = true
-            publishPom = true
-        }
     }
 }
 
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+
+
+
+
