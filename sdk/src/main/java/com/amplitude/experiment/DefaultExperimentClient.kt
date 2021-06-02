@@ -28,17 +28,16 @@ internal class DefaultExperimentClient internal constructor(
     private val executorService: ExecutorService,
 ) : ExperimentClient {
 
+    private val storageLock = Any()
     private val serverUrl: HttpUrl = config.serverUrl.toHttpUrl()
     private val httpClient = httpClient.newBuilder()
         .callTimeout(config.fetchTimeoutMillis, TimeUnit.MILLISECONDS)
         .build()
 
-    private val storageLock = Any()
-
-    private var user: ExperimentUser = ExperimentUser()
+    private var user: ExperimentUser? = null
     private var userProvider: ExperimentUserProvider? = null
 
-    override fun getUser(): ExperimentUser {
+    override fun getUser(): ExperimentUser? {
         return user
     }
 
@@ -70,6 +69,10 @@ internal class DefaultExperimentClient internal constructor(
                 storage.getAll().plus(initialVariants)
             }
         }
+    }
+
+    override fun getUserProvider(): ExperimentUserProvider? {
+        return this.userProvider
     }
 
     override fun setUserProvider(provider: ExperimentUserProvider?): ExperimentClient {
@@ -133,12 +136,11 @@ internal class DefaultExperimentClient internal constructor(
         return variants
     }
 
-    private fun storeVariants(variants: Map<String, Variant>) {
-        synchronized(storageLock) {
-            variants.forEach { (key, variant) ->
-                storage.put(key, variant)
-            }
-            Logger.d("Stored variants: $variants")
+    private fun storeVariants(variants: Map<String, Variant>) = synchronized(storageLock) {
+        storage.clear()
+        variants.forEach { (key, variant) ->
+            storage.put(key, variant)
         }
+        Logger.d("Stored variants: $variants")
     }
 }

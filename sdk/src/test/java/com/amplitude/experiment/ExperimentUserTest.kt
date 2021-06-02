@@ -85,5 +85,8 @@ class ExperimentUserTest {
             .build()
 
         Assert.assertEquals(expected, user)
+
+        val user3 = user1.merge(null)
+        Assert.assertEquals(user1, user3)
     }
 }

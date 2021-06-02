@@ -11,9 +11,9 @@ interface ExperimentClient {
      * Get the user for the experiment client. The user can be set by calling
      * [fetch] with a user argument, or by explicitly setting the user via
      * [setUser].
-     * @return This client's user.
+     * @return This client's user or null if none has been set.
      */
-    fun getUser(): ExperimentUser
+    fun getUser(): ExperimentUser?
 
     /**
      * Set the user within the client. This user will be used to to fetch
@@ -44,7 +44,7 @@ interface ExperimentClient {
      * Fetches [all] variants, falling back given [fallback] then the
      * configured fallbackVariant.
      *
-     * @param key
+     * @param key The flag or experiment key to get the assigned variant for.
      * @param fallback The highest priority fallback.
      * @see ExperimentConfig
      */
@@ -60,6 +60,15 @@ interface ExperimentClient {
      * @see ExperimentConfig
      */
     fun all(): Map<String, Variant>
+
+    /**
+     * Get the user provider if it exists.
+     *
+     * @return The user provider set in the client.
+     * @see ExperimentUserProvider
+     * @see setUserProvider
+     */
+    fun getUserProvider(): ExperimentUserProvider?
 
     /**
      * Sets a user provider that will inject identity information into the user
