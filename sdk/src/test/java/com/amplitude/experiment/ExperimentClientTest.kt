@@ -55,7 +55,7 @@ class ExperimentClientTest {
         ExperimentConfig(
             debug = true,
             source = Source.INITIAL_VARIANTS,
-            initialVariants = initialVariants
+            initialVariants = initialVariants,
         ),
         OkHttpClient(),
         InMemoryStorage(),

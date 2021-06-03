@@ -87,12 +87,14 @@ class AmplitudeUserProvider(private val amplitudeClient: AmplitudeClient) : Expe
         return ExperimentUser.builder()
             .userId(getUserId())
             .deviceId(getDeviceId())
+            .version(version)
             .platform(platform)
             .language(language)
             .os(os)
             .deviceBrand(brand)
             .deviceManufacturer(manufacturer)
             .deviceModel(model)
+            .carrier(carrier)
             .build()
     }
 }
