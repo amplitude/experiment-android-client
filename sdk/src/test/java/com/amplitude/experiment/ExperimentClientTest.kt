@@ -6,7 +6,6 @@ import com.amplitude.experiment.util.SystemLogger
 import okhttp3.OkHttpClient
 import org.junit.Assert
 import org.junit.Test
-import java.io.InterruptedIOException
 import java.util.concurrent.ExecutionException
 
 private const val API_KEY = "client-DvWljIjiiuqLbyjqdvBaLFfEBrAvGuA3"
@@ -67,8 +66,8 @@ class ExperimentClientTest {
         client.fetch(testUser).get()
         val variant = client.variant(KEY)
         Assert.assertNotNull(variant)
-        Assert.assertEquals(ON_VARIANT_VALUE, variant?.value)
-        Assert.assertEquals(ON_VARIANT_PAYLOAD, variant?.payload)
+        Assert.assertEquals(ON_VARIANT_VALUE, variant.value)
+        Assert.assertEquals(ON_VARIANT_PAYLOAD, variant.payload)
     }
 
     @Test
@@ -78,7 +77,7 @@ class ExperimentClientTest {
         } catch (e: ExecutionException) {
             // Timeout is expected
             val variant = client.variant(KEY)
-            Assert.assertEquals("off", variant?.value)
+            Assert.assertEquals("off", variant.value)
             return
         }
         Assert.fail("expected timeout exception")
@@ -107,8 +106,8 @@ class ExperimentClientTest {
         initialVariantSourceClient.fetch(testUser).get()
         variant = initialVariantSourceClient.variant(KEY)
         Assert.assertNotNull(variant)
-        Assert.assertEquals("off", variant?.value)
-        Assert.assertNull(variant?.payload)
+        Assert.assertEquals("off", variant.value)
+        Assert.assertNull(variant.payload)
     }
 
     @Test

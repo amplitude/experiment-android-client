@@ -55,12 +55,12 @@ internal class DefaultExperimentClient internal constructor(
         })
     }
 
-    override fun variant(key: String, fallback: Variant?): Variant? {
+    override fun variant(key: String, fallback: Variant?): Variant {
         return all()[key] ?: fallback ?: config.fallbackVariant
     }
 
     override fun all(): Map<String, Variant> {
-        val initialVariants = config.initialVariants ?: emptyMap()
+        val initialVariants = config.initialVariants
         return when (config.source) {
             Source.LOCAL_STORAGE -> {
                 return initialVariants.plus(storage.getAll())

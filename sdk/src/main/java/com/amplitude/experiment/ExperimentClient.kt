@@ -39,16 +39,18 @@ interface ExperimentClient {
     fun fetch(user: ExperimentUser? = null): Future<ExperimentClient>
 
     /**
-     * Returns the variant for the provided key.
+     * Returns the stored variant for the provided key.
      *
      * Fetches [all] variants, falling back given [fallback] then the
-     * configured fallbackVariant.
+     * configured [ExperimentConfig.fallbackVariant].
      *
      * @param key The flag or experiment key to get the assigned variant for.
      * @param fallback The highest priority fallback.
+     * @return The variant from source, fallbacks, or an empty variant.
+     * @see Variant
      * @see ExperimentConfig
      */
-    fun variant(key: String, fallback: Variant? = null): Variant?
+    fun variant(key: String, fallback: Variant? = null): Variant
 
     /**
      * Returns all variants for the user.

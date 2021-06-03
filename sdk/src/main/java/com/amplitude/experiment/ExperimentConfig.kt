@@ -15,9 +15,9 @@ class ExperimentConfig internal constructor(
     @JvmField
     val debug: Boolean = Defaults.DEBUG,
     @JvmField
-    val fallbackVariant: Variant? = Defaults.FALLBACK_VARIANT,
+    val fallbackVariant: Variant = Defaults.FALLBACK_VARIANT,
     @JvmField
-    val initialVariants: Map<String, Variant>? = Defaults.INITIAL_VARIANTS,
+    val initialVariants: Map<String, Variant> = Defaults.INITIAL_VARIANTS,
     @JvmField
     val source: Source = Defaults.SOURCE,
     @JvmField
@@ -38,14 +38,14 @@ class ExperimentConfig internal constructor(
         const val DEBUG = false
 
         /**
-         * null
+         * Variant(null,  null)
          */
-        val FALLBACK_VARIANT: Variant? = null
+        val FALLBACK_VARIANT: Variant = Variant()
 
         /**
-         * null
+         * Empty Map<String, Variant>
          */
-        val INITIAL_VARIANTS: Map<String, Variant>? = null
+        val INITIAL_VARIANTS: Map<String, Variant> = emptyMap()
 
         /**
          * Source.LOCAL_STORAGE
@@ -86,11 +86,11 @@ class ExperimentConfig internal constructor(
             this.debug = debug
         }
 
-        fun fallbackVariant(fallbackVariant: Variant?) = apply {
+        fun fallbackVariant(fallbackVariant: Variant) = apply {
             this.fallbackVariant = fallbackVariant
         }
 
-        fun initialVariants(initialVariants: Map<String, Variant>?) = apply {
+        fun initialVariants(initialVariants: Map<String, Variant>) = apply {
             this.initialVariants = initialVariants
         }
 
