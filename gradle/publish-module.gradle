@@ -49,7 +49,7 @@ afterEvaluate {
                 artifact javadocJar
 
                 pom {
-                    name = PUBLISH_ARTIFACT_ID
+                    name = PUBLISH_NAME
                     description = PUBLISH_DESCRIPTION
                     url = POM_URL
                     licenses {
