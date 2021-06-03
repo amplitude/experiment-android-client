@@ -40,3 +40,15 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.json:json:20201115'
 }
+
+dokkaJavadoc {
+    dokkaSourceSets {
+        named("main") {
+            description("Android Experiment Client SDK")
+            includeNonPublic.set(false)
+            skipEmptyPackages.set(true)
+            skipDeprecated.set(true)
+            reportUndocumented.set(true)
+        }
+    }
+}

@@ -1,0 +1,1 @@
+var packageSearchIndex = [{"l":"com.amplitude.api","url":"com/amplitude/api/package-summary.html"}, {"l":"com.amplitude.experiment","url":"com/amplitude/experiment/package-summary.html"}, {"l":"All packages","url":"index.html"}]
