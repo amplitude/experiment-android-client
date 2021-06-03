@@ -40,11 +40,13 @@ internal class DefaultExperimentClient internal constructor(
     override fun fetch(user: ExperimentUser?): Future<ExperimentClient> {
         this.user = user ?: this.user
         val fetchUser = this.user.merge(userProvider?.getUser())
-        return executorService.submit(Callable {
-            val variants = doFetch(fetchUser).get()
-            storeVariants(variants)
-            this
-        })
+        return executorService.submit(
+            Callable {
+                val variants = doFetch(fetchUser).get()
+                storeVariants(variants)
+                this
+            }
+        )
     }
 
     override fun variant(key: String): Variant {
