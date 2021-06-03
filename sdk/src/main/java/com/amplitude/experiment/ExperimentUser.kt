@@ -38,6 +38,11 @@ class ExperimentUser internal constructor(
     @JvmField val userProperties: Map<String, Any?>? = null,
 ) {
 
+    /**
+     * Construct an empty [ExperimentUser].
+     */
+    constructor() : this(userId = null)
+
     fun copyToBuilder(): Builder {
         return builder()
             .userId(this.userId)

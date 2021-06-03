@@ -28,6 +28,11 @@ class ExperimentConfig internal constructor(
 ) {
 
     /**
+     * Construct the default [ExperimentConfig].
+     */
+    constructor() : this(debug = Defaults.DEBUG)
+
+    /**
      * Defaults for [ExperimentConfig]
      */
     object Defaults {
