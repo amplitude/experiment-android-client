@@ -9,9 +9,9 @@ import org.junit.Test
 import java.util.concurrent.ExecutionException
 
 private const val API_KEY = "client-DvWljIjiiuqLbyjqdvBaLFfEBrAvGuA3"
+
 private const val KEY = "sdk-ci-test"
-private const val ON_VARIANT_VALUE = "on"
-private const val ON_VARIANT_PAYLOAD = "payload"
+private const val INITIAL_KEY = "initial-key"
 
 class ExperimentClientTest {
 
@@ -21,11 +21,12 @@ class ExperimentClientTest {
 
     private val testUser = ExperimentUser(userId = "test_user")
 
+    private val serverVariant = Variant("on", "payload")
     private val fallbackVariant = Variant("fallback", "payload")
+    private val initialVariant = Variant("initial")
 
     private val initialVariants = mapOf(
-        "initial1" to Variant("initial1", mapOf("abc" to "cdf")),
-        "initial2" to Variant("initial2"),
+        INITIAL_KEY to initialVariant,
         KEY to Variant("off"),
     )
 
@@ -66,8 +67,7 @@ class ExperimentClientTest {
         client.fetch(testUser).get()
         val variant = client.variant(KEY)
         Assert.assertNotNull(variant)
-        Assert.assertEquals(ON_VARIANT_VALUE, variant.value)
-        Assert.assertEquals(ON_VARIANT_PAYLOAD, variant.payload)
+        Assert.assertEquals(serverVariant, variant)
     }
 
     @Test
@@ -91,6 +91,29 @@ class ExperimentClientTest {
 
         variant = client.variant("asdf")
         Assert.assertEquals(fallbackVariant, variant)
+
+        variant = client.variant(INITIAL_KEY, firstFallback)
+        Assert.assertEquals(firstFallback, variant)
+
+        variant = client.variant(INITIAL_KEY)
+        Assert.assertEquals(initialVariant, variant)
+
+        client.fetch(testUser).get()
+
+        variant = client.variant("asdf", firstFallback)
+        Assert.assertEquals(firstFallback, variant)
+
+        variant = client.variant("asdf")
+        Assert.assertEquals(fallbackVariant, variant)
+
+        variant = client.variant(INITIAL_KEY, firstFallback)
+        Assert.assertEquals(firstFallback, variant)
+
+        variant = client.variant(INITIAL_KEY)
+        Assert.assertEquals(initialVariant, variant)
+
+        variant = client.variant(KEY, firstFallback)
+        Assert.assertEquals(serverVariant, variant)
     }
 
     @Test
