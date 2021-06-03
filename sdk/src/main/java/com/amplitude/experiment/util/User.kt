@@ -12,7 +12,7 @@ internal fun ExperimentUser.toJson(): String {
         json.put("country", country)
         json.put("city", city)
         json.put("region", region)
-        json.put("dma", city)
+        json.put("dma", dma)
         json.put("language", language)
         json.put("platform", platform)
         json.put("version", version)
