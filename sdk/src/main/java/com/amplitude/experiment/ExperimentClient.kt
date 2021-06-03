@@ -41,13 +41,12 @@ interface ExperimentClient {
     /**
      * Returns the stored variant for the provided key.
      *
-     * Fetches [all] variants, falling back given [fallback] if not null;
-     * finally falling back to the configured
-     * [ExperimentConfig.fallbackVariant].
+     * Fetches variants from the [Source], falling back to [fallback] if not
+     * null, and finally to the configured [ExperimentConfig.fallbackVariant].
      *
      * @param key The flag or experiment key to get the assigned variant for.
      * @param fallback The highest priority fallback if not null.
-     * @return The variant from source, fallbacks, or an empty variant.
+     * @return The variant from source, fallback, or fallbackVariant.
      * @see Variant
      * @see ExperimentConfig
      */

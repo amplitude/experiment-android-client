@@ -54,19 +54,14 @@ internal class DefaultExperimentClient internal constructor(
     }
 
     override fun variant(key: String, fallback: Variant?): Variant {
-        return all()[key] ?: fallback ?: config.fallbackVariant
+        return sourceVariants()[key]
+            ?: fallback
+            ?: secondaryVariants()[key]
+            ?: config.fallbackVariant
     }
 
     override fun all(): Map<String, Variant> {
-        val initialVariants = config.initialVariants
-        return when (config.source) {
-            Source.LOCAL_STORAGE -> {
-                return initialVariants.plus(storage.getAll())
-            }
-            Source.INITIAL_VARIANTS -> {
-                storage.getAll().plus(initialVariants)
-            }
-        }
+        return secondaryVariants() + sourceVariants()
     }
 
     override fun getUser(): ExperimentUser? {
@@ -148,5 +143,19 @@ internal class DefaultExperimentClient internal constructor(
             storage.put(key, variant)
         }
         Logger.d("Stored variants: $variants")
+    }
+
+    private fun sourceVariants(): Map<String, Variant> {
+        return when (config.source) {
+            Source.LOCAL_STORAGE -> storage.getAll()
+            Source.INITIAL_VARIANTS -> config.initialVariants
+        }
+    }
+
+    private fun secondaryVariants(): Map<String, Variant> {
+        return when (config.source) {
+            Source.LOCAL_STORAGE -> config.initialVariants
+            Source.INITIAL_VARIANTS -> storage.getAll()
+        }
     }
 }
