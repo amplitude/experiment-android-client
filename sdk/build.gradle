@@ -41,7 +41,7 @@ dependencies {
     testImplementation 'org.json:json:20201115'
 }
 
-dokkaJavadoc {
+dokkaHtml {
     dokkaSourceSets {
         named("main") {
             description("Android Experiment Client SDK")
