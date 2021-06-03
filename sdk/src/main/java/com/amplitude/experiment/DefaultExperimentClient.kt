@@ -37,14 +37,6 @@ internal class DefaultExperimentClient internal constructor(
     private var user: ExperimentUser? = null
     private var userProvider: ExperimentUserProvider? = null
 
-    override fun getUser(): ExperimentUser? {
-        return user
-    }
-
-    override fun setUser(user: ExperimentUser) {
-        this.user = user
-    }
-
     override fun fetch(user: ExperimentUser?): Future<ExperimentClient> {
         this.user = user ?: this.user
         val fetchUser = this.user.merge(userProvider?.getUser())
@@ -53,6 +45,10 @@ internal class DefaultExperimentClient internal constructor(
             storeVariants(variants)
             this
         })
+    }
+
+    override fun variant(key: String): Variant {
+        return all()[key] ?: config.fallbackVariant
     }
 
     override fun variant(key: String, fallback: Variant?): Variant {
@@ -69,6 +65,14 @@ internal class DefaultExperimentClient internal constructor(
                 storage.getAll().plus(initialVariants)
             }
         }
+    }
+
+    override fun getUser(): ExperimentUser? {
+        return user
+    }
+
+    override fun setUser(user: ExperimentUser) {
+        this.user = user
     }
 
     override fun getUserProvider(): ExperimentUserProvider? {
