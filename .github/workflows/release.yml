@@ -60,16 +60,11 @@ jobs:
         env:
           GRADLE_PROP_FILE: local.properties
         run: |
-          echo "sonatypeUsername=${{ secrets.OSSRH_USERNAME }}" >> $GRADLE_PROP_FILE
-          echo "sonatypePassword=${{ secrets.OSSRH_PASSWORD }}" >> $GRADLE_PROP_FILE
+          echo "ossrhUsername=${{ secrets.OSSRH_USERNAME }}" >> $GRADLE_PROP_FILE
+          echo "ossrhPassword=${{ secrets.OSSRH_PASSWORD }}" >> $GRADLE_PROP_FILE
           echo "signing.keyId=${{ secrets.SIGNING_KEY_ID }}" >> $GRADLE_PROP_FILE
           echo "signing.password=${{ secrets.SIGNING_PASSWORD }}" >> $GRADLE_PROP_FILE
           echo "signing.secretKeyRingFile=${{ secrets.SIGNING_SECRET_KEY_RING_FILE }}" >> $GRADLE_PROP_FILE
-
-      - name: DEBUG
-        run: |
-          git status
-          cat local.properties
 
       - name: Semantic Release --dry-run
         if: ${{ github.event.inputs.dryRun == 'true'}}
@@ -106,7 +101,3 @@ jobs:
           -p @google/semantic-release-replace-plugin@1 \
           -p @semantic-release/exec@5 \
           semantic-release
-
-      - name: DEBUG
-        run: |
-          git status
