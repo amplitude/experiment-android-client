@@ -42,14 +42,19 @@ dependencies {
     testImplementation 'org.json:json:20201115'
 }
 
-dokkaHtml {
-    dokkaSourceSets {
-        named("main") {
-            description("Android Experiment Client SDK")
-            includeNonPublic.set(false)
-            skipEmptyPackages.set(true)
-            skipDeprecated.set(true)
-            reportUndocumented.set(true)
+task docs(dependsOn: dokkaHtml) {
+    dokkaHtml {
+        outputDirectory.set(new File(rootDir, "docs"))
+        moduleName.set("experiment-android-client")
+        dokkaSourceSets {
+            named("main") {
+                includeNonPublic.set(false)
+                skipEmptyPackages.set(true)
+                skipDeprecated.set(true)
+                reportUndocumented.set(true)
+            }
         }
     }
 }
+
+
