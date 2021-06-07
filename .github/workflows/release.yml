@@ -101,3 +101,6 @@ jobs:
           -p @google/semantic-release-replace-plugin@1 \
           -p @semantic-release/exec@5 \
           semantic-release
+
+      - name: DEBUG
+        run: git status
