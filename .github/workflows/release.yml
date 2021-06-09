@@ -44,7 +44,7 @@ jobs:
         run: ./gradlew test --info
 
       - name: Docs
-        run: ./gradlew sdk:dokkaHtml
+        run: ./gradlew docs
 
       - name: Configure GPG
         env:
