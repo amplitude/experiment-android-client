@@ -1,7 +1,10 @@
 name: Lint
 
-on: [pull_request]
-
+on:
+  pull_request:
+  push:
+    branches:
+      - main
 jobs:
   lint:
     runs-on: ubuntu-18.04
