@@ -26,6 +26,7 @@ internal class DefaultExperimentClient internal constructor(
     httpClient: OkHttpClient,
     private val storage: Storage,
     private val executorService: ExecutorService,
+    private var userProvider: ExperimentUserProvider? = null,
 ) : ExperimentClient {
 
     private val storageLock = Any()
@@ -35,7 +36,6 @@ internal class DefaultExperimentClient internal constructor(
         .build()
 
     private var user: ExperimentUser? = null
-    private var userProvider: ExperimentUserProvider? = null
 
     override fun fetch(user: ExperimentUser?): Future<ExperimentClient> {
         this.user = user ?: this.user
