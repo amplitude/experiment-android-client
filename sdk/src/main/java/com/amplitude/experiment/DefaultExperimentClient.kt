@@ -197,11 +197,3 @@ internal class DefaultExperimentClient internal constructor(
         }
     }
 }
-
-private fun <T> AsyncFuture<T>.getAndCancel(timeoutMillis: Long): T {
-    return try {
-        get(timeoutMillis, TimeUnit.MILLISECONDS)
-    } finally {
-        cancel(true)
-    }
-}
