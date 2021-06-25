@@ -106,17 +106,6 @@ internal class DefaultExperimentClient internal constructor(
         }
     }
 
-    private fun startRetries(user: ExperimentUser) = synchronized(backoffLock) {
-        backoff?.cancel()
-        backoff = executorService.backoff(backoffConfig) {
-            fetchInternal(user, fetchBackoffTimeoutMillis, false)
-        }
-    }
-
-    private fun stopRetries() = synchronized(backoffLock) {
-        backoff?.cancel()
-    }
-
     private fun doFetch(
         user: ExperimentUser,
         timeoutMillis: Long,
@@ -156,6 +145,17 @@ internal class DefaultExperimentClient internal constructor(
             }
         })
         return future
+    }
+
+    private fun startRetries(user: ExperimentUser) = synchronized(backoffLock) {
+        backoff?.cancel()
+        backoff = executorService.backoff(backoffConfig) {
+            fetchInternal(user, fetchBackoffTimeoutMillis, false)
+        }
+    }
+
+    private fun stopRetries() = synchronized(backoffLock) {
+        backoff?.cancel()
     }
 
     @Throws(IOException::class)
