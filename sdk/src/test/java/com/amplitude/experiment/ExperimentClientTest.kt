@@ -44,7 +44,12 @@ class ExperimentClientTest {
 
     private val timeoutClient = DefaultExperimentClient(
         API_KEY,
-        ExperimentConfig(debug = true, fetchTimeoutMillis = 1),
+        ExperimentConfig(
+            debug = true,
+            fallbackVariant = fallbackVariant,
+            initialVariants = initialVariants,
+            fetchTimeoutMillis = 1,
+        ),
         OkHttpClient(),
         InMemoryStorage(),
         Experiment.executorService,
@@ -76,8 +81,26 @@ class ExperimentClientTest {
             timeoutClient.fetch(testUser).get()
         } catch (e: ExecutionException) {
             // Timeout is expected
-            val variant = client.variant(KEY)
+            val variant = timeoutClient.variant(KEY)
             Assert.assertEquals("off", variant.value)
+            return
+        }
+        Assert.fail("expected timeout exception")
+    }
+
+    @Test
+    fun `fetch timeout retry success`() {
+        try {
+            timeoutClient.fetch(testUser).get()
+        } catch (e: ExecutionException) {
+            // Timeout is expected
+            val offVariant = timeoutClient.variant(KEY)
+            Assert.assertEquals("off", offVariant.value)
+            // Wait for retry to succeed and check updated variant
+            Thread.sleep(1000)
+            val variant = timeoutClient.variant(KEY)
+            Assert.assertNotNull(variant)
+            Assert.assertEquals(serverVariant, variant)
             return
         }
         Assert.fail("expected timeout exception")
