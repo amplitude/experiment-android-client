@@ -30,7 +30,7 @@ internal class DefaultExperimentClient internal constructor(
     private val config: ExperimentConfig,
     private val httpClient: OkHttpClient,
     private val storage: Storage,
-    private val executorService: ExecutorService,
+    private val executorService: ScheduledExecutorService,
     private var userProvider: ExperimentUserProvider? = null,
 ) : ExperimentClient {
 
