@@ -24,7 +24,8 @@ class ExperimentConfig internal constructor(
     val serverUrl: String = Defaults.SERVER_URL,
     @JvmField
     val fetchTimeoutMillis: Long = Defaults.FETCH_TIMEOUT_MILLIS,
-//    val retryFetchOnFailure: Boolean = Defaults.RETRY_FETCH_ON_FAILURE,
+    @JvmField
+    val retryFetchOnFailure: Boolean = Defaults.RETRY_FETCH_ON_FAILURE,
 ) {
 
     /**
@@ -67,7 +68,10 @@ class ExperimentConfig internal constructor(
          */
         const val FETCH_TIMEOUT_MILLIS = 10000L
 
-//        const val RETRY_FETCH_ON_FAILURE = true
+        /**
+         * true
+         */
+        const val RETRY_FETCH_ON_FAILURE = true
     }
 
     companion object {
@@ -85,7 +89,7 @@ class ExperimentConfig internal constructor(
         private var source = Defaults.SOURCE
         private var serverUrl = Defaults.SERVER_URL
         private var fetchTimeoutMillis = Defaults.FETCH_TIMEOUT_MILLIS
-//        private var retryFetchOnFailure = Defaults.RETRY_FETCH_ON_FAILURE
+        private var retryFetchOnFailure = Defaults.RETRY_FETCH_ON_FAILURE
 
         fun debug(debug: Boolean) = apply {
             this.debug = debug
@@ -111,9 +115,9 @@ class ExperimentConfig internal constructor(
             this.fetchTimeoutMillis = fetchTimeoutMillis
         }
 
-//        fun retryFetchOnFailure(retryFetchOnFailure: Boolean) = apply {
-//            this.retryFetchOnFailure = retryFetchOnFailure
-//        }
+        fun retryFetchOnFailure(retryFetchOnFailure: Boolean) = apply {
+            this.retryFetchOnFailure = retryFetchOnFailure
+        }
 
         fun build(): ExperimentConfig {
             return ExperimentConfig(
@@ -123,7 +127,7 @@ class ExperimentConfig internal constructor(
                 source = source,
                 serverUrl = serverUrl,
                 fetchTimeoutMillis = fetchTimeoutMillis,
-//                retryFetchOnFailure = retryFetchOnFailure,
+                retryFetchOnFailure = retryFetchOnFailure,
             )
         }
     }

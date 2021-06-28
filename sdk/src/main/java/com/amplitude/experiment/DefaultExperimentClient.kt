@@ -1,7 +1,11 @@
 package com.amplitude.experiment
 
 import com.amplitude.experiment.storage.Storage
+import com.amplitude.experiment.util.AsyncFuture
+import com.amplitude.experiment.util.Backoff
+import com.amplitude.experiment.util.BackoffConfig
 import com.amplitude.experiment.util.Logger
+import com.amplitude.experiment.util.backoff
 import com.amplitude.experiment.util.merge
 import com.amplitude.experiment.util.toJson
 import com.amplitude.experiment.util.toVariant
@@ -16,37 +20,42 @@ import okio.ByteString.Companion.toByteString
 import org.json.JSONObject
 import java.io.IOException
 import java.util.concurrent.Callable
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
+import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
+import kotlin.jvm.Throws
 
 internal class DefaultExperimentClient internal constructor(
     private val apiKey: String,
     private val config: ExperimentConfig,
-    httpClient: OkHttpClient,
+    private val httpClient: OkHttpClient,
     private val storage: Storage,
-    private val executorService: ExecutorService,
+    private val executorService: ScheduledExecutorService,
 ) : ExperimentClient {
-
-    private val storageLock = Any()
-    private val serverUrl: HttpUrl = config.serverUrl.toHttpUrl()
-    private val httpClient = httpClient.newBuilder()
-        .callTimeout(config.fetchTimeoutMillis, TimeUnit.MILLISECONDS)
-        .build()
 
     private var user: ExperimentUser? = null
     private var userProvider: ExperimentUserProvider? = null
 
+    private val backoffLock = Any()
+    private var backoff: Backoff? = null
+    private val fetchBackoffTimeoutMillis = 10000L
+    private val backoffConfig = BackoffConfig(
+        attempts = 8,
+        min = 500,
+        max = 10000,
+        scalar = 1.5f,
+    )
+
+    private val storageLock = Any()
+    private val serverUrl: HttpUrl = config.serverUrl.toHttpUrl()
+
     override fun fetch(user: ExperimentUser?): Future<ExperimentClient> {
         this.user = user ?: this.user
         val fetchUser = this.user.merge(userProvider?.getUser())
-        return executorService.submit(
-            Callable {
-                val variants = doFetch(fetchUser).get()
-                storeVariants(variants)
-                this
-            }
-        )
+        return executorService.submit(Callable {
+            fetchInternal(fetchUser, config.fetchTimeoutMillis, config.retryFetchOnFailure)
+            this
+        })
     }
 
     override fun variant(key: String): Variant {
@@ -81,14 +90,30 @@ internal class DefaultExperimentClient internal constructor(
         return this
     }
 
+    @Throws
+    private fun fetchInternal(user: ExperimentUser, timeoutMillis: Long, retry: Boolean) {
+        if (retry) {
+            stopRetries()
+        }
+        try {
+            val variants = doFetch(user, timeoutMillis).get()
+            storeVariants(variants)
+        } catch (e: Exception) {
+            if (retry) {
+                startRetries(user)
+            }
+            throw e
+        }
+    }
+
     private fun doFetch(
         user: ExperimentUser,
+        timeoutMillis: Long,
     ): Future<Map<String, Variant>> {
         if (user.userId == null && user.deviceId == null) {
             Logger.w("user id and device id are null; amplitude may not resolve identity")
         }
         Logger.d("Fetch variants for user: $user")
-        val future = AsyncFuture<Map<String, Variant>>()
         // Build request to fetch variants for the user
         val userJsonBytes = user.toJson().toByteArray(Charsets.UTF_8)
         val userBase64 = userJsonBytes.toByteString().base64Url()
@@ -100,27 +125,40 @@ internal class DefaultExperimentClient internal constructor(
             .url(url)
             .addHeader("Authorization", "Api-Key $apiKey")
             .build()
-
+        val call = httpClient.newCall(request)
+        call.timeout().timeout(timeoutMillis, TimeUnit.MILLISECONDS)
+        val future = AsyncFuture<Map<String, Variant>>(call)
         // Execute request and handle response
-        httpClient.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                future.completeExceptionally(e)
-            }
-
+        call.enqueue(object : Callback {
             override fun onResponse(call: Call, response: Response) {
                 try {
                     Logger.d("Received fetch response: $response")
                     val variants = parseResponse(response)
-                    Logger.d("Parsed variants: $variants")
                     future.complete(variants)
-                } catch (e: Exception) {
-                    future.completeExceptionally(e)
+                } catch (e: IOException) {
+                    onFailure(call, e)
                 }
+            }
+
+            override fun onFailure(call: Call, e: IOException) {
+                future.completeExceptionally(e)
             }
         })
         return future
     }
 
+    private fun startRetries(user: ExperimentUser) = synchronized(backoffLock) {
+        backoff?.cancel()
+        backoff = executorService.backoff(backoffConfig) {
+            fetchInternal(user, fetchBackoffTimeoutMillis, false)
+        }
+    }
+
+    private fun stopRetries() = synchronized(backoffLock) {
+        backoff?.cancel()
+    }
+
+    @Throws(IOException::class)
     private fun parseResponse(response: Response): Map<String, Variant> = response.use {
         if (!response.isSuccessful) {
             throw IOException("fetch error response: $response")
