@@ -47,7 +47,8 @@ object Experiment {
                     config,
                     httpClient,
                     SharedPrefsStorage(application, apiKey, instanceName),
-                    executorService
+                    executorService,
+                    DefaultUserProvider(application),
                 )
                 instances[instanceName] = newInstance
                 newInstance

@@ -31,10 +31,10 @@ internal class DefaultExperimentClient internal constructor(
     private val httpClient: OkHttpClient,
     private val storage: Storage,
     private val executorService: ScheduledExecutorService,
+    private var userProvider: ExperimentUserProvider? = null,
 ) : ExperimentClient {
 
     private var user: ExperimentUser? = null
-    private var userProvider: ExperimentUserProvider? = null
 
     private val backoffLock = Any()
     private var backoff: Backoff? = null
