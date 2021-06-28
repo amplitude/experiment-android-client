@@ -14,7 +14,6 @@ internal class AsyncFuture<T>(private val call: Call? = null): Future<T> {
     @Volatile private var throwable: Throwable? = null
     private val lock = Object()
 
-
     override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
         call?.cancel()
         return true
@@ -83,5 +82,4 @@ internal class AsyncFuture<T>(private val call: Call? = null): Future<T> {
             }
         }
     }
-
 }

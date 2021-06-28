@@ -5,14 +5,12 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import kotlin.math.min
 
-
 internal fun ScheduledExecutorService.backoff(
     config: BackoffConfig,
     function: () -> Unit,
 ) = Backoff(config, this).apply {
     start(function)
 }
-
 
 internal data class BackoffConfig(
     val attempts: Long,
