@@ -57,11 +57,12 @@ jobs:
         env:
           GRADLE_PROP_FILE: local.properties
         run: |
-          echo "ossrhUsername=${{ secrets.OSSRH_USERNAME }}" >> $GRADLE_PROP_FILE
-          echo "ossrhPassword=${{ secrets.OSSRH_PASSWORD }}" >> $GRADLE_PROP_FILE
-          echo "signing.keyId=${{ secrets.SIGNING_KEY_ID }}" >> $GRADLE_PROP_FILE
-          echo "signing.password=${{ secrets.SIGNING_PASSWORD }}" >> $GRADLE_PROP_FILE
-          echo "signing.secretKeyRingFile=${{ secrets.SIGNING_SECRET_KEY_RING_FILE }}" >> $GRADLE_PROP_FILE
+          echo "\nossrhUsername=${{ secrets.OSSRH_USERNAME }}" >> $GRADLE_PROP_FILE
+          echo "\nossrhPassword=${{ secrets.OSSRH_PASSWORD }}" >> $GRADLE_PROP_FILE
+          echo "\nsonatypeStagingProfileId=${{ secrets.SONATYPE_STAGING_PROFILE_ID }}" >> $GRADLE_PROP_FILE
+          echo "\nsigning.keyId=${{ secrets.SIGNING_KEY_ID }}" >> $GRADLE_PROP_FILE
+          echo "\nsigning.password=${{ secrets.SIGNING_PASSWORD }}" >> $GRADLE_PROP_FILE
+          echo "\nsigning.secretKeyRingFile=${{ secrets.SIGNING_SECRET_KEY_RING_FILE }}" >> $GRADLE_PROP_FILE
 
       - name: Semantic Release --dry-run
         if: ${{ github.event.inputs.dryRun == 'true'}}
