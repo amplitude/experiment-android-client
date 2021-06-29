@@ -59,6 +59,7 @@ jobs:
         run: |
           echo "ossrhUsername=${{ secrets.OSSRH_USERNAME }}" >> $GRADLE_PROP_FILE
           echo "ossrhPassword=${{ secrets.OSSRH_PASSWORD }}" >> $GRADLE_PROP_FILE
+          echo "sonatypeStagingProfileId=${{ secrets.SONATYPE_STAGING_PROFILE_ID }}" >> $GRADLE_PROP_FILE
           echo "signing.keyId=${{ secrets.SIGNING_KEY_ID }}" >> $GRADLE_PROP_FILE
           echo "signing.password=${{ secrets.SIGNING_PASSWORD }}" >> $GRADLE_PROP_FILE
           echo "signing.secretKeyRingFile=${{ secrets.SIGNING_SECRET_KEY_RING_FILE }}" >> $GRADLE_PROP_FILE

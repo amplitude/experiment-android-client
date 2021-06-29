@@ -37,7 +37,7 @@ module.exports = {
       }
     ],
     ["@semantic-release/git", {
-      "assets": ["AmplitudeExperiment.podspec", "sdk/build.gradl", "CHANGELOG.md", "docs/*"],
+      "assets": ["sdk/build.gradle", "CHANGELOG.md", "docs/*"],
       "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
     }],
     ["@semantic-release/exec", {
