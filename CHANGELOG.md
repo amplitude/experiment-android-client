@@ -1,3 +1,11 @@
+## [1.1.1](https://github.com/amplitude/experiment-android-client/compare/1.1.0...1.1.1) (2021-06-29)
+
+
+### Bug Fixes
+
+* formatting ([d455e87](https://github.com/amplitude/experiment-android-client/commit/d455e87d91b73a1eea592d14fc2343fe6bd37c63))
+* use DefaultUserProvider in client by default ([#4](https://github.com/amplitude/experiment-android-client/issues/4)) ([5742e36](https://github.com/amplitude/experiment-android-client/commit/5742e3686f8c99e37d26d6f86279ca0c580633be))
+
 # [1.1.0](https://github.com/amplitude/experiment-android-client/compare/1.0.0...1.1.0) (2021-06-28)
 
 
