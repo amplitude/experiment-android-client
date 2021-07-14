@@ -13,10 +13,11 @@ import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import okio.ByteString.Companion.toByteString
 import org.json.JSONObject
 import java.io.IOException
 import java.util.concurrent.Callable
@@ -115,13 +116,14 @@ internal class DefaultExperimentClient internal constructor(
         }
         Logger.d("Fetch variants for user: $user")
         // Build request to fetch variants for the user
-        val userJsonBytes = user.toJson().toByteArray(Charsets.UTF_8)
-        val userBase64 = userJsonBytes.toByteString().base64Url()
+        val body = user.toJson()
+            .toByteArray(Charsets.UTF_8)
+            .toRequestBody("application/json".toMediaType())
         val url = serverUrl.newBuilder()
-            .addPathSegments("sdk/vardata/$userBase64")
+            .addPathSegments("sdk/vardata")
             .build()
         val request = Request.Builder()
-            .get()
+            .post(body)
             .url(url)
             .addHeader("Authorization", "Api-Key $apiKey")
             .build()
