@@ -1,5 +1,8 @@
 package com.amplitude.experiment
 
+import com.amplitude.experiment.analytics.ExperimentAnalyticsEvent
+import com.amplitude.experiment.analytics.ExperimentAnalyticsProvider
+import com.amplitude.experiment.analytics.ExposureEvent
 import com.amplitude.experiment.storage.InMemoryStorage
 import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.SystemLogger
@@ -163,5 +166,35 @@ class ExperimentClientTest {
         val newUser = testUser.copyToBuilder().userId("different_user").build()
         client.setUser(newUser)
         Assert.assertEquals(newUser, client.getUser())
+    }
+
+    @Test
+    fun `test exposure event through analytics provider when variant called`() {
+        val analyticsProvider = object : ExperimentAnalyticsProvider {
+            override fun track(event: ExperimentAnalyticsEvent) {
+                Assert.assertEquals("[Experiment] Exposure", event.name)
+                val exposureEvent = event as ExposureEvent
+                Assert.assertEquals(mapOf(
+                    "key" to KEY,
+                    "variant" to serverVariant.value
+                ), event.properties)
+
+                Assert.assertEquals(KEY, exposureEvent.key)
+                Assert.assertEquals(serverVariant, exposureEvent.variant)
+                Assert.assertEquals(testUser, exposureEvent.user)
+            }
+        }
+        val analyticsProviderClient = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                debug = true,
+                analyticsProvider = analyticsProvider,
+            ),
+            OkHttpClient(),
+            InMemoryStorage(),
+            Experiment.executorService,
+        )
+        analyticsProviderClient.fetch(testUser).get()
+        analyticsProviderClient.variant(KEY)
     }
 }

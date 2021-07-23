@@ -84,6 +84,7 @@ interface ExperimentClient {
      * @see ExperimentUserProvider
      * @see setUserProvider
      */
+    @Deprecated("Use ExperimentConfig.userProvider instead")
     fun getUserProvider(): ExperimentUserProvider?
 
     /**
@@ -94,5 +95,6 @@ interface ExperimentClient {
      * @param provider
      * @see ExperimentUserProvider
      */
+    @Deprecated("Use ExperimentConfig.userProvider instead")
     fun setUserProvider(provider: ExperimentUserProvider?): ExperimentClient
 }

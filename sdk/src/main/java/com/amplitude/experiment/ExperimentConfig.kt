@@ -1,5 +1,7 @@
 package com.amplitude.experiment
 
+import com.amplitude.experiment.analytics.ExperimentAnalyticsProvider
+
 enum class Source {
     LOCAL_STORAGE,
     INITIAL_VARIANTS,
@@ -26,6 +28,10 @@ class ExperimentConfig internal constructor(
     val fetchTimeoutMillis: Long = Defaults.FETCH_TIMEOUT_MILLIS,
     @JvmField
     val retryFetchOnFailure: Boolean = Defaults.RETRY_FETCH_ON_FAILURE,
+    @JvmField
+    val userProvider: ExperimentUserProvider? = Defaults.USER_PROVIDER,
+    @JvmField
+    val analyticsProvider: ExperimentAnalyticsProvider? = Defaults.ANALYTICS_PROVIDER,
 ) {
 
     /**
@@ -72,6 +78,16 @@ class ExperimentConfig internal constructor(
          * true
          */
         const val RETRY_FETCH_ON_FAILURE = true
+
+        /**
+         * null
+         */
+        val USER_PROVIDER: ExperimentUserProvider? = null
+
+        /**
+         * null
+         */
+        val ANALYTICS_PROVIDER: ExperimentAnalyticsProvider? = null
     }
 
     companion object {
@@ -90,6 +106,8 @@ class ExperimentConfig internal constructor(
         private var serverUrl = Defaults.SERVER_URL
         private var fetchTimeoutMillis = Defaults.FETCH_TIMEOUT_MILLIS
         private var retryFetchOnFailure = Defaults.RETRY_FETCH_ON_FAILURE
+        private var userProvider = Defaults.USER_PROVIDER
+        private var analyticsProvider = Defaults.ANALYTICS_PROVIDER
 
         fun debug(debug: Boolean) = apply {
             this.debug = debug
@@ -119,6 +137,13 @@ class ExperimentConfig internal constructor(
             this.retryFetchOnFailure = retryFetchOnFailure
         }
 
+        fun userProvider(userProvider: ExperimentUserProvider?) = apply {
+            this.userProvider = userProvider
+        }
+        fun analyticsProvider(analyticsProvider: ExperimentAnalyticsProvider?) = apply {
+            this.analyticsProvider = analyticsProvider
+        }
+
         fun build(): ExperimentConfig {
             return ExperimentConfig(
                 debug = debug,
@@ -128,7 +153,22 @@ class ExperimentConfig internal constructor(
                 serverUrl = serverUrl,
                 fetchTimeoutMillis = fetchTimeoutMillis,
                 retryFetchOnFailure = retryFetchOnFailure,
+                userProvider = userProvider,
+                analyticsProvider = analyticsProvider,
             )
         }
+    }
+
+    internal fun copyToBuilder(): Builder {
+        return builder()
+            .debug(debug)
+            .fallbackVariant(fallbackVariant)
+            .initialVariants(initialVariants)
+            .source(source)
+            .serverUrl(serverUrl)
+            .fetchTimeoutMillis(fetchTimeoutMillis)
+            .retryFetchOnFailure(retryFetchOnFailure)
+            .userProvider(userProvider)
+            .analyticsProvider(analyticsProvider)
     }
 }

@@ -1,5 +1,6 @@
 package com.amplitude.experiment
 
+import com.amplitude.experiment.analytics.ExposureEvent
 import com.amplitude.experiment.storage.Storage
 import com.amplitude.experiment.util.AsyncFuture
 import com.amplitude.experiment.util.Backoff
@@ -32,7 +33,6 @@ internal class DefaultExperimentClient internal constructor(
     private val httpClient: OkHttpClient,
     private val storage: Storage,
     private val executorService: ScheduledExecutorService,
-    private var userProvider: ExperimentUserProvider? = null,
 ) : ExperimentClient {
 
     private var user: ExperimentUser? = null
@@ -50,6 +50,9 @@ internal class DefaultExperimentClient internal constructor(
     private val storageLock = Any()
     private val serverUrl: HttpUrl = config.serverUrl.toHttpUrl()
 
+    @Deprecated("moved to experiment config")
+    private var userProvider: ExperimentUserProvider? = config.userProvider
+
     override fun fetch(user: ExperimentUser?): Future<ExperimentClient> {
         this.user = user ?: this.user
         val fetchUser = this.user.merge(userProvider?.getUser())
@@ -64,10 +67,16 @@ internal class DefaultExperimentClient internal constructor(
     }
 
     override fun variant(key: String, fallback: Variant?): Variant {
-        return sourceVariants()[key]
+        val variant = sourceVariants()[key]
             ?: fallback
             ?: secondaryVariants()[key]
             ?: config.fallbackVariant
+        // Track the exposure event if an analytics provider is set
+        if (variant.value != null) {
+            val exposedUser = user.merge(userProvider?.getUser())
+            config.analyticsProvider?.track(ExposureEvent(exposedUser, key, variant))
+        }
+        return variant
     }
 
     override fun all(): Map<String, Variant> {
