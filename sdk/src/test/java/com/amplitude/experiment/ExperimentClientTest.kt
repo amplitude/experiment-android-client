@@ -200,4 +200,28 @@ class ExperimentClientTest {
         analyticsProviderClient.variant(KEY)
         Assert.assertTrue(didExposureGetTracked)
     }
+
+    @Test
+    fun `test exposure event not tracked on fallback variant`() {
+        val analyticsProvider = object : ExperimentAnalyticsProvider {
+            override fun track(event: ExperimentAnalyticsEvent) {
+                Assert.fail("analytics provider should not be called.")
+            }
+        }
+        val analyticsProviderClient = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                debug = true,
+                fallbackVariant = fallbackVariant,
+                initialVariants = initialVariants,
+                analyticsProvider = analyticsProvider,
+            ),
+            OkHttpClient(),
+            InMemoryStorage(),
+            Experiment.executorService,
+        )
+        analyticsProviderClient.fetch(testUser).get()
+        analyticsProviderClient.variant(INITIAL_KEY)
+        analyticsProviderClient.variant("asdf")
+    }
 }
