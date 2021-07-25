@@ -67,16 +67,16 @@ internal class DefaultExperimentClient internal constructor(
     }
 
     override fun variant(key: String, fallback: Variant?): Variant {
-        val variant = sourceVariants()[key]
+        val sourceVariant = sourceVariants()[key]
+        // Track the exposure event if an analytics provider is set
+        if (sourceVariant?.value != null) {
+            val exposedUser = user.merge(userProvider?.getUser())
+            config.analyticsProvider?.track(ExposureEvent(exposedUser, key, sourceVariant))
+        }
+        return sourceVariant
             ?: fallback
             ?: secondaryVariants()[key]
             ?: config.fallbackVariant
-        // Track the exposure event if an analytics provider is set
-        if (variant.value != null) {
-            val exposedUser = user.merge(userProvider?.getUser())
-            config.analyticsProvider?.track(ExposureEvent(exposedUser, key, variant))
-        }
-        return variant
     }
 
     override fun all(): Map<String, Variant> {
