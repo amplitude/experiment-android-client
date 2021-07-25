@@ -170,6 +170,7 @@ class ExperimentClientTest {
 
     @Test
     fun `test exposure event through analytics provider when variant called`() {
+        var didExposureGetTracked = false
         val analyticsProvider = object : ExperimentAnalyticsProvider {
             override fun track(event: ExperimentAnalyticsEvent) {
                 Assert.assertEquals("[Experiment] Exposure", event.name)
@@ -182,6 +183,7 @@ class ExperimentClientTest {
                 Assert.assertEquals(KEY, exposureEvent.key)
                 Assert.assertEquals(serverVariant, exposureEvent.variant)
                 Assert.assertEquals(testUser, exposureEvent.user)
+                didExposureGetTracked = true
             }
         }
         val analyticsProviderClient = DefaultExperimentClient(
@@ -196,5 +198,6 @@ class ExperimentClientTest {
         )
         analyticsProviderClient.fetch(testUser).get()
         analyticsProviderClient.variant(KEY)
+        Assert.assertTrue(didExposureGetTracked)
     }
 }

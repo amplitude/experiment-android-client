@@ -63,7 +63,7 @@ internal class DefaultExperimentClient internal constructor(
     }
 
     override fun variant(key: String): Variant {
-        return all()[key] ?: config.fallbackVariant
+        return variant(key, null)
     }
 
     override fun variant(key: String, fallback: Variant?): Variant {
