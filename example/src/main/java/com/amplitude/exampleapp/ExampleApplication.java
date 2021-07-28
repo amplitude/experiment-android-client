@@ -21,16 +21,10 @@ public class ExampleApplication extends Application {
     public void onCreate() {
         super.onCreate();
 
-        AmplitudeClient amplitude = Amplitude.getInstance();
-        amplitude.initialize(this, "a6dd847b9d2f03c816d4f3f8458cdc1d");
-        amplitude.setUserId("test-user");
-
         // add the following
         String apiKey = "client-IAxMYws9vVQESrrK88aTcToyqMxiiJoR";
         ExperimentConfig config = ExperimentConfig.builder()
             .debug(true)
-            .userProvider(new AmplitudeUserProvider(amplitude))
-            .analyticsProvider(new AmplitudeAnalyticsProvider(amplitude))
             .build();
         experimentClient = Experiment.initialize(this, apiKey, config);
 

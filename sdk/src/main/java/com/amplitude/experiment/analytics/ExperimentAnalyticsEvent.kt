@@ -19,5 +19,3 @@ interface ExperimentAnalyticsEvent {
      */
     val properties: Map<String, String?>
 }
-
-
