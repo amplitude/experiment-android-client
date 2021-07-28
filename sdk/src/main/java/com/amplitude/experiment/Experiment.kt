@@ -42,13 +42,18 @@ object Experiment {
         return when (val instance = instances[instanceName]) {
             null -> {
                 Logger.implementation = AndroidLogger(config.debug)
+                var mergedConfig = config
+                if (config.userProvider == null) {
+                    mergedConfig = config.copyToBuilder()
+                        .userProvider(DefaultUserProvider(application))
+                        .build()
+                }
                 val newInstance = DefaultExperimentClient(
                     apiKey,
-                    config,
+                    mergedConfig,
                     httpClient,
                     SharedPrefsStorage(application, apiKey, instanceName),
                     executorService,
-                    DefaultUserProvider(application),
                 )
                 instances[instanceName] = newInstance
                 newInstance
