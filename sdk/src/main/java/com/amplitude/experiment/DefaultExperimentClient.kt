@@ -55,7 +55,7 @@ internal class DefaultExperimentClient internal constructor(
 
     override fun fetch(user: ExperimentUser?): Future<ExperimentClient> {
         this.user = user ?: this.user
-        val fetchUser = this.user.merge(userProvider?.getUser())
+        val fetchUser = getUserMergedWithProvider()
         return executorService.submit(Callable {
             fetchInternal(fetchUser, config.fetchTimeoutMillis, config.retryFetchOnFailure)
             this
@@ -206,5 +206,11 @@ internal class DefaultExperimentClient internal constructor(
             Source.LOCAL_STORAGE -> config.initialVariants
             Source.INITIAL_VARIANTS -> storage.getAll()
         }
+    }
+
+    private fun getUserMergedWithProvider(): ExperimentUser {
+        return this.user?.copyToBuilder()
+            ?.library("experiment-android-client/${BuildConfig.VERSION_NAME}")
+            ?.build().merge(userProvider?.getUser())
     }
 }
