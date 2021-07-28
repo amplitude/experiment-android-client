@@ -182,7 +182,6 @@ class ExperimentClientTest {
 
                 Assert.assertEquals(KEY, exposureEvent.key)
                 Assert.assertEquals(serverVariant, exposureEvent.variant)
-                Assert.assertEquals(testUser, exposureEvent.user)
                 didExposureGetTracked = true
             }
         }
