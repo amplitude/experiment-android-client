@@ -1,3 +1,17 @@
+# [1.2.0](https://github.com/amplitude/experiment-android-client/compare/1.1.1...1.2.0) (2021-07-29)
+
+
+### Bug Fixes
+
+* add library to user prior to fetch ([#8](https://github.com/amplitude/experiment-android-client/issues/8)) ([eeb473a](https://github.com/amplitude/experiment-android-client/commit/eeb473a53d04bb0f8c090232d7ac329afada4112))
+* revert from post to get with user in header ([#9](https://github.com/amplitude/experiment-android-client/issues/9)) ([c4155f8](https://github.com/amplitude/experiment-android-client/commit/c4155f8fd9b07d4966353e73073a2f95d6451593))
+* use post rather than get ([#6](https://github.com/amplitude/experiment-android-client/issues/6)) ([bb2d2eb](https://github.com/amplitude/experiment-android-client/commit/bb2d2eb5c58659088446dc98ff70c894e1116698))
+
+
+### Features
+
+* automatic exposure tracking through analytics provider ([#7](https://github.com/amplitude/experiment-android-client/issues/7)) ([6cc44ab](https://github.com/amplitude/experiment-android-client/commit/6cc44ab7d0285a164b24aa240012efb1f3143d5a))
+
 ## [1.1.1](https://github.com/amplitude/experiment-android-client/compare/1.1.0...1.1.1) (2021-06-29)
 
 
