@@ -18,4 +18,11 @@ interface ExperimentAnalyticsEvent {
      * [ExperimentAnalyticsProvider].
      */
     val properties: Map<String, String?>
+
+    /**
+     * Properties for the analytics event. Should be passed as the event
+     * properties to the analytics implementation provided by the
+     * [ExperimentAnalyticsProvider].
+     */
+    val userProperties: Map<String, Any?>?
 }
