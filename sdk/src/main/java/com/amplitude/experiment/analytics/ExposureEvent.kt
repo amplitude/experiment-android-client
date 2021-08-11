@@ -28,5 +28,7 @@ class ExposureEvent(
         "key" to key,
         "variant" to variant.value,
     )
-    override val userProperties: Map<String, Any?>? = user.userProperties
+    override val userProperties: Map<String, Any?> = mapOf(
+        "[Experiment] $key" to variant.value
+    )
 }

@@ -226,15 +226,13 @@ class ExperimentClientTest {
 
     @Test
     fun `test exposure event through analytics provider with user properties`() {
-        val userProperties = mapOf(
-            "string" to "string",
-            "bool" to true,
-            "number" to 13121
-        )
         var didExposureGetTracked = false
         val analyticsProvider = object : ExperimentAnalyticsProvider {
             override fun track(event: ExperimentAnalyticsEvent) {
-                Assert.assertEquals(event.userProperties, userProperties)
+                Assert.assertEquals(
+                    event.userProperties,
+                    mapOf("[Experiment] $KEY" to serverVariant.value)
+                )
                 didExposureGetTracked = true
             }
         }
@@ -248,8 +246,7 @@ class ExperimentClientTest {
             InMemoryStorage(),
             Experiment.executorService,
         )
-        val user = testUser.copyToBuilder().userProperties(userProperties).build()
-        analyticsProviderClient.fetch(user).get()
+        analyticsProviderClient.fetch(testUser).get()
         analyticsProviderClient.variant(KEY)
         Assert.assertTrue(didExposureGetTracked)
     }
