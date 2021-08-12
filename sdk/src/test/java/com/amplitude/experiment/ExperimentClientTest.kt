@@ -223,4 +223,31 @@ class ExperimentClientTest {
         analyticsProviderClient.variant(INITIAL_KEY)
         analyticsProviderClient.variant("asdf")
     }
+
+    @Test
+    fun `test exposure event through analytics provider with user properties`() {
+        var didExposureGetTracked = false
+        val analyticsProvider = object : ExperimentAnalyticsProvider {
+            override fun track(event: ExperimentAnalyticsEvent) {
+                Assert.assertEquals(
+                    event.userProperties,
+                    mapOf("[Experiment] $KEY" to serverVariant.value)
+                )
+                didExposureGetTracked = true
+            }
+        }
+        val analyticsProviderClient = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                debug = true,
+                analyticsProvider = analyticsProvider,
+            ),
+            OkHttpClient(),
+            InMemoryStorage(),
+            Experiment.executorService,
+        )
+        analyticsProviderClient.fetch(testUser).get()
+        analyticsProviderClient.variant(KEY)
+        Assert.assertTrue(didExposureGetTracked)
+    }
 }

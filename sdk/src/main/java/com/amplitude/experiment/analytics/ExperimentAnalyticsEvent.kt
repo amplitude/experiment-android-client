@@ -18,4 +18,9 @@ interface ExperimentAnalyticsEvent {
      * [ExperimentAnalyticsProvider].
      */
     val properties: Map<String, String?>
+
+    /**
+     * User properties to identify with the user prior to sending the event.
+     */
+    val userProperties: Map<String, Any?>?
 }
