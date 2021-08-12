@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/amplitude/experiment-android-client/compare/1.2.0...1.3.0) (2021-08-12)
+
+
+### Features
+
+* send user properties for exposure events ([#10](https://github.com/amplitude/experiment-android-client/issues/10)) ([c427360](https://github.com/amplitude/experiment-android-client/commit/c427360a8c301a2933aebe2d75ea46a7e606689e))
+
 # [1.2.0](https://github.com/amplitude/experiment-android-client/compare/1.1.1...1.2.0) (2021-07-29)
 
 
