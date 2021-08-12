@@ -24,9 +24,7 @@ interface ExperimentAnalyticsEvent {
     val properties: Map<String, String?>
 
     /**
-     * Custom user properties from the [ExperimentUser] stored by the
-     * [ExperimentClient]. Also includes merged properties provided by the
-     * [ExperimentUserProvider].
+     * User properties to identify with the user prior to sending the event.
      */
     val userProperties: Map<String, Any?>?
 }
