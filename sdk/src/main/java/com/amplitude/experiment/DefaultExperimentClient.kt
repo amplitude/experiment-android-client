@@ -68,16 +68,50 @@ internal class DefaultExperimentClient internal constructor(
     }
 
     override fun variant(key: String, fallback: Variant?): Variant {
-        val sourceVariant = sourceVariants()[key]
+        val variantAndSource = resolveVariantAndSource(key, fallback)
+        val variant = variantAndSource.variant;
+        val source = variantAndSource.source;
         // Track the exposure event if an analytics provider is set
-        if (sourceVariant?.value != null) {
+        if (variantAndSource.source.isFallback() || variant?.value == null) {
             val exposedUser = getUserMergedWithProvider()
-            config.analyticsProvider?.track(ExposureEvent(exposedUser, key, sourceVariant))
+            config.analyticsProvider?.unset(ExposureEvent(exposedUser, key, variant, source))
+        } else if (variant?.value != null) {
+            val exposedUser = getUserMergedWithProvider()
+            config.analyticsProvider?.track(ExposureEvent(exposedUser, key, variant, source))
         }
-        return sourceVariant
-            ?: fallback
-            ?: secondaryVariants()[key]
-            ?: config.fallbackVariant
+        return variant
+    }
+
+    private fun resolveVariantAndSource(key: String, fallback: Variant?): VariantAndSource {
+        val sourceVariant = sourceVariants()[key]
+        return when (config.source) {
+            Source.LOCAL_STORAGE -> {
+                if (sourceVariant != null) {
+                    return VariantAndSource(sourceVariant, VariantSource.LOCAL_STORAGE)
+                }
+                if (fallback != null) {
+                    return VariantAndSource(fallback, VariantSource.FALLBACK_INLINE)
+                }
+                val secondaryVariant = secondaryVariants()[key]
+                if (secondaryVariant != null) {
+                    return VariantAndSource(secondaryVariant, VariantSource.SECONDARY_INITIAL_VARIANTS)
+                }
+                return VariantAndSource(config.fallbackVariant, VariantSource.FALLBACK_CONFIG)
+            }
+            Source.INITIAL_VARIANTS -> {
+                if (sourceVariant != null) {
+                    return VariantAndSource(sourceVariant, VariantSource.LOCAL_STORAGE)
+                }
+                val secondaryVariant = secondaryVariants()[key]
+                if (secondaryVariant != null) {
+                    return VariantAndSource(secondaryVariant, VariantSource.SECONDARY_INITIAL_VARIANTS)
+                }
+                if (fallback != null) {
+                    return VariantAndSource(fallback, VariantSource.FALLBACK_INLINE)
+                }
+                return VariantAndSource(config.fallbackVariant, VariantSource.FALLBACK_CONFIG)
+            }
+        }
     }
 
     override fun all(): Map<String, Variant> {
@@ -215,5 +249,24 @@ internal class DefaultExperimentClient internal constructor(
         return this.user?.copyToBuilder()
             ?.library("experiment-android-client/${BuildConfig.VERSION_NAME}")
             ?.build().merge(userProvider?.getUser())
+    }
+}
+
+data class VariantAndSource(val variant: Variant, val source: VariantSource)
+
+enum class VariantSource(val type: String) {
+    LOCAL_STORAGE("storage"),
+    INITIAL_VARIANTS("initial"),
+    SECONDARY_LOCAL_STORAGE("secondary-storage"),
+    SECONDARY_INITIAL_VARIANTS("secondary-initial"),
+    FALLBACK_INLINE("fallback-inline"),
+    FALLBACK_CONFIG("fallback-config");
+
+    override fun toString(): String {
+        return type
+    }
+
+    fun isFallback(): Boolean {
+        return this == FALLBACK_INLINE || this == FALLBACK_CONFIG;
     }
 }

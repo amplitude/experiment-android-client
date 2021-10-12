@@ -6,4 +6,5 @@ package com.amplitude.experiment.analytics
  */
 interface ExperimentAnalyticsProvider {
     fun track(event: ExperimentAnalyticsEvent)
+    fun unset(event: ExperimentAnalyticsEvent)
 }
