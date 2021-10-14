@@ -13,11 +13,14 @@ class AmplitudeAnalyticsProvider(
 ): ExperimentAnalyticsProvider {
 
     override fun track(event: ExperimentAnalyticsEvent) {
-        amplitudeClient.setUserProperties(JSONObject(event.userProperties!!.toMutableMap()))
         amplitudeClient.logEvent(event.name, JSONObject(event.properties))
     }
 
-    override fun unset(event: ExperimentAnalyticsEvent) {
+    override fun setUserProperty(event: ExperimentAnalyticsEvent) {
+        amplitudeClient.setUserProperties(JSONObject(event.userProperties!!.toMutableMap()))
+    }
+
+    override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
         amplitudeClient.identify(Identify().unset(event.userProperty));
     }
 }

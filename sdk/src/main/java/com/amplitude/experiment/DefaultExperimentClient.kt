@@ -14,10 +14,8 @@ import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okio.ByteString.Companion.toByteString
 import org.json.JSONObject
@@ -72,12 +70,14 @@ internal class DefaultExperimentClient internal constructor(
         val variant = variantAndSource.variant;
         val source = variantAndSource.source;
         // Track the exposure event if an analytics provider is set
-        if (variantAndSource.source.isFallback() || variant?.value == null) {
+        if (source.isFallback() || variant?.value == null) {
             val exposedUser = getUserMergedWithProvider()
-            config.analyticsProvider?.unset(ExposureEvent(exposedUser, key, variant, source))
+            config.analyticsProvider?.unsetUserProperty(ExposureEvent(exposedUser, key, variant, source))
         } else if (variant?.value != null) {
             val exposedUser = getUserMergedWithProvider()
-            config.analyticsProvider?.track(ExposureEvent(exposedUser, key, variant, source))
+            val event = ExposureEvent(exposedUser, key, variant, source)
+            config.analyticsProvider?.setUserProperty(event)
+            config.analyticsProvider?.track(event)
         }
         return variant
     }
@@ -86,6 +86,11 @@ internal class DefaultExperimentClient internal constructor(
         val sourceVariant = sourceVariants()[key]
         return when (config.source) {
             Source.LOCAL_STORAGE -> {
+                // for source = LocalStorage, fallback order goes:
+                // 1. Local Storage
+                // 2. Function fallback
+                // 3. InitialFlags
+                // 4. Config fallback
                 if (sourceVariant != null) {
                     return VariantAndSource(sourceVariant, VariantSource.LOCAL_STORAGE)
                 }
@@ -99,6 +104,11 @@ internal class DefaultExperimentClient internal constructor(
                 return VariantAndSource(config.fallbackVariant, VariantSource.FALLBACK_CONFIG)
             }
             Source.INITIAL_VARIANTS -> {
+                // for source = InitialVariants, fallback order goes:
+                // 1. InitialFlags
+                // 2. Local Storage
+                // 3. Function fallback
+                // 4. Config fallback
                 if (sourceVariant != null) {
                     return VariantAndSource(sourceVariant, VariantSource.LOCAL_STORAGE)
                 }

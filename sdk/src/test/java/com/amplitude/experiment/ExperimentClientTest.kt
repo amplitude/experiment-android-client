@@ -171,6 +171,7 @@ class ExperimentClientTest {
     @Test
     fun `test exposure event through analytics provider when variant called`() {
         var didExposureGetTracked = false
+        var didUserPropertyGetSet = false
         val analyticsProvider = object : ExperimentAnalyticsProvider {
             override fun track(event: ExperimentAnalyticsEvent) {
                 Assert.assertEquals("[Experiment] Exposure", event.name)
@@ -185,7 +186,13 @@ class ExperimentClientTest {
                 didExposureGetTracked = true
             }
 
-            override fun unset(event: ExperimentAnalyticsEvent) {
+            override fun setUserProperty(event: ExperimentAnalyticsEvent) {
+                Assert.assertEquals("[Experiment] $KEY", event.userProperty);
+                Assert.assertEquals(serverVariant, event.variant)
+                didUserPropertyGetSet = true
+            }
+
+            override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
                 Assert.fail("analytics provider unset() should not be called")
             }
         }
@@ -202,6 +209,7 @@ class ExperimentClientTest {
         analyticsProviderClient.fetch(testUser).get()
         analyticsProviderClient.variant(KEY)
         Assert.assertTrue(didExposureGetTracked)
+        Assert.assertTrue(didUserPropertyGetSet)
     }
 
     @Test
@@ -211,7 +219,12 @@ class ExperimentClientTest {
             override fun track(event: ExperimentAnalyticsEvent) {
                 Assert.fail("analytics provider track() should not be called.")
             }
-            override fun unset(event: ExperimentAnalyticsEvent) {
+
+            override fun setUserProperty(event: ExperimentAnalyticsEvent) {
+                Assert.fail("analytics provider setUserProperty() should not be called")
+            }
+
+            override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
                 Assert.assertEquals(
                         event.userProperty,
                         "[Experiment] asdf"
@@ -258,7 +271,12 @@ class ExperimentClientTest {
                 Assert.assertEquals(event.properties.get("source"), "secondary-initial")
                 didExposureGetUnset = true
             }
-            override fun unset(event: ExperimentAnalyticsEvent) {
+
+            override fun setUserProperty(event: ExperimentAnalyticsEvent) {
+                Assert.assertEquals("[Experiment] $INITIAL_KEY", event.userProperty)
+                Assert.assertEquals(initialVariants.get(INITIAL_KEY), event.variant)
+            }
+            override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
                 Assert.fail("analytics provider unset() should not be called.")
             }
         }
@@ -282,6 +300,7 @@ class ExperimentClientTest {
     @Test
     fun `test exposure event through analytics provider with user properties`() {
         var didExposureGetTracked = false
+        var didUserPropertyGetSet = false
         val analyticsProvider = object : ExperimentAnalyticsProvider {
             override fun track(event: ExperimentAnalyticsEvent) {
                 Assert.assertEquals(
@@ -290,7 +309,15 @@ class ExperimentClientTest {
                 )
                 didExposureGetTracked = true
             }
-            override fun unset(event: ExperimentAnalyticsEvent) {
+
+            override fun setUserProperty(event: ExperimentAnalyticsEvent) {
+                Assert.assertEquals(
+                        "[Experiment] $KEY",
+                        event.userProperty
+                )
+                didUserPropertyGetSet = true
+            }
+            override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
                 Assert.fail("analytics provider unset() should not be called")
             }
         }
@@ -307,5 +334,6 @@ class ExperimentClientTest {
         analyticsProviderClient.fetch(testUser).get()
         analyticsProviderClient.variant(KEY)
         Assert.assertTrue(didExposureGetTracked)
+        Assert.assertTrue(didUserPropertyGetSet)
     }
 }
