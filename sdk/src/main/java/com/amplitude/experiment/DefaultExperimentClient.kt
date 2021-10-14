@@ -110,11 +110,11 @@ internal class DefaultExperimentClient internal constructor(
                 // 3. Function fallback
                 // 4. Config fallback
                 if (sourceVariant != null) {
-                    return VariantAndSource(sourceVariant, VariantSource.LOCAL_STORAGE)
+                    return VariantAndSource(sourceVariant, VariantSource.INITIAL_VARIANTS)
                 }
                 val secondaryVariant = secondaryVariants()[key]
                 if (secondaryVariant != null) {
-                    return VariantAndSource(secondaryVariant, VariantSource.SECONDARY_INITIAL_VARIANTS)
+                    return VariantAndSource(secondaryVariant, VariantSource.SECONDARY_LOCAL_STORAGE)
                 }
                 if (fallback != null) {
                     return VariantAndSource(fallback, VariantSource.FALLBACK_INLINE)
