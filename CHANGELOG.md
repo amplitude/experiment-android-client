@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/amplitude/experiment-android-client/compare/1.3.0...1.4.0) (2021-10-18)
+
+
+### Features
+
+* unset user properties when variant evaluates to null or is a fa… ([#11](https://github.com/amplitude/experiment-android-client/issues/11)) ([8a38ff8](https://github.com/amplitude/experiment-android-client/commit/8a38ff8bdc96b9e37e2c2a689ccefe0f6ecf642d))
+
 # [1.3.0](https://github.com/amplitude/experiment-android-client/compare/1.2.0...1.3.0) (2021-08-12)
 
 
