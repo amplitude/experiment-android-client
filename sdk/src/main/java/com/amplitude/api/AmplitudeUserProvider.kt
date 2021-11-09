@@ -10,6 +10,8 @@ import com.amplitude.experiment.ExperimentUserProvider
 import com.amplitude.experiment.util.Logger
 import java.util.Locale
 
+@Deprecated("Update your version of the amplitude analytics SDK to X.X.X+ and for seamless " +
+    "integration with the amplitude analytics SDK") // TODO X.X.X+
 class AmplitudeUserProvider(private val amplitudeClient: AmplitudeClient) : ExperimentUserProvider {
 
     private var initialized = false

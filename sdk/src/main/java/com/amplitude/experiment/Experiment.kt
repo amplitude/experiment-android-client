@@ -1,6 +1,8 @@
 package com.amplitude.experiment
 
 import android.app.Application
+import com.amplitude.core.AmplitudeCore
+import com.amplitude.core.Component
 import com.amplitude.experiment.storage.SharedPrefsStorage
 import com.amplitude.experiment.util.AndroidLogger
 import com.amplitude.experiment.util.Logger
@@ -39,7 +41,8 @@ object Experiment {
         config: ExperimentConfig
     ): ExperimentClient = synchronized(instances) {
         val instanceName = DEFAULT_INSTANCE
-        return when (val instance = instances[instanceName]) {
+        val core = AmplitudeCore.getInstance(instanceName)
+        val instance = when (val instance = instances[instanceName]) {
             null -> {
                 Logger.implementation = AndroidLogger(config.debug)
                 var mergedConfig = config
@@ -54,11 +57,14 @@ object Experiment {
                     httpClient,
                     SharedPrefsStorage(application, apiKey, instanceName),
                     executorService,
+                    core,
                 )
                 instances[instanceName] = newInstance
                 newInstance
             }
             else -> instance
         }
+        core.componentRegistrar.setInitialized(Component.EXPERIMENT)
+        return instance
     }
 }
