@@ -33,7 +33,7 @@ internal class DefaultExperimentClient internal constructor(
     private val httpClient: OkHttpClient,
     private val storage: Storage,
     private val executorService: ScheduledExecutorService,
-    private val amplitudeCore: AmplitudeCore,
+    private val amplitudeCore: AmplitudeCore? = null,
 ) : ExperimentClient {
 
     private var user: ExperimentUser? = null
@@ -55,7 +55,7 @@ internal class DefaultExperimentClient internal constructor(
     private var userProvider: ExperimentUserProvider? = config.userProvider
 
     init {
-        amplitudeCore.identityStore.addListener {
+        amplitudeCore?.identityStore?.addIdentityListener {
             val currentUser = getUser() ?: ExperimentUser()
             val newUser = currentUser.copyToBuilder()
                 .userId(it.userId)

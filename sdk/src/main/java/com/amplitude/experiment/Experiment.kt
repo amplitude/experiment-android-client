@@ -2,7 +2,6 @@ package com.amplitude.experiment
 
 import android.app.Application
 import com.amplitude.core.AmplitudeCore
-import com.amplitude.core.Component
 import com.amplitude.experiment.storage.SharedPrefsStorage
 import com.amplitude.experiment.util.AndroidLogger
 import com.amplitude.experiment.util.Logger
@@ -41,7 +40,6 @@ object Experiment {
         config: ExperimentConfig
     ): ExperimentClient = synchronized(instances) {
         val instanceName = DEFAULT_INSTANCE
-        val core = AmplitudeCore.getInstance(instanceName)
         val instance = when (val instance = instances[instanceName]) {
             null -> {
                 Logger.implementation = AndroidLogger(config.debug)
@@ -57,6 +55,39 @@ object Experiment {
                     httpClient,
                     SharedPrefsStorage(application, apiKey, instanceName),
                     executorService,
+                )
+                instances[instanceName] = newInstance
+                newInstance
+            }
+            else -> instance
+        }
+        return instance
+    }
+
+    @JvmStatic
+    fun initializeWithAmplitude(
+        application: Application,
+        apiKey: String,
+        config: ExperimentConfig
+    ): ExperimentClient = synchronized(instances) {
+        val instanceName = DEFAULT_INSTANCE
+        val core = AmplitudeCore.getInstance(instanceName)
+        val instance = when (val instance = instances[instanceName]) {
+            null -> {
+                Logger.implementation = AndroidLogger(config.debug)
+                val configBuilder = config.copyToBuilder()
+                if (config.userProvider == null) {
+                    configBuilder.userProvider(CoreUserProvider(application, core.identityStore))
+                }
+                if (config.analyticsProvider == null) {
+                    configBuilder.analyticsProvider(CoreAnalyticsProvider(core.analyticsConnector))
+                }
+                val newInstance = DefaultExperimentClient(
+                    apiKey,
+                    configBuilder.build(),
+                    httpClient,
+                    SharedPrefsStorage(application, apiKey, instanceName),
+                    executorService,
                     core,
                 )
                 instances[instanceName] = newInstance
@@ -64,7 +95,6 @@ object Experiment {
             }
             else -> instance
         }
-        core.componentRegistrar.setInitialized(Component.EXPERIMENT)
         return instance
     }
 }

@@ -5,13 +5,16 @@ import android.os.Build
 import android.telephony.TelephonyManager
 import com.amplitude.api.Constants
 import com.amplitude.api.DeviceInfo
+import com.amplitude.core.Identity
+import com.amplitude.core.IdentityStore
+import com.amplitude.experiment.util.Lock
+import com.amplitude.experiment.util.LockResult
 import java.util.Locale
 
 class DefaultUserProvider(
     context: Context,
     private val userId: String? = null,
     private val deviceId: String? = null,
-
 ) : ExperimentUserProvider {
 
     constructor(context: Context) : this (context, null, null)
