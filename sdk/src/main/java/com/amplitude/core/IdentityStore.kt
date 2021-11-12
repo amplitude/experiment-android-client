@@ -139,11 +139,11 @@ internal class IdentityStoreImpl: IdentityStore {
     }
 
     override fun setIdentity(identity: Identity) {
-        identityLock.withLock {
-            this.userId = identity.userId
-            this.deviceId = identity.deviceId
-            this.userProperties = identity.userProperties
-        }
+        editIdentity()
+            .setUserId(identity.userId)
+            .setDeviceId(identity.deviceId)
+            .setUserProperties(identity.userProperties)
+            .commit()
     }
 
     override fun getIdentity(): Identity {
