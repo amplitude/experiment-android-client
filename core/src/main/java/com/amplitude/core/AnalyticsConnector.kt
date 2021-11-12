@@ -20,7 +20,7 @@ internal class AnalyticsConnectorImpl : AnalyticsConnector {
 
     override fun logEvent(event: AnalyticsEvent) {
         val safeListeners = synchronized(listenersLock) {
-            listeners
+            listeners.toSet()
         }
         for (listener in safeListeners) {
             listener(event)

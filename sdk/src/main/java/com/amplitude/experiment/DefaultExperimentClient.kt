@@ -33,7 +33,7 @@ internal class DefaultExperimentClient internal constructor(
     private val httpClient: OkHttpClient,
     private val storage: Storage,
     private val executorService: ScheduledExecutorService,
-    private val amplitudeCore: AmplitudeCore? = null,
+    private val amplitudeCore: com.amplitude.core.AmplitudeCore? = null,
 ) : ExperimentClient {
 
     private var user: ExperimentUser? = null

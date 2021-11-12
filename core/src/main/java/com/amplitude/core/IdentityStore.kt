@@ -128,7 +128,7 @@ internal class IdentityStoreImpl: IdentityStore {
                 identityLock.unlock()
                 if (newIdentity != originalIdentity) {
                     val safeListeners = synchronized(listenersLock) {
-                        listeners
+                        listeners.toSet()
                     }
                     for (listener in safeListeners) {
                         listener(newIdentity)

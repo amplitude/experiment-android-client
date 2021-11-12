@@ -71,7 +71,7 @@ object Experiment {
         config: ExperimentConfig
     ): ExperimentClient = synchronized(instances) {
         val instanceName = DEFAULT_INSTANCE
-        val core = AmplitudeCore.getInstance(instanceName)
+        val core = com.amplitude.core.AmplitudeCore.getInstance(instanceName)
         val instance = when (val instance = instances[instanceName]) {
             null -> {
                 Logger.implementation = AndroidLogger(config.debug)
