@@ -334,4 +334,3 @@ class IdentityStoreTest {
         Assert.assertEquals(Identity(), identity)
     }
 }
-
