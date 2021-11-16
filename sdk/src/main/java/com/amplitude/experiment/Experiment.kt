@@ -88,7 +88,7 @@ object Experiment {
                     httpClient,
                     SharedPrefsStorage(application, apiKey, instanceName),
                     executorService,
-                    core,
+                    core.identityStore,
                 )
                 instances[instanceName] = newInstance
                 newInstance
