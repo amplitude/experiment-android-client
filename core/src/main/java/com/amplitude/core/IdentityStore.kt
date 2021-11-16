@@ -43,7 +43,6 @@ interface IdentityStore {
 internal class IdentityStoreImpl: IdentityStore {
 
     private val identityLock = ReentrantReadWriteLock(true)
-
     private var identity = Identity()
 
     private val listenersLock = Any()
@@ -138,21 +137,22 @@ internal class IdentityStoreImpl: IdentityStore {
             override fun commit() {
                 val newIdentity = Identity(userId, deviceId, userProperties)
                 setIdentity(newIdentity)
-                if (newIdentity != originalIdentity) {
-                    val safeListeners = synchronized(listenersLock) {
-                        listeners.toSet()
-                    }
-                    for (listener in safeListeners) {
-                        listener(newIdentity)
-                    }
-                }
             }
         }
     }
 
     override fun setIdentity(identity: Identity) {
+        val originalIdentity = getIdentity()
         identityLock.write {
             this.identity = identity
+        }
+        if (identity != originalIdentity) {
+            val safeListeners = synchronized(listenersLock) {
+                listeners.toSet()
+            }
+            for (listener in safeListeners) {
+                listener(identity)
+            }
         }
     }
 

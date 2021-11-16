@@ -90,9 +90,10 @@ class IdentityStoreTest {
             "other" to true,
             "final" to 4.2
         )))
-        identityStore.editIdentity().updateUserProperties(
-            mapOf("\$unset" to mapOf("other" to "-", "final" to "-"))
-        )
+        identityStore.editIdentity()
+            .updateUserProperties(
+                mapOf("\$unset" to mapOf("other" to "-", "final" to "-"))
+            ).commit()
         val identity = identityStore.getIdentity()
         Assert.assertEquals(
             Identity(userProperties = mapOf("key" to "value")),
@@ -113,15 +114,16 @@ class IdentityStoreTest {
             "long" to 1L,
             "double" to 1.1,
         )))
-        identityStore.editIdentity().updateUserProperties(
-            mapOf("\$add" to mapOf(
-                "byte" to 1.1,
-                "short" to 1.1,
-                "int" to 1.1,
-                "long" to 1.1,
-                "double" to 1,
-            ))
-        )
+        identityStore.editIdentity()
+            .updateUserProperties(
+                mapOf("\$add" to mapOf(
+                    "byte" to 1.1,
+                    "short" to 1.1,
+                    "int" to 1.1,
+                    "long" to 1.1,
+                    "double" to 1,
+                ))
+            ).commit()
         val identity = identityStore.getIdentity()
         Assert.assertEquals(
             Identity(userProperties = mapOf(
@@ -141,9 +143,10 @@ class IdentityStoreTest {
         identityStore.setIdentity(Identity(userProperties = mapOf(
             "key" to listOf(0, 1, 2, 3)
         )))
-        identityStore.editIdentity().updateUserProperties(
-            mapOf("\$prepend" to mapOf("key" to listOf(-3, -2, -1)))
-        )
+        identityStore.editIdentity()
+            .updateUserProperties(
+                mapOf("\$prepend" to mapOf("key" to listOf(-3, -2, -1)))
+            ).commit()
         val identity = identityStore.getIdentity()
         Assert.assertEquals(
             Identity(userProperties = mapOf("key" to listOf(-3, -2, -1, 0, 1, 2, 3))),
@@ -157,9 +160,10 @@ class IdentityStoreTest {
         identityStore.setIdentity(Identity(userProperties = mapOf(
             "key" to listOf(-3, -2, -1, 0)
         )))
-        identityStore.editIdentity().updateUserProperties(
-            mapOf("\$append" to mapOf("key" to listOf(1, 2, 3)))
-        )
+        identityStore.editIdentity()
+            .updateUserProperties(
+                mapOf("\$append" to mapOf("key" to listOf(1, 2, 3)))
+            ).commit()
         val identity = identityStore.getIdentity()
         Assert.assertEquals(
             Identity(userProperties = mapOf("key" to listOf(-3, -2, -1, 0, 1, 2, 3))),
@@ -176,9 +180,10 @@ class IdentityStoreTest {
             "key3" to 3,
             "key4" to false,
         )))
-        identityStore.editIdentity().updateUserProperties(
-            mapOf("\$clearAll" to mapOf())
-        )
+        identityStore.editIdentity()
+            .updateUserProperties(
+                mapOf("\$clearAll" to mapOf())
+            ).commit()
         val identity = identityStore.getIdentity()
         Assert.assertEquals(Identity(), identity)
     }
@@ -322,7 +327,9 @@ class IdentityStoreTest {
             .updateUserProperties(identify.userPropertiesOperations.toUpdateUserPropertiesMap())
             .commit()
         val clear = Identify().clearAll()
-        identityStore.editIdentity().updateUserProperties(clear.userPropertiesOperations.toUpdateUserPropertiesMap())
+        identityStore.editIdentity()
+            .updateUserProperties(clear.userPropertiesOperations.toUpdateUserPropertiesMap())
+            .commit()
         val identity = identityStore.getIdentity()
         Assert.assertEquals(Identity(), identity)
     }
