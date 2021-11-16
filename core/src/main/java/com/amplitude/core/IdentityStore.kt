@@ -1,7 +1,8 @@
 package com.amplitude.core
 
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 internal const val ID_OP_SET = "\$set"
 internal const val ID_OP_UNSET = "\$unset"
@@ -41,36 +42,38 @@ interface IdentityStore {
 
 internal class IdentityStoreImpl: IdentityStore {
 
-    private val identityLock = ReentrantLock(true)
+    private val identityLock = ReentrantReadWriteLock(true)
 
-    private var userId: String? = null
-    private var deviceId: String? = null
-    private var userProperties: Map<String, Any?> = mapOf()
+    private var identity = Identity()
 
     private val listenersLock = Any()
     private val listeners: MutableSet<(Identity) -> Unit> = mutableSetOf()
 
     override fun editIdentity(): IdentityStore.Editor {
-        identityLock.lock()
-        val originalIdentity = Identity(userId, deviceId, userProperties)
+        val originalIdentity = getIdentity()
         return object : IdentityStore.Editor {
+
+            private var userId: String? = originalIdentity.userId
+            private var deviceId: String? = originalIdentity.deviceId
+            private var userProperties: Map<String, Any?> = originalIdentity.userProperties
+
             override fun setUserId(userId: String?): IdentityStore.Editor {
-                this@IdentityStoreImpl.userId = userId
+                this.userId = userId
                 return this
             }
 
             override fun setDeviceId(deviceId: String?): IdentityStore.Editor {
-                this@IdentityStoreImpl.deviceId = deviceId
+                this.deviceId = deviceId
                 return this
             }
 
             override fun setUserProperties(userProperties: Map<String, Any?>): IdentityStore.Editor {
-                this@IdentityStoreImpl.userProperties = userProperties
+                this.userProperties = userProperties
                 return this
             }
 
             override fun updateUserProperties(actions: Map<String, Map<String, Any?>>): IdentityStore.Editor {
-                val actingProperties = this@IdentityStoreImpl.userProperties.toMutableMap()
+                val actingProperties = this.userProperties.toMutableMap()
                 for (actionEntry in actions.entries) {
                     val action = actionEntry.key
                     val properties = actionEntry.value
@@ -128,13 +131,13 @@ internal class IdentityStoreImpl: IdentityStore {
 
                     }
                 }
-                this@IdentityStoreImpl.userProperties = actingProperties
+                this.userProperties = actingProperties
                 return this
             }
 
             override fun commit() {
                 val newIdentity = Identity(userId, deviceId, userProperties)
-                identityLock.unlock()
+                setIdentity(newIdentity)
                 if (newIdentity != originalIdentity) {
                     val safeListeners = synchronized(listenersLock) {
                         listeners.toSet()
@@ -148,20 +151,14 @@ internal class IdentityStoreImpl: IdentityStore {
     }
 
     override fun setIdentity(identity: Identity) {
-        editIdentity()
-            .setUserId(identity.userId)
-            .setDeviceId(identity.deviceId)
-            .setUserProperties(identity.userProperties)
-            .commit()
+        identityLock.write {
+            this.identity = identity
+        }
     }
 
     override fun getIdentity(): Identity {
-        identityLock.withLock {
-            return Identity(
-                userId = userId,
-                deviceId = deviceId,
-                userProperties = userProperties,
-            )
+        return identityLock.read {
+            this.identity
         }
     }
 
