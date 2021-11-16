@@ -1,6 +1,7 @@
 package com.amplitude.experiment
 
 import com.amplitude.core.AmplitudeCore
+import com.amplitude.core.IdentityStore
 import com.amplitude.experiment.analytics.ExposureEvent
 import com.amplitude.experiment.storage.Storage
 import com.amplitude.experiment.util.AsyncFuture
@@ -33,7 +34,7 @@ internal class DefaultExperimentClient internal constructor(
     private val httpClient: OkHttpClient,
     private val storage: Storage,
     private val executorService: ScheduledExecutorService,
-    private val amplitudeCore: com.amplitude.core.AmplitudeCore? = null,
+    private val identityStore: IdentityStore? = null,
 ) : ExperimentClient {
 
     private var user: ExperimentUser? = null
@@ -55,7 +56,7 @@ internal class DefaultExperimentClient internal constructor(
     private var userProvider: ExperimentUserProvider? = config.userProvider
 
     init {
-        amplitudeCore?.identityStore?.addIdentityListener {
+        identityStore?.addIdentityListener {
             val currentUser = getUser() ?: ExperimentUser()
             val newUser = currentUser.copyToBuilder()
                 .userId(it.userId)
@@ -249,8 +250,8 @@ internal class DefaultExperimentClient internal constructor(
 
     private fun storeVariants(variants: Map<String, Variant>) = synchronized(storageLock) {
         storage.clear()
-        variants.forEach { (key, variant) ->
-            storage.put(key, variant)
+        for (entry in variants.entries) {
+            storage.put(entry.key, entry.value)
         }
         Logger.d("Stored variants: $variants")
     }
