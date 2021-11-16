@@ -6,7 +6,6 @@ import com.amplitude.core.IdentityStore
 import com.amplitude.experiment.util.Lock
 import com.amplitude.experiment.util.LockResult
 
-
 internal class CoreUserProvider(
     context: Context,
     private val identityStore: IdentityStore,
