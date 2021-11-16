@@ -5,7 +5,6 @@ import com.amplitude.experiment.analytics.ExperimentAnalyticsProvider
 import com.amplitude.experiment.storage.InMemoryStorage
 import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.SystemLogger
-import okhttp3.OkHttp
 import okhttp3.OkHttpClient
 import org.junit.Assert
 import org.junit.Test
