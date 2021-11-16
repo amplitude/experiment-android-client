@@ -1,6 +1,6 @@
 package com.amplitude.experiment.util
 
-sealed class LockResult<T> {
+internal sealed class LockResult<T> {
     data class Success<T>(val value: T) : LockResult<T>()
     data class Error<T>(val error: Exception) : LockResult<T>()
 }

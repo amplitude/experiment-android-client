@@ -40,7 +40,7 @@ object Experiment {
         config: ExperimentConfig
     ): ExperimentClient = synchronized(instances) {
         val instanceName = DEFAULT_INSTANCE
-        val instance = when (val instance = instances[instanceName]) {
+        return when (val instance = instances[instanceName]) {
             null -> {
                 Logger.implementation = AndroidLogger(config.debug)
                 var mergedConfig = config
@@ -61,7 +61,6 @@ object Experiment {
             }
             else -> instance
         }
-        return instance
     }
 
     @JvmStatic
