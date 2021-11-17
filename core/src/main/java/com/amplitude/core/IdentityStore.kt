@@ -12,6 +12,8 @@ internal const val ID_OP_APPEND = "\$append"
 internal const val ID_OP_PREPEND = "\$prepend"
 internal const val ID_OP_CLEAR_ALL = "\$clearAll"
 
+typealias IdentityListener = (Identity) -> Unit
+
 data class Identity(
     val userId: String? = null,
     val deviceId: String? = null,
@@ -36,8 +38,8 @@ interface IdentityStore {
     fun editIdentity(): Editor
     fun setIdentity(identity: Identity)
     fun getIdentity(): Identity
-    fun addIdentityListener(listener: (Identity) -> Unit)
-    fun removeIdentityListener(listener: (Identity) -> Unit)
+    fun addIdentityListener(listener: IdentityListener)
+    fun removeIdentityListener(listener: IdentityListener)
 }
 
 internal class IdentityStoreImpl: IdentityStore {
@@ -46,7 +48,7 @@ internal class IdentityStoreImpl: IdentityStore {
     private var identity = Identity()
 
     private val listenersLock = Any()
-    private val listeners: MutableSet<(Identity) -> Unit> = mutableSetOf()
+    private val listeners: MutableSet<IdentityListener> = mutableSetOf()
 
     override fun editIdentity(): IdentityStore.Editor {
         val originalIdentity = getIdentity()
@@ -162,13 +164,13 @@ internal class IdentityStoreImpl: IdentityStore {
         }
     }
 
-    override fun addIdentityListener(listener: (Identity) -> Unit) {
+    override fun addIdentityListener(listener: IdentityListener) {
         synchronized(listenersLock) {
             listeners.add(listener)
         }
     }
 
-    override fun removeIdentityListener(listener: (Identity) -> Unit) {
+    override fun removeIdentityListener(listener: IdentityListener) {
         synchronized(listenersLock) {
             listeners.remove(listener)
         }

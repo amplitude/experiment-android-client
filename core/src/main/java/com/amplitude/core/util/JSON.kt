@@ -19,6 +19,19 @@ fun JSONObject.toUpdateUserPropertiesMap(): Map<String, Map<String, Any?>> {
     return map
 }
 
+fun Map<*, *>?.toJSONObject(): JSONObject? {
+    if (this == null) {
+        return null
+    }
+    val jsonObject = JSONObject()
+    for (entry in entries) {
+        val key = entry.key as? String ?: continue
+        val value = entry.value.toJSON()
+        jsonObject.put(key, value)
+    }
+    return jsonObject
+}
+
 internal fun JSONObject.toMap(): Map<String, Any?> {
     val map = mutableMapOf<String, Any?>()
     for (key in this.keys()) {
@@ -36,6 +49,17 @@ internal fun JSONArray.toList(): List<Any?> {
     return list
 }
 
+internal fun List<*>?.toJSONArray(): JSONArray? {
+    if (this == null) {
+        return null
+    }
+    val jsonArray = JSONArray()
+    for (element in this) {
+        jsonArray.put(element.toJSON())
+    }
+    return jsonArray
+}
+
 private fun Any?.fromJSON(): Any? {
     return when (this) {
         is JSONObject -> this.toMap()
@@ -44,6 +68,14 @@ private fun Any?.fromJSON(): Any? {
         // to make testing for equality easier.
         is BigDecimal -> this.toDouble()
         JSONObject.NULL -> null
+        else -> this
+    }
+}
+
+private fun Any?.toJSON(): Any? {
+    return when (this) {
+        is Map<*, *> -> this.toJSONObject()
+        is List<*> -> this.toJSONArray()
         else -> this
     }
 }

@@ -2,6 +2,8 @@ package com.amplitude.core
 
 import java.util.concurrent.LinkedBlockingQueue
 
+typealias AnalyticsEventListener = (AnalyticsEvent) -> Unit
+
 data class AnalyticsEvent(
     val eventType: String,
     val eventProperties: Map<String, Any>? = null,
@@ -11,14 +13,14 @@ data class AnalyticsEvent(
 interface AnalyticsConnector {
 
     fun logEvent(event: AnalyticsEvent)
-    fun addEventListener(listener: (AnalyticsEvent) -> Unit)
-    fun removeEventListener(listener: (AnalyticsEvent) -> Unit)
+    fun addEventListener(listener: AnalyticsEventListener)
+    fun removeEventListener(listener: AnalyticsEventListener)
 }
 
 internal class AnalyticsConnectorImpl : AnalyticsConnector {
 
     private val lock = Any()
-    private val listeners: MutableSet<(AnalyticsEvent) -> Unit> = mutableSetOf()
+    private val listeners: MutableSet<AnalyticsEventListener> = mutableSetOf()
     private val queue = LinkedBlockingQueue<AnalyticsEvent>(256)
 
     override fun logEvent(event: AnalyticsEvent) {
@@ -33,7 +35,7 @@ internal class AnalyticsConnectorImpl : AnalyticsConnector {
         }
     }
 
-    override fun addEventListener(listener: (AnalyticsEvent) -> Unit) {
+    override fun addEventListener(listener: AnalyticsEventListener) {
         val events = synchronized(lock) {
             listeners.add(listener)
             mutableListOf<AnalyticsEvent>().apply {
@@ -45,7 +47,7 @@ internal class AnalyticsConnectorImpl : AnalyticsConnector {
         }
     }
 
-    override fun removeEventListener(listener: (AnalyticsEvent) -> Unit) {
+    override fun removeEventListener(listener: AnalyticsEventListener) {
         synchronized(lock) {
             listeners.remove(listener)
         }
