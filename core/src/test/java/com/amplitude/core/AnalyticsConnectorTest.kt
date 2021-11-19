@@ -9,7 +9,7 @@ class AnalyticsConnectorTest {
     fun `test addEventListener, logEvent, listener called`() {
         val testEvent = AnalyticsEvent("test")
         val analyticsConnector = AnalyticsConnectorImpl()
-        analyticsConnector.addEventListener {
+        analyticsConnector.setEventReceiver {
             Assert.assertEquals(testEvent, it)
         }
         analyticsConnector.logEvent(testEvent)
@@ -24,7 +24,7 @@ class AnalyticsConnectorTest {
         analyticsConnector.logEvent(testEvent0)
         analyticsConnector.logEvent(testEvent1)
         var eventCount = 0
-        analyticsConnector.addEventListener {
+        analyticsConnector.setEventReceiver {
             when (eventCount) {
                 0 ->  Assert.assertEquals(testEvent0, it)
                 1 ->  Assert.assertEquals(testEvent1, it)

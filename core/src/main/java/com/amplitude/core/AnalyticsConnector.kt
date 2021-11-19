@@ -1,8 +1,8 @@
 package com.amplitude.core
 
-import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ArrayBlockingQueue
 
-typealias AnalyticsEventListener = (AnalyticsEvent) -> Unit
+typealias AnalyticsEventReceiver = (AnalyticsEvent) -> Unit
 
 data class AnalyticsEvent(
     val eventType: String,
@@ -13,43 +13,32 @@ data class AnalyticsEvent(
 interface AnalyticsConnector {
 
     fun logEvent(event: AnalyticsEvent)
-    fun addEventListener(listener: AnalyticsEventListener)
-    fun removeEventListener(listener: AnalyticsEventListener)
+    fun setEventReceiver(receiver: AnalyticsEventReceiver?)
 }
 
 internal class AnalyticsConnectorImpl : AnalyticsConnector {
 
     private val lock = Any()
-    private val listeners: MutableSet<AnalyticsEventListener> = mutableSetOf()
-    private val queue = LinkedBlockingQueue<AnalyticsEvent>(256)
+    private var receiver: AnalyticsEventReceiver? = null
+    private val queue = ArrayBlockingQueue<AnalyticsEvent>(512)
 
     override fun logEvent(event: AnalyticsEvent) {
-        val safeListeners = synchronized(lock) {
-            if (listeners.isEmpty()) {
+        synchronized(lock) {
+            if (this.receiver == null) {
                 queue.offer(event)
             }
-            listeners.toSet()
-        }
-        for (listener in safeListeners) {
-            listener(event)
-        }
+            this.receiver
+        }?.invoke(event)
     }
 
-    override fun addEventListener(listener: AnalyticsEventListener) {
-        val events = synchronized(lock) {
-            listeners.add(listener)
+    override fun setEventReceiver(receiver: AnalyticsEventReceiver?) {
+        synchronized(lock) {
+            this.receiver = receiver
             mutableListOf<AnalyticsEvent>().apply {
                 queue.drainTo(this)
             }
-        }
-        for (event in events) {
-            listener(event)
-        }
-    }
-
-    override fun removeEventListener(listener: AnalyticsEventListener) {
-        synchronized(lock) {
-            listeners.remove(listener)
+        }.forEach { event ->
+            receiver?.invoke(event)
         }
     }
 }

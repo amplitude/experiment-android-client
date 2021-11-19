@@ -20,8 +20,6 @@ android {
         minSdkVersion 14
         targetSdkVersion 30
         versionName PUBLISH_VERSION
-
-        consumerProguardFiles "consumer-rules.pro"
     }
 
     buildTypes {
