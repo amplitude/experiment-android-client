@@ -20,14 +20,12 @@ object Experiment {
         }
     internal val executorService = ScheduledThreadPoolExecutor(0, daemonThreadFactory)
 
-    private const val DEFAULT_INSTANCE = "\$default_instance"
     private val httpClient = OkHttpClient()
     private val instances = mutableMapOf<String, ExperimentClient>()
 
     /**
-     * Initializes a singleton [ExperimentClient] instance. Subsequent calls will return the
-     * same instance, regardless of api key or config. However, It is advised to inject the client
-     * inside your application rather than re-initializing
+     * Initializes a singleton [ExperimentClient] identified by the configured
+     * instance name.
      *
      * @param application The Android Application context
      * @param apiKey  The API key. This can be found in the Experiment settings and should not be null or empty.
@@ -39,8 +37,9 @@ object Experiment {
         apiKey: String,
         config: ExperimentConfig
     ): ExperimentClient = synchronized(instances) {
-        val instanceName = DEFAULT_INSTANCE
-        return when (val instance = instances[instanceName]) {
+        val instanceName = config.instanceName
+        val instanceKey = "$instanceName.$apiKey"
+        return when (val instance = instances[instanceKey]) {
             null -> {
                 Logger.implementation = AndroidLogger(config.debug)
                 var mergedConfig = config
@@ -53,25 +52,34 @@ object Experiment {
                     apiKey,
                     mergedConfig,
                     httpClient,
-                    SharedPrefsStorage(application, apiKey, instanceName),
+                    SharedPrefsStorage(application, apiKey, instanceKey),
                     executorService,
                 )
-                instances[instanceName] = newInstance
+                instances[instanceKey] = newInstance
                 newInstance
             }
             else -> instance
         }
     }
 
+    /**
+     * Initialize a singleton [ExperimentClient] which automatically
+     * integrates with the installed and initialized instance of the amplitude
+     * analytics SDK.
+     *
+     * @param apiKey
+     * @param config
+     */
     @JvmStatic
-    fun initializeWithAmplitude(
+    fun initializeWithAmplitudeAnalytics(
         application: Application,
         apiKey: String,
         config: ExperimentConfig
     ): ExperimentClient = synchronized(instances) {
-        val instanceName = DEFAULT_INSTANCE
+        val instanceName = config.instanceName
+        val instanceKey = "$instanceName.$apiKey"
         val core = AmplitudeCore.getInstance(instanceName)
-        val instance = when (val instance = instances[instanceName]) {
+        val instance = when (val instance = instances[instanceKey]) {
             null -> {
                 Logger.implementation = AndroidLogger(config.debug)
                 val configBuilder = config.copyToBuilder()
@@ -89,7 +97,7 @@ object Experiment {
                     executorService,
                     core.identityStore,
                 )
-                instances[instanceName] = newInstance
+                instances[instanceKey] = newInstance
                 newInstance
             }
             else -> instance

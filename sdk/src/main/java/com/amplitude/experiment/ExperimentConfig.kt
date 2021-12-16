@@ -17,6 +17,8 @@ class ExperimentConfig internal constructor(
     @JvmField
     val debug: Boolean = Defaults.DEBUG,
     @JvmField
+    val instanceName: String = Defaults.INSTANCE_NAME,
+    @JvmField
     val fallbackVariant: Variant = Defaults.FALLBACK_VARIANT,
     @JvmField
     val initialVariants: Map<String, Variant> = Defaults.INITIAL_VARIANTS,
@@ -48,6 +50,11 @@ class ExperimentConfig internal constructor(
          * false
          */
         const val DEBUG = false
+
+        /**
+         * $default_instance
+         */
+        const val INSTANCE_NAME = "\$default_instance"
 
         /**
          * Variant(null,  null)
@@ -100,6 +107,7 @@ class ExperimentConfig internal constructor(
     class Builder {
 
         private var debug = Defaults.DEBUG
+        private var instanceName = Defaults.INSTANCE_NAME
         private var fallbackVariant = Defaults.FALLBACK_VARIANT
         private var initialVariants = Defaults.INITIAL_VARIANTS
         private var source = Defaults.SOURCE
@@ -111,6 +119,10 @@ class ExperimentConfig internal constructor(
 
         fun debug(debug: Boolean) = apply {
             this.debug = debug
+        }
+
+        fun instanceName(instanceName: String) = apply {
+            this.instanceName = instanceName
         }
 
         fun fallbackVariant(fallbackVariant: Variant) = apply {
@@ -147,6 +159,7 @@ class ExperimentConfig internal constructor(
         fun build(): ExperimentConfig {
             return ExperimentConfig(
                 debug = debug,
+                instanceName = instanceName,
                 fallbackVariant = fallbackVariant,
                 initialVariants = initialVariants,
                 source = source,
@@ -162,6 +175,7 @@ class ExperimentConfig internal constructor(
     internal fun copyToBuilder(): Builder {
         return builder()
             .debug(debug)
+            .instanceName(instanceName)
             .fallbackVariant(fallbackVariant)
             .initialVariants(initialVariants)
             .source(source)
