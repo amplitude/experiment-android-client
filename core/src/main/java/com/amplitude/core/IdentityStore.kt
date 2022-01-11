@@ -6,10 +6,6 @@ import kotlin.concurrent.write
 
 internal const val ID_OP_SET = "\$set"
 internal const val ID_OP_UNSET = "\$unset"
-internal const val ID_OP_SET_ONCE = "\$setOnce"
-internal const val ID_OP_ADD = "\$add"
-internal const val ID_OP_APPEND = "\$append"
-internal const val ID_OP_PREPEND = "\$prepend"
 internal const val ID_OP_CLEAR_ALL = "\$clearAll"
 
 typealias IdentityListener = (Identity) -> Unit
@@ -87,49 +83,9 @@ internal class IdentityStoreImpl: IdentityStore {
                                 actingProperties.remove(entry.key)
                             }
                         }
-                        ID_OP_SET_ONCE -> {
-                            for (entry in properties.entries) {
-                                actingProperties.getOrPut(entry.key) {
-                                    entry.value
-                                }
-                            }
-                        }
-                        ID_OP_ADD -> {
-                            for (entry in properties.entries) {
-                                val value = entry.value
-                                val actingValue = actingProperties[entry.key] ?: 0
-                                // All lesser numbers can be represented as doubles for simplicity
-                                // TODO: Float values will lose precision when converted to double.
-                                // The current move from (Float | Double) -> BigInteger from org.json
-                                // makes this check unnecessary since all floats will be precisely
-                                // converted.
-                                if (value is Number && actingValue is Number) {
-                                    actingProperties[entry.key] = value.toDouble() + actingValue.toDouble()
-                                }
-                            }
-                        }
-                        ID_OP_APPEND -> {
-                            for (entry in properties.entries) {
-                                val actingValue = actingProperties[entry.key]
-                                val value = entry.value
-                                if (value is List<Any?> && actingValue is List<Any?>) {
-                                    actingProperties[entry.key] = actingValue + value.toMutableList()
-                                }
-                            }
-                        }
-                        ID_OP_PREPEND -> {
-                            for (entry in properties.entries) {
-                                val actingValue = actingProperties[entry.key]
-                                val value = entry.value
-                                if (value is List<Any?> && actingValue is List<Any?>) {
-                                    actingProperties[entry.key] = value.toMutableList() + actingValue
-                                }
-                            }
-                        }
                         ID_OP_CLEAR_ALL -> {
                             actingProperties.clear()
                         }
-
                     }
                 }
                 this.userProperties = actingProperties

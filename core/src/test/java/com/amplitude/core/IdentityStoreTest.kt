@@ -101,76 +101,6 @@ class IdentityStoreTest {
         )
     }
 
-    // TODO: Float inputs fail to retain precision. This wont happen when using
-    //       toUpdateUserPropertiesMap from JSON Object since floating point
-    //       precision is kept. May need to handle this use case later.
-    @Test
-    fun `test updateUserProperties, add`() {
-        val identityStore = IdentityStoreImpl()
-        identityStore.setIdentity(Identity(userProperties = mapOf(
-            "byte" to 1.toByte(),
-            "short" to 1.toShort(),
-            "int" to 1,
-            "long" to 1L,
-            "double" to 1.1,
-        )))
-        identityStore.editIdentity()
-            .updateUserProperties(
-                mapOf("\$add" to mapOf(
-                    "byte" to 1.1,
-                    "short" to 1.1,
-                    "int" to 1.1,
-                    "long" to 1.1,
-                    "double" to 1,
-                ))
-            ).commit()
-        val identity = identityStore.getIdentity()
-        Assert.assertEquals(
-            Identity(userProperties = mapOf(
-                "byte" to 2.1,
-                "short" to 2.1,
-                "int" to 2.1,
-                "long" to 2.1,
-                "double" to 2.1,
-            )),
-            identity,
-        )
-    }
-
-    @Test
-    fun `test updateUserProperties, prepend`() {
-        val identityStore = IdentityStoreImpl()
-        identityStore.setIdentity(Identity(userProperties = mapOf(
-            "key" to listOf(0, 1, 2, 3)
-        )))
-        identityStore.editIdentity()
-            .updateUserProperties(
-                mapOf("\$prepend" to mapOf("key" to listOf(-3, -2, -1)))
-            ).commit()
-        val identity = identityStore.getIdentity()
-        Assert.assertEquals(
-            Identity(userProperties = mapOf("key" to listOf(-3, -2, -1, 0, 1, 2, 3))),
-            identity,
-        )
-    }
-
-    @Test
-    fun `test updateUserProperties, append`() {
-        val identityStore = IdentityStoreImpl()
-        identityStore.setIdentity(Identity(userProperties = mapOf(
-            "key" to listOf(-3, -2, -1, 0)
-        )))
-        identityStore.editIdentity()
-            .updateUserProperties(
-                mapOf("\$append" to mapOf("key" to listOf(1, 2, 3)))
-            ).commit()
-        val identity = identityStore.getIdentity()
-        Assert.assertEquals(
-            Identity(userProperties = mapOf("key" to listOf(-3, -2, -1, 0, 1, 2, 3))),
-            identity,
-        )
-    }
-
     @Test
     fun `test updateUserProperties, clearAll`() {
         val identityStore = IdentityStoreImpl()
@@ -186,27 +116,6 @@ class IdentityStoreTest {
             ).commit()
         val identity = identityStore.getIdentity()
         Assert.assertEquals(Identity(), identity)
-    }
-
-    @Test
-    fun `test updateUserProperties, setOnce`() {
-        val identityStore = IdentityStoreImpl()
-        identityStore.editIdentity()
-            .updateUserProperties(mapOf("\$setOnce" to mapOf("key1" to "value1")))
-            .commit()
-        var identity = identityStore.getIdentity()
-        Assert.assertEquals(
-            Identity(userProperties = mapOf("key1" to "value1")),
-            identity
-        )
-        identityStore.editIdentity()
-            .updateUserProperties(mapOf("\$setOnce" to mapOf("key1" to "value2")))
-            .commit()
-        identity = identityStore.getIdentity()
-        Assert.assertEquals(
-            Identity(userProperties = mapOf("key1" to "value1")),
-            identity
-        )
     }
 
     @Test
@@ -246,71 +155,6 @@ class IdentityStoreTest {
             .commit()
         val identity = identityStore.getIdentity()
         Assert.assertEquals(Identity(), identity)
-    }
-
-    @Test
-    fun `test identify to user properties map, add`() {
-        val identityStore = IdentityStoreImpl()
-        val identify = Identify()
-            .set("int", 1)
-            .set("long", 1.toLong())
-            .set("float", 1.1f)
-            .set("double", 1.1)
-        identityStore.editIdentity()
-            .updateUserProperties(identify.userPropertiesOperations.toUpdateUserPropertiesMap())
-            .commit()
-        val add = Identify()
-            .add("int", 1.1)
-            .add("long", 1.1f)
-            .add("float", 1)
-            .add("double", 1L)
-        identityStore.editIdentity()
-            .updateUserProperties(add.userPropertiesOperations.toUpdateUserPropertiesMap())
-            .commit()
-        val identity = identityStore.getIdentity()
-        Assert.assertEquals(
-            Identity(userProperties = mapOf(
-                "int" to 2.1,
-                "long" to 2.1,
-                "float" to 2.1,
-                "double" to 2.1,
-            )),
-            identity,
-        )
-    }
-
-    @Test
-    fun `test identify to user properties map, append`() {
-        val identityStore = IdentityStoreImpl()
-        identityStore.setIdentity(Identity(userProperties = mapOf("key" to listOf(-3, -2, -1, 0))))
-        val identify = Identify().append("key", intArrayOf(1, 2, 3))
-        identityStore.editIdentity()
-            .updateUserProperties(identify.userPropertiesOperations.toUpdateUserPropertiesMap())
-            .commit()
-        val identity = identityStore.getIdentity()
-        Assert.assertEquals(
-            Identity(userProperties = mapOf(
-                "key" to listOf(-3, -2, -1, 0, 1, 2, 3)
-            )),
-            identity
-        )
-    }
-
-    @Test
-    fun `test identify to user properties map, prepend`() {
-        val identityStore = IdentityStoreImpl()
-        identityStore.setIdentity(Identity(userProperties = mapOf("key" to listOf(0, 1, 2, 3))))
-        val identify = Identify().prepend("key", intArrayOf(-3, -2, -1))
-        identityStore.editIdentity()
-            .updateUserProperties(identify.userPropertiesOperations.toUpdateUserPropertiesMap())
-            .commit()
-        val identity = identityStore.getIdentity()
-        Assert.assertEquals(
-            Identity(userProperties = mapOf(
-                "key" to listOf(-3, -2, -1, 0, 1, 2, 3)
-            )),
-            identity
-        )
     }
 
     @Test
