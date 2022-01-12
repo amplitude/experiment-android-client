@@ -9,17 +9,7 @@ internal class CoreAnalyticsProvider(
     private val analyticsConnector: AnalyticsConnector
 ): ExperimentAnalyticsProvider {
 
-    private val setProperties = mutableMapOf<String, String>()
-    private val unsetProperties = mutableSetOf<String>()
-
     override fun track(event: ExperimentAnalyticsEvent) {
-        val variant = event.variant.value ?: return
-        if (setProperties[event.key] == variant) {
-            return
-        } else {
-            setProperties[event.key] = variant
-            unsetProperties.remove(event.key)
-        }
         val eventProperties: Map<String, String> = event.properties
             .filterValues { it != null }
             .mapValues { it.value!! }
@@ -33,9 +23,6 @@ internal class CoreAnalyticsProvider(
 
     override fun setUserProperty(event: ExperimentAnalyticsEvent) {
         val variant = event.variant.value ?: return
-        if (setProperties[event.key] == variant) {
-            return
-        }
         analyticsConnector.logEvent(
             AnalyticsEvent(
                 "\$identify",
@@ -50,12 +37,6 @@ internal class CoreAnalyticsProvider(
     }
 
     override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
-        if (unsetProperties.contains(event.key)) {
-            return
-        } else {
-            unsetProperties.add(event.key)
-            setProperties.remove(event.key)
-        }
         analyticsConnector.logEvent(
             AnalyticsEvent(
                 "\$identify",

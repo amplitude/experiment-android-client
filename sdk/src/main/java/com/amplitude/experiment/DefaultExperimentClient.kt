@@ -1,13 +1,12 @@
 package com.amplitude.experiment
 
-import com.amplitude.core.AmplitudeCore
-import com.amplitude.core.IdentityStore
 import com.amplitude.experiment.analytics.ExposureEvent
 import com.amplitude.experiment.storage.Storage
 import com.amplitude.experiment.util.AsyncFuture
 import com.amplitude.experiment.util.Backoff
 import com.amplitude.experiment.util.BackoffConfig
 import com.amplitude.experiment.util.Logger
+import com.amplitude.experiment.util.SessionAnalyticsProvider
 import com.amplitude.experiment.util.backoff
 import com.amplitude.experiment.util.merge
 import com.amplitude.experiment.util.toJson
@@ -34,7 +33,6 @@ internal class DefaultExperimentClient internal constructor(
     private val httpClient: OkHttpClient,
     private val storage: Storage,
     private val executorService: ScheduledExecutorService,
-    private val identityStore: IdentityStore? = null,
 ) : ExperimentClient {
 
     private var user: ExperimentUser? = null
@@ -55,16 +53,8 @@ internal class DefaultExperimentClient internal constructor(
     @Deprecated("moved to experiment config")
     private var userProvider: ExperimentUserProvider? = config.userProvider
 
-    init {
-        identityStore?.addIdentityListener {
-            val currentUser = getUser() ?: ExperimentUser()
-            val newUser = currentUser.copyToBuilder()
-                .userId(it.userId)
-                .deviceId(it.deviceId)
-                .userProperties(it.userProperties)
-                .build()
-            fetch(newUser)
-        }
+    private val analyticsProvider: SessionAnalyticsProvider? = config.analyticsProvider?.let {
+        SessionAnalyticsProvider(it)
     }
 
     override fun fetch(user: ExperimentUser?): Future<ExperimentClient> {
@@ -85,21 +75,21 @@ internal class DefaultExperimentClient internal constructor(
         val variant = variantAndSource.variant;
         val source = variantAndSource.source;
         // Track the exposure event if an analytics provider is set
-        if (source.isFallback() || variant?.value == null) {
+        if (source.isFallback() || variant.value == null) {
             val exposedUser = getUserMergedWithProvider()
-            config.analyticsProvider?.unsetUserProperty(ExposureEvent(exposedUser, key, variant, source))
-        } else if (variant?.value != null) {
+            analyticsProvider?.unsetUserProperty(ExposureEvent(exposedUser, key, variant, source))
+        } else {
             val exposedUser = getUserMergedWithProvider()
             val event = ExposureEvent(exposedUser, key, variant, source)
-            config.analyticsProvider?.setUserProperty(event)
-            config.analyticsProvider?.track(event)
+            analyticsProvider?.setUserProperty(event)
+            analyticsProvider?.track(event)
         }
         return variant
     }
 
     private fun resolveVariantAndSource(key: String, fallback: Variant?): VariantAndSource {
         val sourceVariant = sourceVariants()[key]
-        return when (config.source) {
+        when (config.source) {
             Source.LOCAL_STORAGE -> {
                 // for source = LocalStorage, fallback order goes:
                 // 1. Local Storage

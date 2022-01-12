@@ -52,7 +52,7 @@ object Experiment {
                     apiKey,
                     mergedConfig,
                     httpClient,
-                    SharedPrefsStorage(application, apiKey, instanceKey),
+                    SharedPrefsStorage(application, apiKey, instanceName),
                     executorService,
                 )
                 instances[instanceKey] = newInstance
@@ -95,9 +95,11 @@ object Experiment {
                     httpClient,
                     SharedPrefsStorage(application, apiKey, instanceName),
                     executorService,
-                    core.identityStore,
                 )
                 instances[instanceKey] = newInstance
+                core.identityStore.addIdentityListener {
+                    newInstance.fetch()
+                }
                 newInstance
             }
             else -> instance
