@@ -74,15 +74,24 @@ internal class DefaultExperimentClient internal constructor(
         val variantAndSource = resolveVariantAndSource(key, fallback)
         val variant = variantAndSource.variant;
         val source = variantAndSource.source;
-        // Track the exposure event if an analytics provider is set
-        if (source.isFallback() || variant.value == null) {
-            val exposedUser = getUserMergedWithProvider()
-            analyticsProvider?.unsetUserProperty(ExposureEvent(exposedUser, key, variant, source))
-        } else {
-            val exposedUser = getUserMergedWithProvider()
-            val event = ExposureEvent(exposedUser, key, variant, source)
-            analyticsProvider?.setUserProperty(event)
-            analyticsProvider?.track(event)
+        if (config.automaticClientSideExposureTracking) {
+            // Track the exposure event if an analytics provider is set
+            if (source.isFallback() || variant.value == null) {
+                val exposedUser = getUserMergedWithProvider()
+                analyticsProvider?.unsetUserProperty(
+                    ExposureEvent(
+                        exposedUser,
+                        key,
+                        variant,
+                        source
+                    )
+                )
+            } else {
+                val exposedUser = getUserMergedWithProvider()
+                val event = ExposureEvent(exposedUser, key, variant, source)
+                analyticsProvider?.setUserProperty(event)
+                analyticsProvider?.track(event)
+            }
         }
         return variant
     }

@@ -11,7 +11,7 @@ enum class Source {
  * Configuration options. This is an immutable object that can be created using
  * a [ExperimentConfig.Builder]. Example usage:
  *
- *`ExperimentConfig.builder().setServerUrl("https://api.lab.amplitude.com/").build()`
+ *`ExperimentConfig.builder().serverUrl("https://api.lab.amplitude.com/").build()`
  */
 class ExperimentConfig internal constructor(
     @JvmField
@@ -30,6 +30,8 @@ class ExperimentConfig internal constructor(
     val fetchTimeoutMillis: Long = Defaults.FETCH_TIMEOUT_MILLIS,
     @JvmField
     val retryFetchOnFailure: Boolean = Defaults.RETRY_FETCH_ON_FAILURE,
+    @JvmField
+    val automaticClientSideExposureTracking: Boolean = Defaults.AUTOMATIC_CLIENT_SIDE_EXPOSURE_TRACKING,
     @JvmField
     val userProvider: ExperimentUserProvider? = Defaults.USER_PROVIDER,
     @JvmField
@@ -87,6 +89,11 @@ class ExperimentConfig internal constructor(
         const val RETRY_FETCH_ON_FAILURE = true
 
         /**
+         * true
+         */
+        const val AUTOMATIC_CLIENT_SIDE_EXPOSURE_TRACKING = true
+
+        /**
          * null
          */
         val USER_PROVIDER: ExperimentUserProvider? = null
@@ -114,6 +121,7 @@ class ExperimentConfig internal constructor(
         private var serverUrl = Defaults.SERVER_URL
         private var fetchTimeoutMillis = Defaults.FETCH_TIMEOUT_MILLIS
         private var retryFetchOnFailure = Defaults.RETRY_FETCH_ON_FAILURE
+        private var automaticClientSideExposureTracking = Defaults.AUTOMATIC_CLIENT_SIDE_EXPOSURE_TRACKING
         private var userProvider = Defaults.USER_PROVIDER
         private var analyticsProvider = Defaults.ANALYTICS_PROVIDER
 
@@ -149,6 +157,10 @@ class ExperimentConfig internal constructor(
             this.retryFetchOnFailure = retryFetchOnFailure
         }
 
+        fun automaticClientSideExposureTracking(automaticClientSideExposureTracking: Boolean) = apply {
+            this.automaticClientSideExposureTracking = automaticClientSideExposureTracking
+        }
+
         fun userProvider(userProvider: ExperimentUserProvider?) = apply {
             this.userProvider = userProvider
         }
@@ -182,6 +194,7 @@ class ExperimentConfig internal constructor(
             .serverUrl(serverUrl)
             .fetchTimeoutMillis(fetchTimeoutMillis)
             .retryFetchOnFailure(retryFetchOnFailure)
+            .automaticClientSideExposureTracking(automaticClientSideExposureTracking)
             .userProvider(userProvider)
             .analyticsProvider(analyticsProvider)
     }
