@@ -34,7 +34,7 @@ android {
 }
 
 dependencies {
-    implementation project(':core') // TODO use published dependency
+    implementation 'com.amplitude:amplitude-core:1.0.0-alpha.0'
     implementation 'com.amplitude:android-sdk:2.26.1'
     implementation 'com.squareup.okhttp3:okhttp:4.9.1'
 
