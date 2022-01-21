@@ -97,8 +97,10 @@ object Experiment {
                     executorService,
                 )
                 instances[instanceKey] = newInstance
-                core.identityStore.addIdentityListener {
-                    newInstance.fetch()
+                if (config.automaticFetchOnAmplitudeIdentityChange) {
+                    core.identityStore.addIdentityListener {
+                        newInstance.fetch()
+                    }
                 }
                 newInstance
             }

@@ -33,6 +33,8 @@ class ExperimentConfig internal constructor(
     @JvmField
     val automaticClientSideExposureTracking: Boolean = Defaults.AUTOMATIC_CLIENT_SIDE_EXPOSURE_TRACKING,
     @JvmField
+    val automaticFetchOnAmplitudeIdentityChange: Boolean = Defaults.AUTOMATIC_FETCH_ON_AMPLITUDE_IDENTITY_CHANGE,
+    @JvmField
     val userProvider: ExperimentUserProvider? = Defaults.USER_PROVIDER,
     @JvmField
     val analyticsProvider: ExperimentAnalyticsProvider? = Defaults.ANALYTICS_PROVIDER,
@@ -94,6 +96,11 @@ class ExperimentConfig internal constructor(
         const val AUTOMATIC_CLIENT_SIDE_EXPOSURE_TRACKING = true
 
         /**
+         * false
+         */
+        const val AUTOMATIC_FETCH_ON_AMPLITUDE_IDENTITY_CHANGE = false
+
+        /**
          * null
          */
         val USER_PROVIDER: ExperimentUserProvider? = null
@@ -122,6 +129,7 @@ class ExperimentConfig internal constructor(
         private var fetchTimeoutMillis = Defaults.FETCH_TIMEOUT_MILLIS
         private var retryFetchOnFailure = Defaults.RETRY_FETCH_ON_FAILURE
         private var automaticClientSideExposureTracking = Defaults.AUTOMATIC_CLIENT_SIDE_EXPOSURE_TRACKING
+        private var automaticFetchOnAmplitudeIdentityChange = Defaults.AUTOMATIC_FETCH_ON_AMPLITUDE_IDENTITY_CHANGE
         private var userProvider = Defaults.USER_PROVIDER
         private var analyticsProvider = Defaults.ANALYTICS_PROVIDER
 
@@ -161,6 +169,10 @@ class ExperimentConfig internal constructor(
             this.automaticClientSideExposureTracking = automaticClientSideExposureTracking
         }
 
+        fun automaticFetchOnAmplitudeIdentityChange(automaticFetchOnAmplitudeIdentityChange: Boolean) = apply {
+            this.automaticFetchOnAmplitudeIdentityChange = automaticFetchOnAmplitudeIdentityChange
+        }
+
         fun userProvider(userProvider: ExperimentUserProvider?) = apply {
             this.userProvider = userProvider
         }
@@ -178,6 +190,8 @@ class ExperimentConfig internal constructor(
                 serverUrl = serverUrl,
                 fetchTimeoutMillis = fetchTimeoutMillis,
                 retryFetchOnFailure = retryFetchOnFailure,
+                automaticClientSideExposureTracking = automaticClientSideExposureTracking,
+                automaticFetchOnAmplitudeIdentityChange = automaticFetchOnAmplitudeIdentityChange,
                 userProvider = userProvider,
                 analyticsProvider = analyticsProvider,
             )
@@ -195,6 +209,7 @@ class ExperimentConfig internal constructor(
             .fetchTimeoutMillis(fetchTimeoutMillis)
             .retryFetchOnFailure(retryFetchOnFailure)
             .automaticClientSideExposureTracking(automaticClientSideExposureTracking)
+            .automaticFetchOnAmplitudeIdentityChange((automaticFetchOnAmplitudeIdentityChange))
             .userProvider(userProvider)
             .analyticsProvider(analyticsProvider)
     }
