@@ -5,6 +5,8 @@ import com.amplitude.core.Identity
 import com.amplitude.core.IdentityStore
 import com.amplitude.experiment.util.Lock
 import com.amplitude.experiment.util.LockResult
+import java.util.concurrent.TimeoutException
+import kotlin.jvm.Throws
 
 internal class CoreUserProvider(
     context: Context,
@@ -14,7 +16,17 @@ internal class CoreUserProvider(
     private val base = DefaultUserProvider(context)
 
     override fun getUser(): ExperimentUser {
-        val identity = identityStore.getIdentityOrWait()
+        val identity = identityStore.getIdentity()
+        return base.getUser().copyToBuilder()
+            .userId(identity.userId)
+            .deviceId(identity.deviceId)
+            .userProperties(identity.userProperties)
+            .build()
+    }
+
+    @Throws(TimeoutException::class)
+    fun getUserOrWait(ms: Long): ExperimentUser {
+        val identity = identityStore.getIdentityOrWait(ms)
         return base.getUser().copyToBuilder()
             .userId(identity.userId)
             .deviceId(identity.deviceId)
@@ -30,7 +42,7 @@ internal class CoreUserProvider(
  * More complex to assure that no race conditions between getting the identity
  * directly and adding a listener.
  */
-private fun IdentityStore.getIdentityOrWait(): Identity {
+private fun IdentityStore.getIdentityOrWait(ms: Long): Identity {
     val lock = Lock<Identity>()
     val callback: (Identity) -> Unit = { id ->
         lock.notify(LockResult.Success(id))
@@ -38,9 +50,15 @@ private fun IdentityStore.getIdentityOrWait(): Identity {
     addIdentityListener(callback)
     val immediateIdentity = getIdentity()
     val result = if (immediateIdentity.isUnidentified()) {
-        when(val result = lock.wait()) {
+        when(val result = lock.wait(ms)) {
             is LockResult.Success -> result.value
-            is LockResult.Error -> Identity()
+            is LockResult.Error -> {
+                if (result.error is TimeoutException) {
+                    throw TimeoutException("Timed out waiting for Amplitude Analytics SDK to initialize. " +
+                        "You should ensure that the analytics SDK is initialized prior to calling fetch().")
+                }
+                Identity()
+            }
         }
     } else {
         immediateIdentity
