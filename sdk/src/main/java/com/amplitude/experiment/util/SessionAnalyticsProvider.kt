@@ -26,7 +26,7 @@ internal class SessionAnalyticsProvider(
         if (setProperties[event.key] == variant) {
             return
         }
-        analyticsProvider.track(event)
+        analyticsProvider.setUserProperty(event)
     }
 
     override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
@@ -36,6 +36,6 @@ internal class SessionAnalyticsProvider(
             unsetProperties.add(event.key)
             setProperties.remove(event.key)
         }
-        analyticsProvider.track(event)
+        analyticsProvider.unsetUserProperty(event)
     }
 }
