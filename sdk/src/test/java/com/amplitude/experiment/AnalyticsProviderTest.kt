@@ -4,6 +4,7 @@ import com.amplitude.core.AnalyticsConnector
 import com.amplitude.core.AnalyticsEvent
 import com.amplitude.core.AnalyticsEventReceiver
 import com.amplitude.experiment.analytics.ExposureEvent
+import com.amplitude.experiment.util.SessionAnalyticsProvider
 import org.junit.Assert
 import org.junit.Test
 
@@ -17,7 +18,7 @@ class TestAnalyticsConnector : AnalyticsConnector {
     override fun setEventReceiver(receiver: AnalyticsEventReceiver?) {}
 }
 
-class CoreAnalyticsProviderTest {
+class AnalyticsProviderTest {
 
     private val exposureEvent1 = ExposureEvent(
         user = ExperimentUser(),
@@ -72,7 +73,7 @@ class CoreAnalyticsProviderTest {
     @Test
     fun `set and track called once each per variant`() {
         val analyticsConnector = TestAnalyticsConnector()
-        val coreAnalyticsProvider = CoreAnalyticsProvider(analyticsConnector)
+        val coreAnalyticsProvider = SessionAnalyticsProvider(CoreAnalyticsProvider(analyticsConnector))
 
         coreAnalyticsProvider.setUserProperty(exposureEvent1)
         Assert.assertEquals(expectedSet1, analyticsConnector.recentEvent)
@@ -102,13 +103,13 @@ class CoreAnalyticsProviderTest {
     @Test
     fun `unset called once per key`() {
         val analyticsConnector = TestAnalyticsConnector()
-        val coreAnalyticsProvider = CoreAnalyticsProvider(analyticsConnector)
+        val coreAnalyticsProvider = SessionAnalyticsProvider(CoreAnalyticsProvider(analyticsConnector))
         val exposureEvent1 = ExposureEvent(ExperimentUser(), "test-key", Variant("test"), VariantSource.LOCAL_STORAGE)
         repeat(10) {
             coreAnalyticsProvider.unsetUserProperty(exposureEvent1)
             Assert.assertEquals(expectedUnset, analyticsConnector.recentEvent)
         }
-        Assert.assertEquals(analyticsConnector.logEventCount, 1)
+        Assert.assertEquals(1, analyticsConnector.logEventCount)
     }
 
     @Test
