@@ -14,11 +14,7 @@ data class Identity(
     val userId: String? = null,
     val deviceId: String? = null,
     val userProperties: Map<String, Any?> = mapOf(),
-) {
-    fun isUnidentified(): Boolean {
-        return userId.isNullOrEmpty() && deviceId.isNullOrEmpty()
-    }
-}
+)
 
 interface IdentityStore {
 
