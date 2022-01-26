@@ -84,6 +84,7 @@ class ExperimentUserTest {
             .country("newCountry")
             .version("newVersion")
             .userProperty("userPropertyKey2", "value2")
+            .userProperty("userPropertyKey", "value2")
             .build()
 
         val user = user2.merge(user1, false)
@@ -105,6 +106,7 @@ class ExperimentUserTest {
             .deviceManufacturer("deviceManufacturer")
             .deviceModel("deviceModel")
             .carrier("carrier")
+            .userProperty("userPropertyKey", "value2")
             .userProperty("userPropertyKey2", "value2")
             .build()
 

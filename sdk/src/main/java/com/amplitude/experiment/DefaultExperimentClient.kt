@@ -6,6 +6,7 @@ import com.amplitude.experiment.util.AsyncFuture
 import com.amplitude.experiment.util.Backoff
 import com.amplitude.experiment.util.BackoffConfig
 import com.amplitude.experiment.util.Logger
+import com.amplitude.experiment.util.SessionAnalyticsProvider
 import com.amplitude.experiment.util.backoff
 import com.amplitude.experiment.util.merge
 import com.amplitude.experiment.util.toJson
@@ -20,10 +21,12 @@ import okhttp3.Response
 import okio.ByteString.Companion.toByteString
 import org.json.JSONObject
 import java.io.IOException
+import java.lang.IllegalStateException
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import kotlin.jvm.Throws
 
 internal class DefaultExperimentClient internal constructor(
@@ -52,10 +55,14 @@ internal class DefaultExperimentClient internal constructor(
     @Deprecated("moved to experiment config")
     private var userProvider: ExperimentUserProvider? = config.userProvider
 
+    private val analyticsProvider: SessionAnalyticsProvider? = config.analyticsProvider?.let {
+        SessionAnalyticsProvider(it)
+    }
+
     override fun fetch(user: ExperimentUser?): Future<ExperimentClient> {
         this.user = user ?: this.user
-        val fetchUser = getUserMergedWithProvider()
         return executorService.submit(Callable {
+            val fetchUser = getUserMergedWithProviderOrWait(1000)
             fetchInternal(fetchUser, config.fetchTimeoutMillis, config.retryFetchOnFailure)
             this
         })
@@ -67,24 +74,34 @@ internal class DefaultExperimentClient internal constructor(
 
     override fun variant(key: String, fallback: Variant?): Variant {
         val variantAndSource = resolveVariantAndSource(key, fallback)
-        val variant = variantAndSource.variant;
-        val source = variantAndSource.source;
-        // Track the exposure event if an analytics provider is set
-        if (source.isFallback() || variant?.value == null) {
-            val exposedUser = getUserMergedWithProvider()
-            config.analyticsProvider?.unsetUserProperty(ExposureEvent(exposedUser, key, variant, source))
-        } else if (variant?.value != null) {
-            val exposedUser = getUserMergedWithProvider()
-            val event = ExposureEvent(exposedUser, key, variant, source)
-            config.analyticsProvider?.setUserProperty(event)
-            config.analyticsProvider?.track(event)
+        val variant = variantAndSource.variant
+        val source = variantAndSource.source
+        if (config.automaticClientSideExposureTracking) {
+            exposureInternal(key, variant, source)
         }
         return variant
     }
 
+    override fun exposure(key: String) {
+        val variantAndSource = resolveVariantAndSource(key, null)
+        exposureInternal(key, variantAndSource.variant, variantAndSource.source)
+    }
+
+    private fun exposureInternal(key: String, variant: Variant, source: VariantSource) {
+        val exposedUser = getUserMergedWithProvider()
+        val event = ExposureEvent(exposedUser, key, variant, source)
+        // Track the exposure event if an analytics provider is set
+        if (source.isFallback() || variant.value == null) {
+            analyticsProvider?.unsetUserProperty(event)
+        } else {
+            analyticsProvider?.setUserProperty(event)
+            analyticsProvider?.track(event)
+        }
+    }
+
     private fun resolveVariantAndSource(key: String, fallback: Variant?): VariantAndSource {
         val sourceVariant = sourceVariants()[key]
-        return when (config.source) {
+        when (config.source) {
             Source.LOCAL_STORAGE -> {
                 // for source = LocalStorage, fallback order goes:
                 // 1. Local Storage
@@ -235,8 +252,8 @@ internal class DefaultExperimentClient internal constructor(
 
     private fun storeVariants(variants: Map<String, Variant>) = synchronized(storageLock) {
         storage.clear()
-        variants.forEach { (key, variant) ->
-            storage.put(key, variant)
+        for (entry in variants.entries) {
+            storage.put(entry.key, entry.value)
         }
         Logger.d("Stored variants: $variants")
     }
@@ -259,6 +276,23 @@ internal class DefaultExperimentClient internal constructor(
         return this.user?.copyToBuilder()
             ?.library("experiment-android-client/${BuildConfig.VERSION_NAME}")
             ?.build().merge(userProvider?.getUser())
+    }
+
+    @Throws(IllegalStateException::class)
+    private fun getUserMergedWithProviderOrWait(ms: Long): ExperimentUser {
+        val safeUserProvider = userProvider
+        val providedUser = if (safeUserProvider is CoreUserProvider) {
+            try {
+                safeUserProvider.getUserOrWait(ms)
+            } catch (e: TimeoutException) {
+                throw IllegalStateException(e)
+            }
+        } else {
+            safeUserProvider?.getUser()
+        }
+        return this.user?.copyToBuilder()
+            ?.library("experiment-android-client/${BuildConfig.VERSION_NAME}")
+            ?.build().merge(providedUser)
     }
 }
 

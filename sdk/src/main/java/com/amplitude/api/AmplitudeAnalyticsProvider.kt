@@ -8,6 +8,8 @@ import org.json.JSONObject
  * Provides a tracking implementation for standard experiment events generated
  * by the client (e.g. exposure) using an [AmplitudeClient] instance.
  */
+@Deprecated("Update your version of the amplitude analytics SDK to 2.36.0+ and for seamless " +
+    "integration with the amplitude analytics SDK")
 class AmplitudeAnalyticsProvider(
     private val amplitudeClient: AmplitudeClient,
 ): ExperimentAnalyticsProvider {

@@ -11,11 +11,13 @@ enum class Source {
  * Configuration options. This is an immutable object that can be created using
  * a [ExperimentConfig.Builder]. Example usage:
  *
- *`ExperimentConfig.builder().setServerUrl("https://api.lab.amplitude.com/").build()`
+ *`ExperimentConfig.builder().serverUrl("https://api.lab.amplitude.com/").build()`
  */
 class ExperimentConfig internal constructor(
     @JvmField
     val debug: Boolean = Defaults.DEBUG,
+    @JvmField
+    val instanceName: String = Defaults.INSTANCE_NAME,
     @JvmField
     val fallbackVariant: Variant = Defaults.FALLBACK_VARIANT,
     @JvmField
@@ -28,6 +30,10 @@ class ExperimentConfig internal constructor(
     val fetchTimeoutMillis: Long = Defaults.FETCH_TIMEOUT_MILLIS,
     @JvmField
     val retryFetchOnFailure: Boolean = Defaults.RETRY_FETCH_ON_FAILURE,
+    @JvmField
+    val automaticClientSideExposureTracking: Boolean = Defaults.AUTOMATIC_CLIENT_SIDE_EXPOSURE_TRACKING,
+    @JvmField
+    val automaticFetchOnAmplitudeIdentityChange: Boolean = Defaults.AUTOMATIC_FETCH_ON_AMPLITUDE_IDENTITY_CHANGE,
     @JvmField
     val userProvider: ExperimentUserProvider? = Defaults.USER_PROVIDER,
     @JvmField
@@ -48,6 +54,11 @@ class ExperimentConfig internal constructor(
          * false
          */
         const val DEBUG = false
+
+        /**
+         * $default_instance
+         */
+        const val INSTANCE_NAME = "\$default_instance"
 
         /**
          * Variant(null,  null)
@@ -80,6 +91,16 @@ class ExperimentConfig internal constructor(
         const val RETRY_FETCH_ON_FAILURE = true
 
         /**
+         * true
+         */
+        const val AUTOMATIC_CLIENT_SIDE_EXPOSURE_TRACKING = true
+
+        /**
+         * false
+         */
+        const val AUTOMATIC_FETCH_ON_AMPLITUDE_IDENTITY_CHANGE = false
+
+        /**
          * null
          */
         val USER_PROVIDER: ExperimentUserProvider? = null
@@ -100,17 +121,24 @@ class ExperimentConfig internal constructor(
     class Builder {
 
         private var debug = Defaults.DEBUG
+        private var instanceName = Defaults.INSTANCE_NAME
         private var fallbackVariant = Defaults.FALLBACK_VARIANT
         private var initialVariants = Defaults.INITIAL_VARIANTS
         private var source = Defaults.SOURCE
         private var serverUrl = Defaults.SERVER_URL
         private var fetchTimeoutMillis = Defaults.FETCH_TIMEOUT_MILLIS
         private var retryFetchOnFailure = Defaults.RETRY_FETCH_ON_FAILURE
+        private var automaticClientSideExposureTracking = Defaults.AUTOMATIC_CLIENT_SIDE_EXPOSURE_TRACKING
+        private var automaticFetchOnAmplitudeIdentityChange = Defaults.AUTOMATIC_FETCH_ON_AMPLITUDE_IDENTITY_CHANGE
         private var userProvider = Defaults.USER_PROVIDER
         private var analyticsProvider = Defaults.ANALYTICS_PROVIDER
 
         fun debug(debug: Boolean) = apply {
             this.debug = debug
+        }
+
+        fun instanceName(instanceName: String) = apply {
+            this.instanceName = instanceName
         }
 
         fun fallbackVariant(fallbackVariant: Variant) = apply {
@@ -137,6 +165,14 @@ class ExperimentConfig internal constructor(
             this.retryFetchOnFailure = retryFetchOnFailure
         }
 
+        fun automaticClientSideExposureTracking(automaticClientSideExposureTracking: Boolean) = apply {
+            this.automaticClientSideExposureTracking = automaticClientSideExposureTracking
+        }
+
+        fun automaticFetchOnAmplitudeIdentityChange(automaticFetchOnAmplitudeIdentityChange: Boolean) = apply {
+            this.automaticFetchOnAmplitudeIdentityChange = automaticFetchOnAmplitudeIdentityChange
+        }
+
         fun userProvider(userProvider: ExperimentUserProvider?) = apply {
             this.userProvider = userProvider
         }
@@ -147,12 +183,15 @@ class ExperimentConfig internal constructor(
         fun build(): ExperimentConfig {
             return ExperimentConfig(
                 debug = debug,
+                instanceName = instanceName,
                 fallbackVariant = fallbackVariant,
                 initialVariants = initialVariants,
                 source = source,
                 serverUrl = serverUrl,
                 fetchTimeoutMillis = fetchTimeoutMillis,
                 retryFetchOnFailure = retryFetchOnFailure,
+                automaticClientSideExposureTracking = automaticClientSideExposureTracking,
+                automaticFetchOnAmplitudeIdentityChange = automaticFetchOnAmplitudeIdentityChange,
                 userProvider = userProvider,
                 analyticsProvider = analyticsProvider,
             )
@@ -162,12 +201,15 @@ class ExperimentConfig internal constructor(
     internal fun copyToBuilder(): Builder {
         return builder()
             .debug(debug)
+            .instanceName(instanceName)
             .fallbackVariant(fallbackVariant)
             .initialVariants(initialVariants)
             .source(source)
             .serverUrl(serverUrl)
             .fetchTimeoutMillis(fetchTimeoutMillis)
             .retryFetchOnFailure(retryFetchOnFailure)
+            .automaticClientSideExposureTracking(automaticClientSideExposureTracking)
+            .automaticFetchOnAmplitudeIdentityChange((automaticFetchOnAmplitudeIdentityChange))
             .userProvider(userProvider)
             .analyticsProvider(analyticsProvider)
     }

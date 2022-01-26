@@ -34,6 +34,12 @@ internal fun ExperimentUser.toJson(): String {
 
 internal fun ExperimentUser?.merge(other: ExperimentUser?, overwrite: Boolean = false): ExperimentUser {
     val user = this ?: ExperimentUser()
+    val mergedUserProperties: Map<String, Any?>? = when {
+        this?.userProperties == null -> other?.userProperties
+        other?.userProperties == null -> this.userProperties
+        overwrite -> this.userProperties + other.userProperties
+        else -> other.userProperties + this.userProperties
+    }
     return user.copyToBuilder()
         .userId(user.userId.takeOrOverwrite(other?.userId, overwrite))
         .deviceId(user.deviceId.takeOrOverwrite(other?.deviceId, overwrite))
@@ -52,7 +58,7 @@ internal fun ExperimentUser?.merge(other: ExperimentUser?, overwrite: Boolean = 
         .deviceModel(user.deviceModel.takeOrOverwrite(other?.deviceModel, overwrite))
         .carrier(user.carrier.takeOrOverwrite(other?.carrier, overwrite))
         .library(user.library.takeOrOverwrite(other?.library, overwrite))
-        .userProperties(user.userProperties.takeOrOverwrite(other?.userProperties, overwrite))
+        .userProperties(mergedUserProperties)
         .build()
 }
 

@@ -64,6 +64,20 @@ interface ExperimentClient {
     fun all(): Map<String, Variant>
 
     /**
+     * Track an exposure event for the variant associated with the
+     * flag/experiment [key] through the analytics provider.
+     *
+     * This method requires that an [ExperimentAnalyticsProvider] be configured
+     * when this client is initialized, either manually, or through the
+     * Amplitude Analytics SDK integration from set up using
+     * [Experiment.initializeWithAmplitudeAnalytics].
+     *
+     * @param key the flag/experiment key to track an exposure for.
+     * @see ExperimentAnalyticsProvider
+     */
+    fun exposure(key: String)
+
+    /**
      * Get the user for the experiment client. The user can be set by calling
      * [fetch] with a user argument, or by explicitly setting the user via
      * [setUser].

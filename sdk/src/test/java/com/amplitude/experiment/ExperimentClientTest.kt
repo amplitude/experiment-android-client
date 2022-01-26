@@ -2,7 +2,6 @@ package com.amplitude.experiment
 
 import com.amplitude.experiment.analytics.ExperimentAnalyticsEvent
 import com.amplitude.experiment.analytics.ExperimentAnalyticsProvider
-import com.amplitude.experiment.analytics.ExposureEvent
 import com.amplitude.experiment.storage.InMemoryStorage
 import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.SystemLogger

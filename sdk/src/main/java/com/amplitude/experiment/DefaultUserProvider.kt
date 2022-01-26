@@ -11,7 +11,6 @@ class DefaultUserProvider(
     context: Context,
     private val userId: String? = null,
     private val deviceId: String? = null,
-
 ) : ExperimentUserProvider {
 
     constructor(context: Context) : this (context, null, null)
