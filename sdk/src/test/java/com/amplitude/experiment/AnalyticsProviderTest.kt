@@ -73,7 +73,7 @@ class AnalyticsProviderTest {
     @Test
     fun `set and track called once each per variant`() {
         val eventBridge = TestEventBridge()
-        val coreAnalyticsProvider = SessionAnalyticsProvider(CoreAnalyticsProvider(eventBridge))
+        val coreAnalyticsProvider = SessionAnalyticsProvider(ConnectorAnalyticsProvider(eventBridge))
 
         coreAnalyticsProvider.setUserProperty(exposureEvent1)
         Assert.assertEquals(expectedSet1, eventBridge.recentEvent)
@@ -103,7 +103,7 @@ class AnalyticsProviderTest {
     @Test
     fun `unset called once per key`() {
         val eventBridge = TestEventBridge()
-        val coreAnalyticsProvider = SessionAnalyticsProvider(CoreAnalyticsProvider(eventBridge))
+        val coreAnalyticsProvider = SessionAnalyticsProvider(ConnectorAnalyticsProvider(eventBridge))
         val exposureEvent1 = ExposureEvent(ExperimentUser(), "test-key", Variant("test"), VariantSource.LOCAL_STORAGE)
         repeat(10) {
             coreAnalyticsProvider.unsetUserProperty(exposureEvent1)
@@ -115,7 +115,7 @@ class AnalyticsProviderTest {
     @Test
     fun `test property set tracked, unset, set tracked`() {
         val eventBridge = TestEventBridge()
-        val coreAnalyticsProvider = CoreAnalyticsProvider(eventBridge)
+        val coreAnalyticsProvider = ConnectorAnalyticsProvider(eventBridge)
         repeat(10) {
             // set
             coreAnalyticsProvider.setUserProperty(exposureEvent1)

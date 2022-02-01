@@ -5,7 +5,7 @@ import com.amplitude.analytics.connector.AnalyticsEvent
 import com.amplitude.experiment.analytics.ExperimentAnalyticsEvent
 import com.amplitude.experiment.analytics.ExperimentAnalyticsProvider
 
-internal class CoreAnalyticsProvider(
+internal class ConnectorAnalyticsProvider(
     private val eventBridge: EventBridge
 ): ExperimentAnalyticsProvider {
 

@@ -8,7 +8,7 @@ import com.amplitude.experiment.util.LockResult
 import java.util.concurrent.TimeoutException
 import kotlin.jvm.Throws
 
-internal class CoreUserProvider(
+internal class ConnectorUserProvider(
     context: Context,
     private val identityStore: IdentityStore,
 ): ExperimentUserProvider {
