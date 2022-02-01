@@ -1,19 +1,19 @@
 package com.amplitude.experiment
 
-import com.amplitude.core.AnalyticsConnector
-import com.amplitude.core.AnalyticsEvent
+import com.amplitude.analytics.connector.EventBridge
+import com.amplitude.analytics.connector.AnalyticsEvent
 import com.amplitude.experiment.analytics.ExperimentAnalyticsEvent
 import com.amplitude.experiment.analytics.ExperimentAnalyticsProvider
 
 internal class CoreAnalyticsProvider(
-    private val analyticsConnector: AnalyticsConnector
+    private val eventBridge: EventBridge
 ): ExperimentAnalyticsProvider {
 
     override fun track(event: ExperimentAnalyticsEvent) {
         val eventProperties: Map<String, String> = event.properties
             .filterValues { it != null }
             .mapValues { it.value!! }
-        analyticsConnector.logEvent(
+        eventBridge.logEvent(
             AnalyticsEvent(
                 eventType = event.name,
                 eventProperties = eventProperties
@@ -23,7 +23,7 @@ internal class CoreAnalyticsProvider(
 
     override fun setUserProperty(event: ExperimentAnalyticsEvent) {
         val variant = event.variant.value ?: return
-        analyticsConnector.logEvent(
+        eventBridge.logEvent(
             AnalyticsEvent(
                 "\$identify",
                 null,
@@ -37,7 +37,7 @@ internal class CoreAnalyticsProvider(
     }
 
     override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
-        analyticsConnector.logEvent(
+        eventBridge.logEvent(
             AnalyticsEvent(
                 "\$identify",
                 null,

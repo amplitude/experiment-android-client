@@ -1,14 +1,16 @@
-package com.amplitude.core
+package com.amplitude.analytics.connector
 
+import com.amplitude.analytics.connector.AnalyticsEvent
+import com.amplitude.analytics.connector.EventBridgeImpl
 import org.junit.Assert
 import org.junit.Test
 
-class AnalyticsConnectorTest {
+class EventBridgeTest {
 
     @Test
     fun `test addEventListener, logEvent, listener called`() {
         val testEvent = AnalyticsEvent("test")
-        val analyticsConnector = AnalyticsConnectorImpl()
+        val analyticsConnector = EventBridgeImpl()
         analyticsConnector.setEventReceiver {
             Assert.assertEquals(testEvent, it)
         }
@@ -20,7 +22,7 @@ class AnalyticsConnectorTest {
         val testEvent0 = AnalyticsEvent("test0")
         val testEvent1 = AnalyticsEvent("test1")
         val testEvent2 = AnalyticsEvent("test2")
-        val analyticsConnector = AnalyticsConnectorImpl()
+        val analyticsConnector = EventBridgeImpl()
         analyticsConnector.logEvent(testEvent0)
         analyticsConnector.logEvent(testEvent1)
         var eventCount = 0

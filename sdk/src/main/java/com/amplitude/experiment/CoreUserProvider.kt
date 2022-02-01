@@ -1,8 +1,8 @@
 package com.amplitude.experiment
 
 import android.content.Context
-import com.amplitude.core.Identity
-import com.amplitude.core.IdentityStore
+import com.amplitude.analytics.connector.Identity
+import com.amplitude.analytics.connector.IdentityStore
 import com.amplitude.experiment.util.Lock
 import com.amplitude.experiment.util.LockResult
 import java.util.concurrent.TimeoutException
@@ -65,4 +65,8 @@ private fun IdentityStore.getIdentityOrWait(ms: Long): Identity {
     }
     removeIdentityListener(callback)
     return result
+}
+
+private fun Identity.isUnidentified(): Boolean {
+    return deviceId.isNullOrBlank() && userId.isNullOrBlank()
 }

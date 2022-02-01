@@ -1,14 +1,14 @@
 package com.amplitude.experiment
 
-import com.amplitude.core.AnalyticsConnector
-import com.amplitude.core.AnalyticsEvent
-import com.amplitude.core.AnalyticsEventReceiver
+import com.amplitude.analytics.connector.AnalyticsEvent
+import com.amplitude.analytics.connector.AnalyticsEventReceiver
+import com.amplitude.analytics.connector.EventBridge
 import com.amplitude.experiment.analytics.ExposureEvent
 import com.amplitude.experiment.util.SessionAnalyticsProvider
 import org.junit.Assert
 import org.junit.Test
 
-class TestAnalyticsConnector : AnalyticsConnector {
+class TestEventBridge : EventBridge {
     var logEventCount = 0
     var recentEvent: AnalyticsEvent? = null
     override fun logEvent(event: AnalyticsEvent) {
@@ -72,61 +72,61 @@ class AnalyticsProviderTest {
 
     @Test
     fun `set and track called once each per variant`() {
-        val analyticsConnector = TestAnalyticsConnector()
-        val coreAnalyticsProvider = SessionAnalyticsProvider(CoreAnalyticsProvider(analyticsConnector))
+        val eventBridge = TestEventBridge()
+        val coreAnalyticsProvider = SessionAnalyticsProvider(CoreAnalyticsProvider(eventBridge))
 
         coreAnalyticsProvider.setUserProperty(exposureEvent1)
-        Assert.assertEquals(expectedSet1, analyticsConnector.recentEvent)
+        Assert.assertEquals(expectedSet1, eventBridge.recentEvent)
         coreAnalyticsProvider.track(exposureEvent1)
-        Assert.assertEquals(expectedTrack1, analyticsConnector.recentEvent)
+        Assert.assertEquals(expectedTrack1, eventBridge.recentEvent)
         repeat(10) {
             coreAnalyticsProvider.setUserProperty(exposureEvent1)
-            Assert.assertEquals(expectedTrack1, analyticsConnector.recentEvent)
+            Assert.assertEquals(expectedTrack1, eventBridge.recentEvent)
             coreAnalyticsProvider.track(exposureEvent1)
-            Assert.assertEquals(expectedTrack1, analyticsConnector.recentEvent)
+            Assert.assertEquals(expectedTrack1, eventBridge.recentEvent)
         }
-        Assert.assertEquals(analyticsConnector.logEventCount, 2)
+        Assert.assertEquals(eventBridge.logEventCount, 2)
 
         coreAnalyticsProvider.setUserProperty(exposureEvent2)
-        Assert.assertEquals(expectedSet2, analyticsConnector.recentEvent)
+        Assert.assertEquals(expectedSet2, eventBridge.recentEvent)
         coreAnalyticsProvider.track(exposureEvent2)
-        Assert.assertEquals(expectedTrack2, analyticsConnector.recentEvent)
+        Assert.assertEquals(expectedTrack2, eventBridge.recentEvent)
         repeat(10) {
             coreAnalyticsProvider.setUserProperty(exposureEvent2)
-            Assert.assertEquals(expectedTrack2, analyticsConnector.recentEvent)
+            Assert.assertEquals(expectedTrack2, eventBridge.recentEvent)
             coreAnalyticsProvider.track(exposureEvent2)
-            Assert.assertEquals(expectedTrack2, analyticsConnector.recentEvent)
+            Assert.assertEquals(expectedTrack2, eventBridge.recentEvent)
         }
-        Assert.assertEquals(analyticsConnector.logEventCount, 4)
+        Assert.assertEquals(eventBridge.logEventCount, 4)
     }
 
     @Test
     fun `unset called once per key`() {
-        val analyticsConnector = TestAnalyticsConnector()
-        val coreAnalyticsProvider = SessionAnalyticsProvider(CoreAnalyticsProvider(analyticsConnector))
+        val eventBridge = TestEventBridge()
+        val coreAnalyticsProvider = SessionAnalyticsProvider(CoreAnalyticsProvider(eventBridge))
         val exposureEvent1 = ExposureEvent(ExperimentUser(), "test-key", Variant("test"), VariantSource.LOCAL_STORAGE)
         repeat(10) {
             coreAnalyticsProvider.unsetUserProperty(exposureEvent1)
-            Assert.assertEquals(expectedUnset, analyticsConnector.recentEvent)
+            Assert.assertEquals(expectedUnset, eventBridge.recentEvent)
         }
-        Assert.assertEquals(1, analyticsConnector.logEventCount)
+        Assert.assertEquals(1, eventBridge.logEventCount)
     }
 
     @Test
     fun `test property set tracked, unset, set tracked`() {
-        val analyticsConnector = TestAnalyticsConnector()
-        val coreAnalyticsProvider = CoreAnalyticsProvider(analyticsConnector)
+        val eventBridge = TestEventBridge()
+        val coreAnalyticsProvider = CoreAnalyticsProvider(eventBridge)
         repeat(10) {
             // set
             coreAnalyticsProvider.setUserProperty(exposureEvent1)
-            Assert.assertEquals(expectedSet1, analyticsConnector.recentEvent)
+            Assert.assertEquals(expectedSet1, eventBridge.recentEvent)
             // track
             coreAnalyticsProvider.track(exposureEvent1)
-            Assert.assertEquals(expectedTrack1, analyticsConnector.recentEvent)
+            Assert.assertEquals(expectedTrack1, eventBridge.recentEvent)
             // unset
             coreAnalyticsProvider.unsetUserProperty(exposureEvent1)
-            Assert.assertEquals(expectedUnset, analyticsConnector.recentEvent)
+            Assert.assertEquals(expectedUnset, eventBridge.recentEvent)
         }
-        Assert.assertEquals(analyticsConnector.logEventCount, 30)
+        Assert.assertEquals(eventBridge.logEventCount, 30)
     }
 }

@@ -1,7 +1,7 @@
 package com.amplitude.experiment
 
 import android.app.Application
-import com.amplitude.core.AmplitudeCore
+import com.amplitude.analytics.connector.AnalyticsConnector
 import com.amplitude.experiment.storage.SharedPrefsStorage
 import com.amplitude.experiment.util.AndroidLogger
 import com.amplitude.experiment.util.Logger
@@ -82,16 +82,16 @@ object Experiment {
     ): ExperimentClient = synchronized(instances) {
         val instanceName = config.instanceName
         val instanceKey = "$instanceName.$apiKey"
-        val core = AmplitudeCore.getInstance(instanceName)
+        val connector = AnalyticsConnector.getInstance(instanceName)
         val instance = when (val instance = instances[instanceKey]) {
             null -> {
                 Logger.implementation = AndroidLogger(config.debug)
                 val configBuilder = config.copyToBuilder()
                 if (config.userProvider == null) {
-                    configBuilder.userProvider(CoreUserProvider(application, core.identityStore))
+                    configBuilder.userProvider(CoreUserProvider(application, connector.identityStore))
                 }
                 if (config.analyticsProvider == null) {
-                    configBuilder.analyticsProvider(CoreAnalyticsProvider(core.analyticsConnector))
+                    configBuilder.analyticsProvider(CoreAnalyticsProvider(connector.eventBridge))
                 }
                 val newInstance = DefaultExperimentClient(
                     apiKey,
@@ -102,7 +102,7 @@ object Experiment {
                 )
                 instances[instanceKey] = newInstance
                 if (config.automaticFetchOnAmplitudeIdentityChange) {
-                    core.identityStore.addIdentityListener {
+                    connector.identityStore.addIdentityListener {
                         newInstance.fetch()
                     }
                 }

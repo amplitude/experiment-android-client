@@ -4,11 +4,11 @@ plugins {
 }
 
 ext {
-    PUBLISH_NAME = 'Amplitude SDK Core'
-    PUBLISH_DESCRIPTION = 'Core package for Amplitide SDKs'
+    PUBLISH_NAME = 'Amplitude Analytics SDK Connector'
+    PUBLISH_DESCRIPTION = 'Connector for seamlessly integrating with the Amplitude Analytics SDK'
     PUBLISH_GROUP_ID = 'com.amplitude'
     PUBLISH_VERSION = '1.0.0'
-    PUBLISH_ARTIFACT_ID = 'amplitude-core'
+    PUBLISH_ARTIFACT_ID = 'analytics-connector'
 }
 
 apply from: "${rootDir}/gradle/publish-module.gradle"

@@ -34,7 +34,8 @@ android {
 }
 
 dependencies {
-    implementation 'com.amplitude:amplitude-core:1.0.0'
+//    implementation 'com.amplitude:analytics-connector:1.0.0'
+    implementation project(path: ':analytics-connector')
     implementation 'com.amplitude:android-sdk:2.26.1'
     implementation 'com.squareup.okhttp3:okhttp:4.9.1'
 
