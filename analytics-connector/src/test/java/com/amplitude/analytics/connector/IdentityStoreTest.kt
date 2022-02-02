@@ -1,7 +1,7 @@
-package com.amplitude.core
+package com.amplitude.analytics.connector
 
 import com.amplitude.api.Identify
-import com.amplitude.core.util.toUpdateUserPropertiesMap
+import com.amplitude.analytics.connector.util.toUpdateUserPropertiesMap
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert
@@ -85,11 +85,13 @@ class IdentityStoreTest {
     @Test
     fun `test updateUserProperties, unset`() {
         val identityStore = IdentityStoreImpl()
-        identityStore.setIdentity(Identity(userProperties = mapOf(
+        identityStore.setIdentity(
+            Identity(userProperties = mapOf(
             "key" to "value",
             "other" to true,
             "final" to 4.2
-        )))
+        ))
+        )
         identityStore.editIdentity()
             .updateUserProperties(
                 mapOf("\$unset" to mapOf("other" to "-", "final" to "-"))
@@ -104,12 +106,14 @@ class IdentityStoreTest {
     @Test
     fun `test updateUserProperties, clearAll`() {
         val identityStore = IdentityStoreImpl()
-        identityStore.setIdentity(Identity(userProperties = mapOf(
+        identityStore.setIdentity(
+            Identity(userProperties = mapOf(
             "key" to listOf(-3, -2, -1, 0),
             "key2" to mapOf("wow" to "cool"),
             "key3" to 3,
             "key4" to false,
-        )))
+        ))
+        )
         identityStore.editIdentity()
             .updateUserProperties(
                 mapOf("\$clearAll" to mapOf())

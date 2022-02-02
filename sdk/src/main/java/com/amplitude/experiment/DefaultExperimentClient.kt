@@ -281,7 +281,7 @@ internal class DefaultExperimentClient internal constructor(
     @Throws(IllegalStateException::class)
     private fun getUserMergedWithProviderOrWait(ms: Long): ExperimentUser {
         val safeUserProvider = userProvider
-        val providedUser = if (safeUserProvider is CoreUserProvider) {
+        val providedUser = if (safeUserProvider is ConnectorUserProvider) {
             try {
                 safeUserProvider.getUserOrWait(ms)
             } catch (e: TimeoutException) {

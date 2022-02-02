@@ -1,6 +1,6 @@
 @file:JvmName("JSONUtil")
 
-package com.amplitude.core.util
+package com.amplitude.analytics.connector.util
 
 import org.json.JSONArray
 import org.json.JSONObject

@@ -1,4 +1,4 @@
-package com.amplitude.core
+package com.amplitude.analytics.connector
 
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read

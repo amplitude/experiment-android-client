@@ -1,4 +1,4 @@
-package com.amplitude.core
+package com.amplitude.analytics.connector
 
 import java.util.concurrent.ArrayBlockingQueue
 
@@ -10,13 +10,13 @@ data class AnalyticsEvent(
     val userProperties: Map<String, Map<String, Any>>? = null,
 )
 
-interface AnalyticsConnector {
+interface EventBridge {
 
     fun logEvent(event: AnalyticsEvent)
     fun setEventReceiver(receiver: AnalyticsEventReceiver?)
 }
 
-internal class AnalyticsConnectorImpl : AnalyticsConnector {
+internal class EventBridgeImpl : EventBridge {
 
     private val lock = Any()
     private var receiver: AnalyticsEventReceiver? = null
