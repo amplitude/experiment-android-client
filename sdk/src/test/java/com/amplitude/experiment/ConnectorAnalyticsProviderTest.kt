@@ -18,7 +18,7 @@ class TestEventBridge : EventBridge {
     override fun setEventReceiver(receiver: AnalyticsEventReceiver?) {}
 }
 
-class AnalyticsProviderTest {
+class ConnectorAnalyticsProviderTest {
 
     private val exposureEvent1 = ExposureEvent(
         user = ExperimentUser(),
@@ -33,42 +33,40 @@ class AnalyticsProviderTest {
         source = VariantSource.LOCAL_STORAGE,
     )
     private val expectedSet1 = AnalyticsEvent(
-        eventType = "\$identify",
-        eventProperties = null,
-        userProperties = mapOf(
-            "\$set" to mapOf("[Experiment] test-key" to "test")
-        )
+        eventType = "\$exposure",
+        eventProperties = mapOf(
+            "flag_key" to "test-key",
+            "variant" to "test",
+        ),
     )
     private val expectedSet2 = AnalyticsEvent(
-        eventType = "\$identify",
-        eventProperties = null,
-        userProperties = mapOf(
-            "\$set" to mapOf("[Experiment] test-key" to "test2")
-        )
+        eventType = "\$exposure",
+        eventProperties = mapOf(
+            "flag_key" to "test-key",
+            "variant" to "test2",
+        ),
     )
     private val expectedTrack1 = AnalyticsEvent(
-        eventType = "[Experiment] Exposure",
-        eventProperties = exposureEvent1.properties
-            .filterValues { it != null }
-            .mapValues { it.value!! },
-        userProperties = null,
+        eventType = "\$exposure",
+        eventProperties = mapOf(
+            "flag_key" to "test-key",
+            "variant" to "test",
+        ),
     )
 
     private val expectedTrack2 = AnalyticsEvent(
-        eventType = "[Experiment] Exposure",
-        eventProperties = exposureEvent2.properties
-            .filterValues { it != null }
-            .mapValues { it.value!! },
-        userProperties = null,
+        eventType = "\$exposure",
+        eventProperties = mapOf(
+            "flag_key" to "test-key",
+            "variant" to "test2",
+        ),
     )
     private val expectedUnset = AnalyticsEvent(
-        eventType = "\$identify",
-        eventProperties = null,
-        userProperties = mapOf(
-            "\$unset" to mapOf("[Experiment] test-key" to "-")
-        )
+        eventType = "\$exposure",
+        eventProperties = mapOf(
+            "flag_key" to "test-key",
+        ),
     )
-
 
     @Test
     fun `set and track called once each per variant`() {
@@ -76,35 +74,39 @@ class AnalyticsProviderTest {
         val coreAnalyticsProvider = SessionAnalyticsProvider(ConnectorAnalyticsProvider(eventBridge))
 
         coreAnalyticsProvider.setUserProperty(exposureEvent1)
-        Assert.assertEquals(expectedSet1, eventBridge.recentEvent)
+        Assert.assertEquals(null, eventBridge.recentEvent)
         coreAnalyticsProvider.track(exposureEvent1)
         Assert.assertEquals(expectedTrack1, eventBridge.recentEvent)
+        Assert.assertEquals(eventBridge.logEventCount, 1)
         repeat(10) {
+            eventBridge.recentEvent = null
             coreAnalyticsProvider.setUserProperty(exposureEvent1)
-            Assert.assertEquals(expectedTrack1, eventBridge.recentEvent)
+            Assert.assertEquals(null, eventBridge.recentEvent)
             coreAnalyticsProvider.track(exposureEvent1)
-            Assert.assertEquals(expectedTrack1, eventBridge.recentEvent)
+            Assert.assertEquals(null, eventBridge.recentEvent)
         }
-        Assert.assertEquals(eventBridge.logEventCount, 2)
+        Assert.assertEquals(eventBridge.logEventCount, 1)
 
+        eventBridge.recentEvent = null
         coreAnalyticsProvider.setUserProperty(exposureEvent2)
-        Assert.assertEquals(expectedSet2, eventBridge.recentEvent)
+        Assert.assertEquals(null, eventBridge.recentEvent)
         coreAnalyticsProvider.track(exposureEvent2)
         Assert.assertEquals(expectedTrack2, eventBridge.recentEvent)
         repeat(10) {
+            eventBridge.recentEvent = null
             coreAnalyticsProvider.setUserProperty(exposureEvent2)
-            Assert.assertEquals(expectedTrack2, eventBridge.recentEvent)
+            Assert.assertEquals(null, eventBridge.recentEvent)
             coreAnalyticsProvider.track(exposureEvent2)
-            Assert.assertEquals(expectedTrack2, eventBridge.recentEvent)
+            Assert.assertEquals(null, eventBridge.recentEvent)
         }
-        Assert.assertEquals(eventBridge.logEventCount, 4)
+        Assert.assertEquals(eventBridge.logEventCount, 2)
     }
 
     @Test
     fun `unset called once per key`() {
         val eventBridge = TestEventBridge()
         val coreAnalyticsProvider = SessionAnalyticsProvider(ConnectorAnalyticsProvider(eventBridge))
-        val exposureEvent1 = ExposureEvent(ExperimentUser(), "test-key", Variant("test"), VariantSource.LOCAL_STORAGE)
+        val exposureEvent1 = ExposureEvent(ExperimentUser(), "test-key", Variant("off"), VariantSource.FALLBACK_INLINE)
         repeat(10) {
             coreAnalyticsProvider.unsetUserProperty(exposureEvent1)
             Assert.assertEquals(expectedUnset, eventBridge.recentEvent)
@@ -116,17 +118,19 @@ class AnalyticsProviderTest {
     fun `test property set tracked, unset, set tracked`() {
         val eventBridge = TestEventBridge()
         val coreAnalyticsProvider = ConnectorAnalyticsProvider(eventBridge)
+        val unsetEvent = ExposureEvent(ExperimentUser(), "test-key", Variant(), VariantSource.FALLBACK_CONFIG)
         repeat(10) {
-            // set
+            eventBridge.recentEvent = null
+            // set (not called in ConnectorUserProvider)
             coreAnalyticsProvider.setUserProperty(exposureEvent1)
-            Assert.assertEquals(expectedSet1, eventBridge.recentEvent)
+            Assert.assertEquals(null, eventBridge.recentEvent)
             // track
             coreAnalyticsProvider.track(exposureEvent1)
             Assert.assertEquals(expectedTrack1, eventBridge.recentEvent)
             // unset
-            coreAnalyticsProvider.unsetUserProperty(exposureEvent1)
+            coreAnalyticsProvider.unsetUserProperty(unsetEvent)
             Assert.assertEquals(expectedUnset, eventBridge.recentEvent)
         }
-        Assert.assertEquals(eventBridge.logEventCount, 30)
+        Assert.assertEquals(eventBridge.logEventCount, 20)
     }
 }

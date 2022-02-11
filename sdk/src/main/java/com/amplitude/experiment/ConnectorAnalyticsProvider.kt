@@ -10,43 +10,32 @@ internal class ConnectorAnalyticsProvider(
 ): ExperimentAnalyticsProvider {
 
     override fun track(event: ExperimentAnalyticsEvent) {
-        val eventProperties: Map<String, String> = event.properties
-            .filterValues { it != null }
-            .mapValues { it.value!! }
         eventBridge.logEvent(
             AnalyticsEvent(
-                eventType = event.name,
-                eventProperties = eventProperties
+                eventType = "\$exposure",
+                eventProperties = mapOf(
+                    "flag_key" to event.key,
+                    "variant" to event.variant.value
+                ).filterNull()
             )
         )
     }
 
     override fun setUserProperty(event: ExperimentAnalyticsEvent) {
-        val variant = event.variant.value ?: return
-        eventBridge.logEvent(
-            AnalyticsEvent(
-                "\$identify",
-                null,
-                mapOf(
-                    "\$set" to mapOf(
-                        event.userProperty to variant
-                    )
-                )
-            )
-        )
     }
 
     override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
         eventBridge.logEvent(
             AnalyticsEvent(
-                "\$identify",
-                null,
-                mapOf(
-                    "\$unset" to mapOf(
-                        event.userProperty to "-"
-                    )
-                )
+                eventType = "\$exposure",
+                eventProperties = mapOf(
+                    "flag_key" to event.key,
+                ).filterNull()
             )
         )
     }
+}
+
+private fun Map<String, String?>.filterNull(): Map<String, String> {
+    return filterValues { it != null }.mapValues { it.value!! }
 }
