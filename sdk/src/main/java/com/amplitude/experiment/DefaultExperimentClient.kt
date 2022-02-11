@@ -1,6 +1,5 @@
 package com.amplitude.experiment
 
-import com.amplitude.BuildConfig.VERSION_NAME
 import com.amplitude.experiment.analytics.ExposureEvent as OldExposureEvent
 import com.amplitude.experiment.storage.Storage
 import com.amplitude.experiment.util.AsyncFuture
@@ -98,10 +97,10 @@ internal class DefaultExperimentClient internal constructor(
         val event = OldExposureEvent(exposedUser, key, variant, source)
         // Track the exposure event if an analytics provider is set
         if (source.isFallback() || variant.value == null) {
-            exposureTrackingProvider?.track(ExposureEvent(key, null))
+            exposureTrackingProvider?.track(Exposure(key, null))
             analyticsProvider?.unsetUserProperty(event)
         } else {
-            exposureTrackingProvider?.track(ExposureEvent(key, variant.value))
+            exposureTrackingProvider?.track(Exposure(key, variant.value))
             analyticsProvider?.setUserProperty(event)
             analyticsProvider?.track(event)
         }

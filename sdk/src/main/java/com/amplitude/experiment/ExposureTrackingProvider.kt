@@ -1,7 +1,7 @@
 package com.amplitude.experiment
 
 /**
- * Interface for enabling tracking [ExposureEvent]s through the
+ * Interface for enabling tracking [Exposure]s through the
  * [ExperimentClient].
  *
  * If you're using the Amplitude Analytics SDK for tracking you do not need
@@ -29,8 +29,8 @@ package com.amplitude.experiment
  * Analytics.with(context).track(
  *   "$exposure",
  *   new Properties()
- *     .putValue("flag_key", exposureEvent.flagKey)
- *     .putValue("variant", exposureEvent.variant)
+ *     .putValue("flag_key", exposure.flagKey)
+ *     .putValue("variant", exposure.variant)
  * );
  * ```
  */
@@ -65,5 +65,5 @@ interface ExposureTrackingProvider {
      * );
      * ```
      */
-    fun track(exposureEvent: ExposureEvent)
+    fun track(exposure: Exposure)
 }

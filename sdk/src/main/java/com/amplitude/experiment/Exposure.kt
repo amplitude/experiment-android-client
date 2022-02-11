@@ -30,7 +30,7 @@ package com.amplitude.experiment
  * );
  * ```
  */
-data class ExposureEvent internal constructor(
+data class Exposure internal constructor(
     val flagKey: String,
     val variant: String?,
 )

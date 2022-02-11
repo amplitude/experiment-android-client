@@ -1,6 +1,6 @@
 package com.amplitude.experiment.util
 
-import com.amplitude.experiment.ExposureEvent
+import com.amplitude.experiment.Exposure
 import com.amplitude.experiment.ExposureTrackingProvider
 
 internal class SessionExposureTrackingProvider(
@@ -8,16 +8,16 @@ internal class SessionExposureTrackingProvider(
 ): ExposureTrackingProvider {
 
     private val lock = Any()
-    private val tracked = mutableSetOf<ExposureEvent>()
+    private val tracked = mutableSetOf<Exposure>()
 
-    override fun track(exposureEvent: ExposureEvent) {
+    override fun track(exposure: Exposure) {
         synchronized(lock) {
-            if (tracked.contains(exposureEvent)) {
+            if (tracked.contains(exposure)) {
                 return@track
             } else {
-                tracked.add(exposureEvent)
+                tracked.add(exposure)
             }
         }
-        trackingProvider.track(exposureEvent)
+        trackingProvider.track(exposure)
     }
 }
