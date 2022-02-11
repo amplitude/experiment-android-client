@@ -14,6 +14,7 @@ ext {
 
 apply from: "${rootDir}/gradle/publish-module.gradle"
 
+
 android {
     compileSdkVersion 30
 
@@ -24,9 +25,15 @@ android {
 
         consumerProguardFiles "consumer-rules.pro"
     }
-
     buildTypes {
+
+    }
+    buildTypes {
+        debug{
+            buildConfigField("String","VERSION_NAME","\"${defaultConfig.versionName}\"")
+        }
         release {
+            buildConfigField("String","VERSION_NAME","\"${defaultConfig.versionName}\"")
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }

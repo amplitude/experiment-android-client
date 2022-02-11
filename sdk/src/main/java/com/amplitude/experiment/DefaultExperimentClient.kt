@@ -1,12 +1,14 @@
 package com.amplitude.experiment
 
-import com.amplitude.experiment.analytics.ExposureEvent
+import com.amplitude.BuildConfig.VERSION_NAME
+import com.amplitude.experiment.analytics.ExposureEvent as OldExposureEvent
 import com.amplitude.experiment.storage.Storage
 import com.amplitude.experiment.util.AsyncFuture
 import com.amplitude.experiment.util.Backoff
 import com.amplitude.experiment.util.BackoffConfig
 import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.SessionAnalyticsProvider
+import com.amplitude.experiment.util.SessionExposureTrackingProvider
 import com.amplitude.experiment.util.backoff
 import com.amplitude.experiment.util.merge
 import com.amplitude.experiment.util.toJson
@@ -58,6 +60,10 @@ internal class DefaultExperimentClient internal constructor(
     private val analyticsProvider: SessionAnalyticsProvider? = config.analyticsProvider?.let {
         SessionAnalyticsProvider(it)
     }
+    private val exposureTrackingProvider: SessionExposureTrackingProvider? =
+        config.exposureTrackingProvider?.let {
+            SessionExposureTrackingProvider(it)
+        }
 
     override fun fetch(user: ExperimentUser?): Future<ExperimentClient> {
         this.user = user ?: this.user
@@ -76,7 +82,7 @@ internal class DefaultExperimentClient internal constructor(
         val variantAndSource = resolveVariantAndSource(key, fallback)
         val variant = variantAndSource.variant
         val source = variantAndSource.source
-        if (config.automaticClientSideExposureTracking) {
+        if (config.automaticExposureTracking) {
             exposureInternal(key, variant, source)
         }
         return variant
@@ -89,11 +95,13 @@ internal class DefaultExperimentClient internal constructor(
 
     private fun exposureInternal(key: String, variant: Variant, source: VariantSource) {
         val exposedUser = getUserMergedWithProvider()
-        val event = ExposureEvent(exposedUser, key, variant, source)
+        val event = OldExposureEvent(exposedUser, key, variant, source)
         // Track the exposure event if an analytics provider is set
         if (source.isFallback() || variant.value == null) {
+            exposureTrackingProvider?.track(ExposureEvent(key, null))
             analyticsProvider?.unsetUserProperty(event)
         } else {
+            exposureTrackingProvider?.track(ExposureEvent(key, variant.value))
             analyticsProvider?.setUserProperty(event)
             analyticsProvider?.track(event)
         }
