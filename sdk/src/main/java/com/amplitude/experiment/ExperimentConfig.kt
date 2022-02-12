@@ -31,13 +31,16 @@ class ExperimentConfig internal constructor(
     @JvmField
     val retryFetchOnFailure: Boolean = Defaults.RETRY_FETCH_ON_FAILURE,
     @JvmField
-    val automaticClientSideExposureTracking: Boolean = Defaults.AUTOMATIC_CLIENT_SIDE_EXPOSURE_TRACKING,
+    val automaticExposureTracking: Boolean = Defaults.AUTOMATIC_EXPOSURE_TRACKING,
     @JvmField
     val automaticFetchOnAmplitudeIdentityChange: Boolean = Defaults.AUTOMATIC_FETCH_ON_AMPLITUDE_IDENTITY_CHANGE,
     @JvmField
     val userProvider: ExperimentUserProvider? = Defaults.USER_PROVIDER,
     @JvmField
+    @Deprecated("Use the exposureTrackingProvider configuration")
     val analyticsProvider: ExperimentAnalyticsProvider? = Defaults.ANALYTICS_PROVIDER,
+    @JvmField
+    val exposureTrackingProvider: ExposureTrackingProvider? = Defaults.EXPOSURE_TRACKING_PROVIDER,
 ) {
 
     /**
@@ -93,7 +96,7 @@ class ExperimentConfig internal constructor(
         /**
          * true
          */
-        const val AUTOMATIC_CLIENT_SIDE_EXPOSURE_TRACKING = true
+        const val AUTOMATIC_EXPOSURE_TRACKING = true
 
         /**
          * false
@@ -108,7 +111,13 @@ class ExperimentConfig internal constructor(
         /**
          * null
          */
+        @Deprecated("Use ExposureTrackingProvider instead")
         val ANALYTICS_PROVIDER: ExperimentAnalyticsProvider? = null
+
+        /**
+         * null
+         */
+        val EXPOSURE_TRACKING_PROVIDER: ExposureTrackingProvider? = null
     }
 
     companion object {
@@ -128,10 +137,11 @@ class ExperimentConfig internal constructor(
         private var serverUrl = Defaults.SERVER_URL
         private var fetchTimeoutMillis = Defaults.FETCH_TIMEOUT_MILLIS
         private var retryFetchOnFailure = Defaults.RETRY_FETCH_ON_FAILURE
-        private var automaticClientSideExposureTracking = Defaults.AUTOMATIC_CLIENT_SIDE_EXPOSURE_TRACKING
+        private var automaticExposureTracking = Defaults.AUTOMATIC_EXPOSURE_TRACKING
         private var automaticFetchOnAmplitudeIdentityChange = Defaults.AUTOMATIC_FETCH_ON_AMPLITUDE_IDENTITY_CHANGE
         private var userProvider = Defaults.USER_PROVIDER
         private var analyticsProvider = Defaults.ANALYTICS_PROVIDER
+        private var exposureTrackingProvider = Defaults.EXPOSURE_TRACKING_PROVIDER
 
         fun debug(debug: Boolean) = apply {
             this.debug = debug
@@ -165,8 +175,8 @@ class ExperimentConfig internal constructor(
             this.retryFetchOnFailure = retryFetchOnFailure
         }
 
-        fun automaticClientSideExposureTracking(automaticClientSideExposureTracking: Boolean) = apply {
-            this.automaticClientSideExposureTracking = automaticClientSideExposureTracking
+        fun automaticExposureTracking(automaticExposureTracking: Boolean) = apply {
+            this.automaticExposureTracking = automaticExposureTracking
         }
 
         fun automaticFetchOnAmplitudeIdentityChange(automaticFetchOnAmplitudeIdentityChange: Boolean) = apply {
@@ -176,8 +186,14 @@ class ExperimentConfig internal constructor(
         fun userProvider(userProvider: ExperimentUserProvider?) = apply {
             this.userProvider = userProvider
         }
+
+        @Deprecated("Use the exposureTrackingProvider instead")
         fun analyticsProvider(analyticsProvider: ExperimentAnalyticsProvider?) = apply {
             this.analyticsProvider = analyticsProvider
+        }
+
+        fun exposureTrackingProvider(exposureTrackingProvider: ExposureTrackingProvider?) = apply {
+            this.exposureTrackingProvider = exposureTrackingProvider
         }
 
         fun build(): ExperimentConfig {
@@ -190,7 +206,7 @@ class ExperimentConfig internal constructor(
                 serverUrl = serverUrl,
                 fetchTimeoutMillis = fetchTimeoutMillis,
                 retryFetchOnFailure = retryFetchOnFailure,
-                automaticClientSideExposureTracking = automaticClientSideExposureTracking,
+                automaticExposureTracking = automaticExposureTracking,
                 automaticFetchOnAmplitudeIdentityChange = automaticFetchOnAmplitudeIdentityChange,
                 userProvider = userProvider,
                 analyticsProvider = analyticsProvider,
@@ -208,9 +224,10 @@ class ExperimentConfig internal constructor(
             .serverUrl(serverUrl)
             .fetchTimeoutMillis(fetchTimeoutMillis)
             .retryFetchOnFailure(retryFetchOnFailure)
-            .automaticClientSideExposureTracking(automaticClientSideExposureTracking)
+            .automaticExposureTracking(automaticExposureTracking)
             .automaticFetchOnAmplitudeIdentityChange((automaticFetchOnAmplitudeIdentityChange))
             .userProvider(userProvider)
             .analyticsProvider(analyticsProvider)
+            .exposureTrackingProvider(exposureTrackingProvider)
     }
 }

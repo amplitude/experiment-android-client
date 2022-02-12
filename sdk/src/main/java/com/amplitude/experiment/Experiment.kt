@@ -88,10 +88,14 @@ object Experiment {
                 Logger.implementation = AndroidLogger(config.debug)
                 val configBuilder = config.copyToBuilder()
                 if (config.userProvider == null) {
-                    configBuilder.userProvider(ConnectorUserProvider(application, connector.identityStore))
+                    configBuilder.userProvider(
+                        ConnectorUserProvider(application, connector.identityStore)
+                    )
                 }
-                if (config.analyticsProvider == null) {
-                    configBuilder.analyticsProvider(ConnectorAnalyticsProvider(connector.eventBridge))
+                if (config.exposureTrackingProvider == null) {
+                    configBuilder.exposureTrackingProvider(
+                        ConnectorExposureTrackingProvider(connector.eventBridge)
+                    )
                 }
                 val newInstance = DefaultExperimentClient(
                     apiKey,
