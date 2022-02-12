@@ -111,7 +111,7 @@ class ExperimentConfig internal constructor(
         /**
          * null
          */
-        @Deprecated("")
+        @Deprecated("Use ExposureTrackingProvider instead")
         val ANALYTICS_PROVIDER: ExperimentAnalyticsProvider? = null
 
         /**

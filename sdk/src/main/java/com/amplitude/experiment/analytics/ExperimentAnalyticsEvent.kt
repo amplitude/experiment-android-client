@@ -8,7 +8,7 @@ import com.amplitude.experiment.Variant
  * These events are sent to the implementation provided by an
  * [ExperimentAnalyticsProvider].
  */
-@Deprecated("")
+@Deprecated("Use ExposureTrackingProvider instead")
 interface ExperimentAnalyticsEvent {
     /**
      * The name of the event. Should be passed as the event tracking name to the

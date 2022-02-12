@@ -4,7 +4,7 @@ package com.amplitude.experiment.analytics
  * Provides a analytics implementation for standard experiment events generated
  * by the client (e.g. [ExposureEvent]).
  */
-@Deprecated("")
+@Deprecated("Use ExposureTrackingProvider instead")
 interface ExperimentAnalyticsProvider {
 
     /**

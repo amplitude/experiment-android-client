@@ -8,7 +8,7 @@ import com.amplitude.experiment.VariantSource
  * Event for tracking a user's exposure to a variant. This event will not count
  * towards your analytics event volume.
  */
-@Deprecated("")
+@Deprecated("Use ExposureTrackingProvider instead")
 class ExposureEvent(
     /**
      * The user exposed to the flag/experiment variant.
