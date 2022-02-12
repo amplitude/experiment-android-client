@@ -1,3 +1,13 @@
+# [1.5.0](https://github.com/amplitude/experiment-android-client/compare/1.4.0...1.5.0) (2022-02-12)
+
+
+### Features
+
+* add exposure tracking provider ([#15](https://github.com/amplitude/experiment-android-client/issues/15)) ([5a2a471](https://github.com/amplitude/experiment-android-client/commit/5a2a471ecaf72192d6ec42f32d1467532e1d9412))
+* core package for seamless integration with analytics ([#12](https://github.com/amplitude/experiment-android-client/issues/12)) ([95addb3](https://github.com/amplitude/experiment-android-client/commit/95addb37ca123f17ed8462938dcae15e56620371))
+* rename amplitude-core to analytics-connector ([#13](https://github.com/amplitude/experiment-android-client/issues/13)) ([da7a11c](https://github.com/amplitude/experiment-android-client/commit/da7a11c9f0cd6619bc1ecf7db6334339d0c54f6c))
+* use exposure-v2 in connector analytics provider ([#14](https://github.com/amplitude/experiment-android-client/issues/14)) ([afe9cfc](https://github.com/amplitude/experiment-android-client/commit/afe9cfc9c47fe63550a58be9515117e5548f15d1))
+
 # [1.4.0](https://github.com/amplitude/experiment-android-client/compare/1.3.0...1.4.0) (2021-10-18)
 
 
