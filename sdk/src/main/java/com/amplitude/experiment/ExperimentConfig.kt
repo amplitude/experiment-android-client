@@ -210,6 +210,7 @@ class ExperimentConfig internal constructor(
                 automaticFetchOnAmplitudeIdentityChange = automaticFetchOnAmplitudeIdentityChange,
                 userProvider = userProvider,
                 analyticsProvider = analyticsProvider,
+                exposureTrackingProvider = exposureTrackingProvider,
             )
         }
     }
