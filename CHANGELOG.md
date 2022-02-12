@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/amplitude/experiment-android-client/compare/1.5.0...1.5.1) (2022-02-12)
+
+
+### Bug Fixes
+
+* exposure tracking provider in config builder ([6b172d5](https://github.com/amplitude/experiment-android-client/commit/6b172d576d6ec24773fce6a6c357543628814cdb))
+
 # [1.5.0](https://github.com/amplitude/experiment-android-client/compare/1.4.0...1.5.0) (2022-02-12)
 
 
