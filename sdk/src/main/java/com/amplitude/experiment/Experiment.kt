@@ -72,27 +72,30 @@ object Experiment {
      *
      * @param application The Android Application context
      * @param apiKey  The API key. This can be found in the Experiment settings and should not be null or empty.
-     * @param config see [ExperimentConfig] for configuration options
+     * @param config See [ExperimentConfig] for configuration options. If null, uses default config.
+     * You should not have to set userProvider or exposureTrackingProvider since those will be set
+     * up for you.
      */
     @JvmStatic
     fun initializeWithAmplitudeAnalytics(
         application: Application,
         apiKey: String,
-        config: ExperimentConfig
+        config: ExperimentConfig? = null
     ): ExperimentClient = synchronized(instances) {
-        val instanceName = config.instanceName
+        val nonNullConfig = config ?: ExperimentConfig()
+        val instanceName = nonNullConfig.instanceName
         val instanceKey = "$instanceName.$apiKey"
         val connector = AnalyticsConnector.getInstance(instanceName)
         val instance = when (val instance = instances[instanceKey]) {
             null -> {
-                Logger.implementation = AndroidLogger(config.debug)
-                val configBuilder = config.copyToBuilder()
-                if (config.userProvider == null) {
+                Logger.implementation = AndroidLogger(nonNullConfig.debug)
+                val configBuilder = nonNullConfig.copyToBuilder()
+                if (nonNullConfig.userProvider == null) {
                     configBuilder.userProvider(
                         ConnectorUserProvider(application, connector.identityStore)
                     )
                 }
-                if (config.exposureTrackingProvider == null) {
+                if (nonNullConfig.exposureTrackingProvider == null) {
                     configBuilder.exposureTrackingProvider(
                         ConnectorExposureTrackingProvider(connector.eventBridge)
                     )
@@ -105,7 +108,7 @@ object Experiment {
                     executorService,
                 )
                 instances[instanceKey] = newInstance
-                if (config.automaticFetchOnAmplitudeIdentityChange) {
+                if (nonNullConfig.automaticFetchOnAmplitudeIdentityChange) {
                     connector.identityStore.addIdentityListener {
                         newInstance.fetch()
                     }
