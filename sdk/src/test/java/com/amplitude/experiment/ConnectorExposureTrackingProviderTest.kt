@@ -3,7 +3,7 @@ package com.amplitude.experiment
 import com.amplitude.analytics.connector.AnalyticsEvent
 import com.amplitude.analytics.connector.AnalyticsEventReceiver
 import com.amplitude.analytics.connector.EventBridge
-import com.amplitude.experiment.util.SessionExposureTrackingProvider
+import com.amplitude.experiment.util.UserSessionExposureTracker
 import org.junit.Assert
 import org.junit.Test
 
@@ -22,7 +22,7 @@ class ConnectorExposureTrackingProviderTest {
     @Test
     fun `track called once each per variant for different flag keys`() {
         val eventBridge = TestEventBridge()
-        val connectorExposureTrackingProvider = SessionExposureTrackingProvider(ConnectorExposureTrackingProvider(eventBridge))
+        val connectorExposureTrackingProvider = UserSessionExposureTracker(ConnectorExposureTrackingProvider(eventBridge))
 
         // Track event with variant
 
@@ -59,7 +59,7 @@ class ConnectorExposureTrackingProviderTest {
     @Test
     fun `track called once each per variant for the same flag key`() {
         val eventBridge = TestEventBridge()
-        val connectorExposureTrackingProvider = SessionExposureTrackingProvider(ConnectorExposureTrackingProvider(eventBridge))
+        val connectorExposureTrackingProvider = UserSessionExposureTracker(ConnectorExposureTrackingProvider(eventBridge))
 
         // Track event with variant
 
