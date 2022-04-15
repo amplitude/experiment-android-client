@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/amplitude/experiment-android-client/compare/1.5.1...1.6.0) (2022-04-15)
+
+
+### Features
+
+* invalidate exposure cache on user identity change ([#16](https://github.com/amplitude/experiment-android-client/issues/16)) ([386936f](https://github.com/amplitude/experiment-android-client/commit/386936f6dccdb6c932fdae3e7bd8c6164d9b53c5))
+
 ## [1.5.1](https://github.com/amplitude/experiment-android-client/compare/1.5.0...1.5.1) (2022-02-12)
 
 
