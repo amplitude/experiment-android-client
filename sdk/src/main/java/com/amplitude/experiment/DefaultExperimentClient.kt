@@ -7,7 +7,7 @@ import com.amplitude.experiment.util.Backoff
 import com.amplitude.experiment.util.BackoffConfig
 import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.SessionAnalyticsProvider
-import com.amplitude.experiment.util.SessionExposureTrackingProvider
+import com.amplitude.experiment.util.UserSessionExposureTracker
 import com.amplitude.experiment.util.backoff
 import com.amplitude.experiment.util.merge
 import com.amplitude.experiment.util.toJson
@@ -59,9 +59,9 @@ internal class DefaultExperimentClient internal constructor(
     private val analyticsProvider: SessionAnalyticsProvider? = config.analyticsProvider?.let {
         SessionAnalyticsProvider(it)
     }
-    private val exposureTrackingProvider: SessionExposureTrackingProvider? =
+    private val userSessionExposureTracker: UserSessionExposureTracker? =
         config.exposureTrackingProvider?.let {
-            SessionExposureTrackingProvider(it)
+            UserSessionExposureTracker(it)
         }
 
     override fun fetch(user: ExperimentUser?): Future<ExperimentClient> {
@@ -97,10 +97,10 @@ internal class DefaultExperimentClient internal constructor(
         val event = OldExposureEvent(exposedUser, key, variant, source)
         // Track the exposure event if an analytics provider is set
         if (source.isFallback() || variant.value == null) {
-            exposureTrackingProvider?.track(Exposure(key, null))
+            userSessionExposureTracker?.track(Exposure(key, null), exposedUser)
             analyticsProvider?.unsetUserProperty(event)
         } else {
-            exposureTrackingProvider?.track(Exposure(key, variant.value))
+            userSessionExposureTracker?.track(Exposure(key, variant.value), exposedUser)
             analyticsProvider?.setUserProperty(event)
             analyticsProvider?.track(event)
         }
