@@ -59,7 +59,7 @@ internal class DefaultExperimentClient internal constructor(
     private val analyticsProvider: SessionAnalyticsProvider? = config.analyticsProvider?.let {
         SessionAnalyticsProvider(it)
     }
-    private val exposureTrackingProvider: UserSessionExposureTracker? =
+    private val userSessionExposureTracker: UserSessionExposureTracker? =
         config.exposureTrackingProvider?.let {
             UserSessionExposureTracker(it)
         }
@@ -97,10 +97,10 @@ internal class DefaultExperimentClient internal constructor(
         val event = OldExposureEvent(exposedUser, key, variant, source)
         // Track the exposure event if an analytics provider is set
         if (source.isFallback() || variant.value == null) {
-            exposureTrackingProvider?.track(Exposure(key, null), exposedUser)
+            userSessionExposureTracker?.track(Exposure(key, null), exposedUser)
             analyticsProvider?.unsetUserProperty(event)
         } else {
-            exposureTrackingProvider?.track(Exposure(key, variant.value), exposedUser)
+            userSessionExposureTracker?.track(Exposure(key, variant.value), exposedUser)
             analyticsProvider?.setUserProperty(event)
             analyticsProvider?.track(event)
         }
