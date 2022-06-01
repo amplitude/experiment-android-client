@@ -255,7 +255,7 @@ class ExperimentClientTest {
 
 
     @Test
-    fun `test exposure event tracked on secondary variant and unset not called`() {
+    fun `test exposure event not tracked on secondary variant and unset not called`() {
         var didExposureGetUnset = false;
         val analyticsProvider = object : ExperimentAnalyticsProvider {
             override fun track(event: ExperimentAnalyticsEvent) {
@@ -272,11 +272,10 @@ class ExperimentClientTest {
             }
 
             override fun setUserProperty(event: ExperimentAnalyticsEvent) {
-                Assert.assertEquals("[Experiment] $INITIAL_KEY", event.userProperty)
-                Assert.assertEquals(initialVariants.get(INITIAL_KEY), event.variant)
+                Assert.fail("analytics provider set() should not be called.")
             }
             override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
-                Assert.fail("analytics provider unset() should not be called.")
+                Assert.assertEquals("[Experiment] $INITIAL_KEY", event.userProperty)
             }
         }
         val analyticsProviderClient = DefaultExperimentClient(
@@ -293,7 +292,7 @@ class ExperimentClientTest {
         )
         analyticsProviderClient.fetch(testUser).get()
         analyticsProviderClient.variant(INITIAL_KEY)
-        Assert.assertTrue(didExposureGetUnset);
+        Assert.assertFalse(didExposureGetUnset);
     }
 
     @Test
