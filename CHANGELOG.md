@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/amplitude/experiment-android-client/compare/1.6.0...1.6.1) (2022-06-02)
+
+
+### Bug Fixes
+
+* add secondary initial variants as a fallback ([9e81778](https://github.com/amplitude/experiment-android-client/commit/9e81778578ea4a3ca4f04dc639e6114e9cd0708f))
+
 # [1.6.0](https://github.com/amplitude/experiment-android-client/compare/1.5.1...1.6.0) (2022-04-15)
 
 
