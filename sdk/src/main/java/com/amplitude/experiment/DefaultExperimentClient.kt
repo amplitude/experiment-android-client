@@ -280,9 +280,10 @@ internal class DefaultExperimentClient internal constructor(
     }
 
     private fun getUserMergedWithProvider(): ExperimentUser {
-        return this.user?.copyToBuilder()
-            ?.library("experiment-android-client/${BuildConfig.VERSION_NAME}")
-            ?.build().merge(userProvider?.getUser())
+        val user = this.user ?: ExperimentUser()
+        return user.copyToBuilder()
+            .library("experiment-android-client/${BuildConfig.VERSION_NAME}")
+            .build().merge(userProvider?.getUser())
     }
 
     @Throws(IllegalStateException::class)
@@ -297,9 +298,10 @@ internal class DefaultExperimentClient internal constructor(
         } else {
             safeUserProvider?.getUser()
         }
-        return this.user?.copyToBuilder()
-            ?.library("experiment-android-client/${BuildConfig.VERSION_NAME}")
-            ?.build().merge(providedUser)
+        val user = this.user ?: ExperimentUser()
+        return user.copyToBuilder()
+            .library("experiment-android-client/${BuildConfig.VERSION_NAME}")
+            .build().merge(providedUser)
     }
 }
 
