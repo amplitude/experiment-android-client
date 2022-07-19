@@ -1,3 +1,10 @@
+## [1.6.2](https://github.com/amplitude/experiment-android-client/compare/1.6.1...1.6.2) (2022-07-19)
+
+
+### Bug Fixes
+
+* fix library in user merge ([40db9cb](https://github.com/amplitude/experiment-android-client/commit/40db9cb566728ee60afd24909ac975cf641ed5d9))
+
 ## [1.6.1](https://github.com/amplitude/experiment-android-client/compare/1.6.0...1.6.1) (2022-06-02)
 
 
