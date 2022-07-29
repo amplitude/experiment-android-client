@@ -67,7 +67,7 @@ internal class DefaultExperimentClient internal constructor(
     override fun fetch(user: ExperimentUser?): Future<ExperimentClient> {
         this.user = user ?: this.user
         return executorService.submit(Callable {
-            val fetchUser = getUserMergedWithProviderOrWait(1000)
+            val fetchUser = getUserMergedWithProviderOrWait(10000)
             fetchInternal(fetchUser, config.fetchTimeoutMillis, config.retryFetchOnFailure)
             this
         })
