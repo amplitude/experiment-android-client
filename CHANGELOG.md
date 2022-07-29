@@ -1,3 +1,10 @@
+## [1.6.3](https://github.com/amplitude/experiment-android-client/compare/1.6.2...1.6.3) (2022-07-29)
+
+
+### Bug Fixes
+
+* increase integration timeout from 1 to 10 seconds ([1dbb585](https://github.com/amplitude/experiment-android-client/commit/1dbb585ea7bffdc2c741a10013c4c1d3b52bbc1b))
+
 ## [1.6.2](https://github.com/amplitude/experiment-android-client/compare/1.6.1...1.6.2) (2022-07-19)
 
 
