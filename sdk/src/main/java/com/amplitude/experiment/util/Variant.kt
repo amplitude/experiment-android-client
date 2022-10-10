@@ -17,6 +17,10 @@ internal fun Variant.toJson(): String {
     return jsonObject.toString()
 }
 
+fun Variant.toJSON(): String {
+    return this.toJson()
+}
+
 internal fun String?.toVariant(): Variant? {
     return if (this == null) {
         return null

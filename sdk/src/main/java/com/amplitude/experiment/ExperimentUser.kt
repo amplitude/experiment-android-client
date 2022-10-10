@@ -159,6 +159,11 @@ class ExperimentUser internal constructor(
         fun deviceModel(deviceModel: String?) = apply { this.deviceModel = deviceModel }
         fun carrier(carrier: String?) = apply { this.carrier = carrier }
         fun library(library: String?) = apply { this.library = library }
+        fun optLibrary(library: String?) = apply {
+            if (this.library == null) {
+                this.library = library
+            }
+        }
         fun userProperties(userProperties: Map<String, Any?>?) = apply {
             this.userProperties = userProperties?.toMutableMap()
         }

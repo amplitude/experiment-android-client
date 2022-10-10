@@ -300,7 +300,7 @@ internal class DefaultExperimentClient internal constructor(
         }
         val user = this.user ?: ExperimentUser()
         return user.copyToBuilder()
-            .library("experiment-android-client/${BuildConfig.VERSION_NAME}")
+            .optLibrary("experiment-android-client/${BuildConfig.VERSION_NAME}")
             .build().merge(providedUser)
     }
 }

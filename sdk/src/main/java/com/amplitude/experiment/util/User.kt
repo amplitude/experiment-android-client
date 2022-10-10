@@ -1,8 +1,11 @@
 package com.amplitude.experiment.util
 
+import com.amplitude.analytics.connector.util.toUpdateUserPropertiesMap
 import com.amplitude.experiment.ExperimentUser
+import com.amplitude.experiment.Variant
 import org.json.JSONException
 import org.json.JSONObject
+
 
 internal fun ExperimentUser.toJson(): String {
     val json = JSONObject()
@@ -60,6 +63,29 @@ internal fun ExperimentUser?.merge(other: ExperimentUser?, overwrite: Boolean = 
         .library(user.library.takeOrOverwrite(other?.library, overwrite))
         .userProperties(mergedUserProperties)
         .build()
+}
+
+fun String?.toExperimentUser(): ExperimentUser? {
+    return if (this == null) {
+        return null
+    } else {
+        JSONObject(this).toExperimentUser()
+    }
+}
+fun JSONObject.toExperimentUser(): ExperimentUser {
+    return ExperimentUser.builder()
+        .userId(this.optionalString("userId", null))
+        .deviceId(this.optionalString("deviceId", null))
+        .library(this.optionalString("library", null))
+        .country(this.optionalString("country", null))
+        .build()
+}
+
+inline fun JSONObject.optionalString(key: String, defaultValue: String?): String? {
+    if (this.has(key)) {
+        return this.getString(key)
+    }
+    return defaultValue
 }
 
 // Private Helpers
