@@ -69,6 +69,16 @@ class ExperimentClientTest {
         Experiment.executorService,
     )
 
+    private val generalClient = DefaultExperimentClient(
+        API_KEY,
+        ExperimentConfig(
+            debug = true,
+        ),
+        OkHttpClient(),
+        InMemoryStorage(),
+        Experiment.executorService,
+    )
+
     @Test
     fun `fetch success`() {
         client.fetch(testUser).get()
@@ -148,6 +158,16 @@ class ExperimentClientTest {
     }
 
     @Test
+    fun `clear the flag config in storage`() {
+        generalClient.fetch(testUser).get()
+        val variant = generalClient.variant("sdk-ci-test")
+        Assert.assertEquals(Variant("on", "payload"), variant)
+        generalClient.clear()
+        val clearedVariants = generalClient.all()
+        Assert.assertEquals(0, clearedVariants.entries.size)
+    }
+
+    @Test
     fun `initial variants source overrides fetch`() {
         var variant = initialVariantSourceClient.variant(KEY)
         Assert.assertNotNull(variant)
@@ -174,11 +194,14 @@ class ExperimentClientTest {
         val analyticsProvider = object : ExperimentAnalyticsProvider {
             override fun track(event: ExperimentAnalyticsEvent) {
                 Assert.assertEquals("[Experiment] Exposure", event.name)
-                Assert.assertEquals(mapOf(
-                    "key" to KEY,
-                    "variant" to serverVariant.value,
-                    "source" to VariantSource.LOCAL_STORAGE.toString()
-                ), event.properties)
+                Assert.assertEquals(
+                    mapOf(
+                        "key" to KEY,
+                        "variant" to serverVariant.value,
+                        "source" to VariantSource.LOCAL_STORAGE.toString()
+                    ),
+                    event.properties
+                )
 
                 Assert.assertEquals(KEY, event.key)
                 Assert.assertEquals(serverVariant, event.variant)
@@ -186,7 +209,7 @@ class ExperimentClientTest {
             }
 
             override fun setUserProperty(event: ExperimentAnalyticsEvent) {
-                Assert.assertEquals("[Experiment] $KEY", event.userProperty);
+                Assert.assertEquals("[Experiment] $KEY", event.userProperty)
                 Assert.assertEquals(serverVariant, event.variant)
                 didUserPropertyGetSet = true
             }
@@ -213,7 +236,7 @@ class ExperimentClientTest {
 
     @Test
     fun `test exposure event not tracked on fallback variant and unset called`() {
-        var didExposureGetUnset = false;
+        var didExposureGetUnset = false
         val analyticsProvider = object : ExperimentAnalyticsProvider {
             override fun track(event: ExperimentAnalyticsEvent) {
                 Assert.fail("analytics provider track() should not be called.")
@@ -225,12 +248,12 @@ class ExperimentClientTest {
 
             override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
                 Assert.assertEquals(
-                        event.userProperty,
-                        "[Experiment] asdf"
+                    event.userProperty,
+                    "[Experiment] asdf"
                 )
                 Assert.assertEquals(
-                        event.variant,
-                        fallbackVariant
+                    event.variant,
+                    fallbackVariant
                 )
                 Assert.assertEquals(event.properties.get("source"), "fallback-config")
                 didExposureGetUnset = true
@@ -250,22 +273,21 @@ class ExperimentClientTest {
         )
         analyticsProviderClient.fetch(testUser).get()
         analyticsProviderClient.variant("asdf")
-        Assert.assertTrue(didExposureGetUnset);
+        Assert.assertTrue(didExposureGetUnset)
     }
-
 
     @Test
     fun `test exposure event not tracked on secondary variant and unset not called`() {
-        var didExposureGetUnset = false;
+        var didExposureGetUnset = false
         val analyticsProvider = object : ExperimentAnalyticsProvider {
             override fun track(event: ExperimentAnalyticsEvent) {
                 Assert.assertEquals(
-                        event.userProperty,
-                        "[Experiment] $INITIAL_KEY"
+                    event.userProperty,
+                    "[Experiment] $INITIAL_KEY"
                 )
                 Assert.assertEquals(
-                        event.variant,
-                        initialVariants.get(INITIAL_KEY)
+                    event.variant,
+                    initialVariants.get(INITIAL_KEY)
                 )
                 Assert.assertEquals(event.properties.get("source"), "secondary-initial")
                 didExposureGetUnset = true
@@ -279,20 +301,20 @@ class ExperimentClientTest {
             }
         }
         val analyticsProviderClient = DefaultExperimentClient(
-                API_KEY,
-                ExperimentConfig(
-                        debug = true,
-                        fallbackVariant = fallbackVariant,
-                        initialVariants = initialVariants,
-                        analyticsProvider = analyticsProvider,
-                ),
-                OkHttpClient(),
-                InMemoryStorage(),
-                Experiment.executorService,
+            API_KEY,
+            ExperimentConfig(
+                debug = true,
+                fallbackVariant = fallbackVariant,
+                initialVariants = initialVariants,
+                analyticsProvider = analyticsProvider,
+            ),
+            OkHttpClient(),
+            InMemoryStorage(),
+            Experiment.executorService,
         )
         analyticsProviderClient.fetch(testUser).get()
         analyticsProviderClient.variant(INITIAL_KEY)
-        Assert.assertFalse(didExposureGetUnset);
+        Assert.assertFalse(didExposureGetUnset)
     }
 
     @Test
@@ -310,8 +332,8 @@ class ExperimentClientTest {
 
             override fun setUserProperty(event: ExperimentAnalyticsEvent) {
                 Assert.assertEquals(
-                        "[Experiment] $KEY",
-                        event.userProperty
+                    "[Experiment] $KEY",
+                    event.userProperty
                 )
                 didUserPropertyGetSet = true
             }
