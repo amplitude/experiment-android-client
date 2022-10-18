@@ -64,7 +64,7 @@ interface ExperimentClient {
     fun all(): Map<String, Variant>
 
     /**
-     * Clear the flag configs in storage.
+     * Clear all variants in the cache and storage.
      *
      */
     fun clear()
