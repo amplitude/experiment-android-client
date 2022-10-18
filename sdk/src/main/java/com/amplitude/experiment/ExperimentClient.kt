@@ -64,6 +64,12 @@ interface ExperimentClient {
     fun all(): Map<String, Variant>
 
     /**
+     * Clear all variants in the cache and storage.
+     *
+     */
+    fun clear()
+
+    /**
      * Track an exposure event for the variant associated with the
      * flag/experiment [key] through the analytics provider.
      *

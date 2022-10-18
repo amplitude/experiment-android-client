@@ -152,6 +152,10 @@ internal class DefaultExperimentClient internal constructor(
         return secondaryVariants() + sourceVariants()
     }
 
+    override fun clear() {
+        this.storage.clear()
+    }
+
     override fun getUser(): ExperimentUser? {
         return user
     }
