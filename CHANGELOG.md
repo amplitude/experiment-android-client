@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/amplitude/experiment-android-client/compare/1.6.3...1.7.0) (2022-10-19)
+
+
+### Features
+
+* flag config manipulate ([#18](https://github.com/amplitude/experiment-android-client/issues/18)) ([557c04e](https://github.com/amplitude/experiment-android-client/commit/557c04e2bedceae2ef71ac66921251a00897f657))
+
 ## [1.6.3](https://github.com/amplitude/experiment-android-client/compare/1.6.2...1.6.3) (2022-07-29)
 
 
