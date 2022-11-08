@@ -65,6 +65,10 @@ internal class DefaultExperimentClient internal constructor(
             UserSessionExposureTracker(it)
         }
 
+    override fun fetch(user: ExperimentUser?): Future<ExperimentClient> {
+        return fetch(user, null)
+    }
+
     override fun fetch(user: ExperimentUser?, options: FetchOptions?): Future<ExperimentClient> {
         this.user = user ?: this.user
         return executorService.submit(Callable {
