@@ -34,6 +34,10 @@ internal class SharedPrefsStorage(
         return sharedPrefs.getString(key, null).toVariant()
     }
 
+    override fun remove(key: String) {
+        sharedPrefs.edit().remove(key).apply()
+    }
+
     override fun getAll(): Map<String, Variant> {
         val result = mutableMapOf<String, Variant>()
         for ((key, value) in sharedPrefs.all) {

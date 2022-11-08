@@ -19,11 +19,12 @@ interface ExperimentClient {
      *
      * @param user The user to fetch variants for. If null use the user stored
      *             in the client.
+     * @param options Optional fetch options, could config to fetch subset flags.
      * @returns Future that resolves when the request for variants completes.
      * @see ExperimentUser
      * @see ExperimentUserProvider
      */
-    fun fetch(user: ExperimentUser? = null): Future<ExperimentClient>
+    fun fetch(user: ExperimentUser? = null, options: FetchOptions? = null): Future<ExperimentClient>
 
     /**
      * Returns the stored variant for the provided key.
