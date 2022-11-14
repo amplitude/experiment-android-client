@@ -277,7 +277,9 @@ internal class DefaultExperimentClient internal constructor(
 
     private fun storeVariants(variants: Map<String, Variant>, options: FetchOptions?) = synchronized(storageLock) {
         val failedFlagKeys = options?.flagKeys ?.toMutableList() ?: mutableListOf()
-        storage.clear()
+        if (options?.flagKeys == null) {
+            storage.clear()
+        }
         for (entry in variants.entries) {
             storage.put(entry.key, entry.value)
             failedFlagKeys.remove(entry.key)
