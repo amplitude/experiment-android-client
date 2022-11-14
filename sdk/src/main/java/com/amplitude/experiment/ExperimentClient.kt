@@ -6,7 +6,6 @@ import java.util.concurrent.Future
  * An experiment client manages a set of experiments and flags for a given user.
  */
 interface ExperimentClient {
-
     /**
      * Assign the given user to the SDK and asynchronously fetch all variants
      * from the server. Subsequent calls may omit the user from the argument to
@@ -24,6 +23,25 @@ interface ExperimentClient {
      * @see ExperimentUserProvider
      */
     fun fetch(user: ExperimentUser? = null): Future<ExperimentClient>
+
+    /**
+     * Assign the given user to the SDK and asynchronously fetch all variants
+     * from the server. Subsequent calls may omit the user from the argument to
+     * use the user from the previous call, or set previously using [setUser].
+     *
+     * If an [ExperimentUserProvider] has been set, the argument user will
+     * be merged with the provider user, preferring user fields from the
+     * argument user and falling back on the provider for fields which are null
+     * or undefined.
+     *
+     * @param user The user to fetch variants for. If null use the user stored
+     *             in the client.
+     * @param options Optional fetch options, could config to fetch subset flags.
+     * @returns Future that resolves when the request for variants completes.
+     * @see ExperimentUser
+     * @see ExperimentUserProvider
+     */
+    fun fetch(user: ExperimentUser? = null, options: FetchOptions? = null): Future<ExperimentClient>
 
     /**
      * Returns the stored variant for the provided key.

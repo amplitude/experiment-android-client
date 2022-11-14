@@ -29,6 +29,7 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import kotlin.jvm.Throws
+import org.json.JSONArray
 
 internal class DefaultExperimentClient internal constructor(
     private val apiKey: String,
@@ -65,10 +66,14 @@ internal class DefaultExperimentClient internal constructor(
         }
 
     override fun fetch(user: ExperimentUser?): Future<ExperimentClient> {
+        return fetch(user, null)
+    }
+
+    override fun fetch(user: ExperimentUser?, options: FetchOptions?): Future<ExperimentClient> {
         this.user = user ?: this.user
         return executorService.submit(Callable {
             val fetchUser = getUserMergedWithProviderOrWait(10000)
-            fetchInternal(fetchUser, config.fetchTimeoutMillis, config.retryFetchOnFailure)
+            fetchInternal(fetchUser, config.fetchTimeoutMillis, config.retryFetchOnFailure, options)
             this
         })
     }
@@ -174,16 +179,16 @@ internal class DefaultExperimentClient internal constructor(
     }
 
     @Throws
-    private fun fetchInternal(user: ExperimentUser, timeoutMillis: Long, retry: Boolean) {
+    private fun fetchInternal(user: ExperimentUser, timeoutMillis: Long, retry: Boolean, options: FetchOptions?) {
         if (retry) {
             stopRetries()
         }
         try {
-            val variants = doFetch(user, timeoutMillis).get()
-            storeVariants(variants)
+            val variants = doFetch(user, timeoutMillis, options).get()
+            storeVariants(variants, options)
         } catch (e: Exception) {
             if (retry) {
-                startRetries(user)
+                startRetries(user, options)
             }
             throw e
         }
@@ -192,6 +197,7 @@ internal class DefaultExperimentClient internal constructor(
     private fun doFetch(
         user: ExperimentUser,
         timeoutMillis: Long,
+        options: FetchOptions?
     ): Future<Map<String, Variant>> {
         if (user.userId == null && user.deviceId == null) {
             Logger.w("user id and device id are null; amplitude may not resolve identity")
@@ -205,12 +211,20 @@ internal class DefaultExperimentClient internal constructor(
         val url = serverUrl.newBuilder()
             .addPathSegments("sdk/vardata")
             .build()
-        val request = Request.Builder()
+        val builder = Request.Builder()
             .get()
             .url(url)
             .addHeader("Authorization", "Api-Key $apiKey")
             .addHeader("X-Amp-Exp-User", userBase64)
-            .build()
+        if (!options?.flagKeys.isNullOrEmpty()) {
+            val flagKeysBase64 = JSONArray(options?.flagKeys)
+                .toString()
+                .toByteArray(Charsets.UTF_8)
+                .toByteString()
+                .base64()
+            builder.addHeader("X-Amp-Exp-Flag-Keys", flagKeysBase64)
+        }
+        val request = builder.build()
         val call = httpClient.newCall(request)
         call.timeout().timeout(timeoutMillis, TimeUnit.MILLISECONDS)
         val future = AsyncFuture<Map<String, Variant>>(call)
@@ -233,10 +247,10 @@ internal class DefaultExperimentClient internal constructor(
         return future
     }
 
-    private fun startRetries(user: ExperimentUser) = synchronized(backoffLock) {
+    private fun startRetries(user: ExperimentUser, options: FetchOptions?) = synchronized(backoffLock) {
         backoff?.cancel()
         backoff = executorService.backoff(backoffConfig) {
-            fetchInternal(user, fetchBackoffTimeoutMillis, false)
+            fetchInternal(user, fetchBackoffTimeoutMillis, false, options)
         }
     }
 
@@ -261,10 +275,17 @@ internal class DefaultExperimentClient internal constructor(
         return variants
     }
 
-    private fun storeVariants(variants: Map<String, Variant>) = synchronized(storageLock) {
-        storage.clear()
+    private fun storeVariants(variants: Map<String, Variant>, options: FetchOptions?) = synchronized(storageLock) {
+        val failedFlagKeys = options?.flagKeys ?.toMutableList() ?: mutableListOf()
+        if (options?.flagKeys == null) {
+            storage.clear()
+        }
         for (entry in variants.entries) {
             storage.put(entry.key, entry.value)
+            failedFlagKeys.remove(entry.key)
+        }
+        for (key in failedFlagKeys) {
+            storage.remove(key)
         }
         Logger.d("Stored variants: $variants")
     }

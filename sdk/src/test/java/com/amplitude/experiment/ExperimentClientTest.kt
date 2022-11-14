@@ -188,6 +188,30 @@ class ExperimentClientTest {
     }
 
     @Test
+    fun `test fetch user with flag`() {
+        client.fetch(testUser, FetchOptions(flagKeys = listOf(KEY))).get()
+        val variant = client.variant(KEY)
+        Assert.assertNotNull(variant)
+        Assert.assertEquals(serverVariant, variant)
+    }
+
+    @Test
+    fun `test fetch user with invalid flags`() {
+        val invalidKey = "invalid"
+        client.fetch(testUser, FetchOptions(flagKeys = listOf(KEY, INITIAL_KEY, invalidKey))).get()
+        val variant = client.variant(KEY)
+        Assert.assertNotNull(variant)
+        Assert.assertEquals(serverVariant, variant)
+
+        val firstFallback = Variant("first")
+        val initialVariant = client.variant(INITIAL_KEY, firstFallback)
+        Assert.assertEquals(firstFallback, initialVariant)
+
+        val invalidVariant = client.variant(invalidKey)
+        Assert.assertEquals(fallbackVariant, invalidVariant)
+    }
+
+    @Test
     fun `test exposure event through analytics provider when variant called`() {
         var didExposureGetTracked = false
         var didUserPropertyGetSet = false

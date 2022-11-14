@@ -15,6 +15,10 @@ internal class InMemoryStorage : Storage {
         return data[key]
     }
 
+    override fun remove(key: String) {
+        data.remove(key)
+    }
+
     override fun getAll(): Map<String, Variant> {
         return data.toMap()
     }
