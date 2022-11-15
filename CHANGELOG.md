@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/amplitude/experiment-android-client/compare/1.7.0...1.8.0) (2022-11-15)
+
+
+### Features
+
+* support subset flags fetch ([#19](https://github.com/amplitude/experiment-android-client/issues/19)) ([efb987c](https://github.com/amplitude/experiment-android-client/commit/efb987c0dd945ca656374beabb2c8fdc61bc2fbc))
+
 # [1.7.0](https://github.com/amplitude/experiment-android-client/compare/1.6.3...1.7.0) (2022-10-19)
 
 
