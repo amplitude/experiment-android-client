@@ -20,25 +20,38 @@ internal class SharedPrefsStorage(
 ) : Storage {
 
     private val sharedPrefs: SharedPreferences
+    private val map: MutableMap<String, Variant> = mutableMapOf()
 
     init {
         val sharedPrefsKey = "$SHARED_PREFS_PREFIX-$instanceName-${apiKey.takeLast(6)}"
         sharedPrefs = appContext.getSharedPreferences(sharedPrefsKey, Context.MODE_PRIVATE)
+        load()
     }
 
-    override fun put(key: String, variant: Variant) {
+    override fun put(key: String, variant: Variant) = synchronized(this) {
+        map[key] = variant
         sharedPrefs.edit().putString(key, variant.toJson()).apply()
     }
 
-    override fun get(key: String): Variant? {
-        return sharedPrefs.getString(key, null).toVariant()
+    override fun get(key: String): Variant? = synchronized(this) {
+        return map[key]
     }
 
-    override fun remove(key: String) {
+    override fun remove(key: String) = synchronized(this) {
+        map.remove(key)
         sharedPrefs.edit().remove(key).apply()
     }
 
-    override fun getAll(): Map<String, Variant> {
+    override fun getAll(): Map<String, Variant> = synchronized(this) {
+        return linkedMapOf<String, Variant>().apply { putAll(map) }
+    }
+
+    override fun clear() = synchronized(this) {
+        map.clear()
+        sharedPrefs.edit().clear().apply()
+    }
+
+    private fun load() = synchronized(this) {
         val result = mutableMapOf<String, Variant>()
         for ((key, value) in sharedPrefs.all) {
             if (value is String) {
@@ -50,10 +63,7 @@ internal class SharedPrefsStorage(
                 }
             }
         }
-        return result
-    }
-
-    override fun clear() {
-        sharedPrefs.edit().clear().apply()
+        map.clear()
+        map.putAll(result)
     }
 }

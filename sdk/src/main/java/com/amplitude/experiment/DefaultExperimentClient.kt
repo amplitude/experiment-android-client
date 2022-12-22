@@ -51,7 +51,6 @@ internal class DefaultExperimentClient internal constructor(
         scalar = 1.5f,
     )
 
-    private val storageLock = Any()
     private val serverUrl: HttpUrl = config.serverUrl.toHttpUrl()
 
     @Deprecated("moved to experiment config")
@@ -275,7 +274,7 @@ internal class DefaultExperimentClient internal constructor(
         return variants
     }
 
-    private fun storeVariants(variants: Map<String, Variant>, options: FetchOptions?) = synchronized(storageLock) {
+    private fun storeVariants(variants: Map<String, Variant>, options: FetchOptions?) = synchronized(storage) {
         val failedFlagKeys = options?.flagKeys ?.toMutableList() ?: mutableListOf()
         if (options?.flagKeys == null) {
             storage.clear()
