@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/amplitude/experiment-android-client/compare/1.8.0...1.8.1) (2022-12-23)
+
+
+### Bug Fixes
+
+* use in memory cache for variant access from storage ([#22](https://github.com/amplitude/experiment-android-client/issues/22)) ([cb02a2c](https://github.com/amplitude/experiment-android-client/commit/cb02a2cd4b42588faf866891496af4188726ef34))
+
 # [1.8.0](https://github.com/amplitude/experiment-android-client/compare/1.7.0...1.8.0) (2022-11-15)
 
 
