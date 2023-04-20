@@ -5,6 +5,7 @@ import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.SystemLogger
 import com.amplitude.experiment.util.merge
 import com.amplitude.experiment.util.toJson
+import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert
 import org.junit.Test
@@ -34,6 +35,8 @@ class ExperimentUserTest {
             .deviceModel("deviceModel")
             .carrier("carrier")
             .userProperty("userPropertyKey", "value")
+            .groups(mapOf("groupType" to setOf("groupName")))
+            .groupProperties(mapOf("groupType" to mapOf("groupName" to mapOf("k" to "v"))))
             .build()
 
         // Ordering matters here, based on toJson() extension function
@@ -56,7 +59,20 @@ class ExperimentUserTest {
         val expectedUserProperties = JSONObject()
         expectedUserProperties.put("userPropertyKey", "value")
         expected.put("user_properties", expectedUserProperties)
-
+        expected.put("groups", JSONObject().apply {
+            put("groupType", JSONArray().apply { put("groupName") })
+        })
+        expected.put("group_properties", JSONObject().apply {
+            put("groupType", JSONObject().apply {
+                put("groupName", JSONObject().apply {
+                    put("k", "v")
+                })
+            })
+        })
+        val expectedString = expected.toString()
+        val actualString = user.toJson()
+        println(expectedString)
+        println(actualString)
         Assert.assertEquals(expected.toString(), user.toJson())
     }
 
@@ -78,6 +94,22 @@ class ExperimentUserTest {
             .deviceModel("deviceModel")
             .carrier("carrier")
             .userProperty("userPropertyKey", "value")
+            .groups(mapOf(
+                "gt2" to setOf("gn2"),
+                "gt3" to setOf("gn3"),
+                "gt4" to setOf("gn4"),
+            ))
+            .groupProperties(mapOf(
+                "gt1" to mapOf(
+                    "gn1" to mapOf(
+                        "gp1" to "v2",
+                        "gp3" to "v1"
+                    ),
+                    "gn3" to mapOf(
+                        "gp1" to "v1",
+                    ),
+                ),
+            ))
             .build()
 
         val user2 = builder()
@@ -85,9 +117,30 @@ class ExperimentUserTest {
             .version("newVersion")
             .userProperty("userPropertyKey2", "value2")
             .userProperty("userPropertyKey", "value2")
+            .groups(mapOf(
+                "gt1" to setOf("gn1"),
+                "gt2" to setOf("difference"),
+                "gt4" to setOf("gn4"),
+            ))
+            .groupProperties(mapOf(
+                "gt1" to mapOf(
+                    "gn1" to mapOf(
+                        "gp1" to "v1",
+                        "gp2" to "v1"
+                    ),
+                    "gn2" to mapOf(
+                        "gp1" to "v1",
+                    ),
+                ),
+                "gt2" to mapOf(
+                    "gn1" to mapOf(
+                        "gp1" to "v1",
+                    ),
+                ),
+            ))
             .build()
 
-        val user = user2.merge(user1, false)
+        val user = user2.merge(user1)
 
         val expected = builder()
             .userId("user_id")
@@ -108,6 +161,33 @@ class ExperimentUserTest {
             .carrier("carrier")
             .userProperty("userPropertyKey", "value2")
             .userProperty("userPropertyKey2", "value2")
+            .groups(mapOf(
+                "gt1" to setOf("gn1"),
+                "gt2" to setOf("difference"),
+                "gt3" to setOf("gn3"),
+                "gt4" to setOf("gn4"),
+            ))
+            .groupProperties(mapOf(
+                "gt1" to mapOf(
+                    "gn1" to mapOf(
+                        "gp1" to "v1",
+                        "gp2" to "v1",
+                        "gp3" to "v1"
+                    ),
+                    "gn2" to mapOf(
+                        "gp1" to "v1",
+                    ),
+                    "gn3" to mapOf(
+                        "gp1" to "v1",
+                    ),
+                ),
+                "gt2" to mapOf(
+                    "gn1" to mapOf(
+                        "gp1" to "v1",
+                    ),
+                ),
+            ))
+
             .build()
 
         Assert.assertEquals(expected, user)
