@@ -104,7 +104,6 @@ private fun <T> Map<String, T>?.mergeMapValues(other: Map<String, T>?, merger: (
     }
 }
 
-
 private fun <T> T?.merge(other: T?, merger: (T, T) -> T = { t, o -> t }): T? {
     return when {
         this == null -> other
