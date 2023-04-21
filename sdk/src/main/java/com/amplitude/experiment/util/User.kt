@@ -26,49 +26,88 @@ internal fun ExperimentUser.toJson(): String {
             "user_properties",
             JSONObject(userProperties?.toMutableMap() ?: mutableMapOf<String, Any?>())
         )
+        json.put(
+            "groups",
+            groups?.toJSONObject()
+        )
+        json.put(
+            "group_properties",
+            groupProperties?.toJSONObject()
+        )
     } catch (e: JSONException) {
         Logger.w("Error converting SkylabUser to JSONObject", e)
     }
     return json.toString()
 }
 
-internal fun ExperimentUser?.merge(other: ExperimentUser?, overwrite: Boolean = false): ExperimentUser {
+internal fun ExperimentUser?.merge(other: ExperimentUser?): ExperimentUser {
     val user = this ?: ExperimentUser()
-    val mergedUserProperties: Map<String, Any?>? = when {
-        this?.userProperties == null -> other?.userProperties
-        other?.userProperties == null -> this.userProperties
-        overwrite -> this.userProperties + other.userProperties
-        else -> other.userProperties + this.userProperties
-    }
+    val mergedUserProperties = this?.userProperties.merge(other?.userProperties) { t, o -> o + t}
+    val mergedGroups = this?.groups.merge(other?.groups) { t, o -> o + t }
+    val mergedGroupProperties: Map<String, Map<String, Map<String, Any?>>>? =
+        this?.groupProperties.mergeMapValues(other?.groupProperties) { thisGroupName, otherGroupName ->
+            thisGroupName.mergeMapValues(otherGroupName) { thisGroupProperties, otherGroupProperties ->
+                otherGroupProperties + thisGroupProperties
+            }
+        }
+
     return user.copyToBuilder()
-        .userId(user.userId.takeOrOverwrite(other?.userId, overwrite))
-        .deviceId(user.deviceId.takeOrOverwrite(other?.deviceId, overwrite))
-        .country(user.country.takeOrOverwrite(other?.country, overwrite))
-        .region(user.region.takeOrOverwrite(other?.region, overwrite))
-        .dma(user.dma.takeOrOverwrite(other?.dma, overwrite))
-        .city(user.city.takeOrOverwrite(other?.city, overwrite))
-        .language(user.language.takeOrOverwrite(other?.language, overwrite))
-        .platform(user.platform.takeOrOverwrite(other?.platform, overwrite))
-        .version(user.version.takeOrOverwrite(other?.version, overwrite))
-        .os(user.os.takeOrOverwrite(other?.os, overwrite))
+        .userId(user.userId.merge(other?.userId))
+        .deviceId(user.deviceId.merge(other?.deviceId))
+        .country(user.country.merge(other?.country))
+        .region(user.region.merge(other?.region))
+        .dma(user.dma.merge(other?.dma))
+        .city(user.city.merge(other?.city))
+        .language(user.language.merge(other?.language))
+        .platform(user.platform.merge(other?.platform))
+        .version(user.version.merge(other?.version))
+        .os(user.os.merge(other?.os))
         .deviceManufacturer(
-            user.deviceManufacturer.takeOrOverwrite(other?.deviceManufacturer, overwrite)
+            user.deviceManufacturer.merge(other?.deviceManufacturer)
         )
-        .deviceBrand(user.deviceBrand.takeOrOverwrite(other?.deviceBrand, overwrite))
-        .deviceModel(user.deviceModel.takeOrOverwrite(other?.deviceModel, overwrite))
-        .carrier(user.carrier.takeOrOverwrite(other?.carrier, overwrite))
-        .library(user.library.takeOrOverwrite(other?.library, overwrite))
+        .deviceBrand(user.deviceBrand.merge(other?.deviceBrand))
+        .deviceModel(user.deviceModel.merge(other?.deviceModel))
+        .carrier(user.carrier.merge(other?.carrier))
+        .library(user.library.merge(other?.library))
         .userProperties(mergedUserProperties)
+        .groups(mergedGroups)
+        .groupProperties(mergedGroupProperties)
         .build()
 }
 
 // Private Helpers
 
-private fun <T> T?.takeOrOverwrite(other: T?, overwrite: Boolean): T? {
+private fun <T> Map<String, T>?.mergeMapValues(other: Map<String, T>?, merger: (T, T) -> T?): Map<String, T>? {
     return when {
         this == null -> other
         other == null -> this
-        overwrite -> other
-        else -> this
+        else -> {
+            val result = mutableMapOf<String, T>()
+            for ((thisKey, thisValue) in this.entries) {
+                val otherValue = other[thisKey]
+                val value = if (otherValue != null) {
+                    merger(thisValue, otherValue)
+                } else {
+                    thisValue
+                }
+                if (value != null) {
+                    result[thisKey] = value
+                }
+            }
+            for ((otherKey, otherValue) in other.entries) {
+                if (!result.contains(otherKey)) {
+                    result[otherKey] = otherValue
+                }
+            }
+            result
+        }
+    }
+}
+
+private fun <T> T?.merge(other: T?, merger: (T, T) -> T = { t, o -> t }): T? {
+    return when {
+        this == null -> other
+        other == null -> this
+        else -> merger(this, other)
     }
 }

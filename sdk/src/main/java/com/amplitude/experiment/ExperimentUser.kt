@@ -36,6 +36,8 @@ class ExperimentUser internal constructor(
     @JvmField val carrier: String? = null,
     @JvmField val library: String? = null,
     @JvmField val userProperties: Map<String, Any?>? = null,
+    @JvmField val groups: Map<String, Set<String>>? = null,
+    @JvmField val groupProperties: Map<String, Map<String, Map<String, Any?>>>? = null,
 ) {
 
     /**
@@ -61,6 +63,8 @@ class ExperimentUser internal constructor(
             .carrier(this.carrier)
             .library(this.library)
             .userProperties(this.userProperties)
+            .groups(this.groups)
+            .groupProperties(this.groupProperties)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -85,6 +89,8 @@ class ExperimentUser internal constructor(
         if (carrier != other.carrier) return false
         if (library != other.library) return false
         if (userProperties != other.userProperties) return false
+        if (groups != other.groups) return false
+        if (groupProperties != other.groupProperties) return false
 
         return true
     }
@@ -106,6 +112,8 @@ class ExperimentUser internal constructor(
         result = 31 * result + (carrier?.hashCode() ?: 0)
         result = 31 * result + (library?.hashCode() ?: 0)
         result = 31 * result + (userProperties?.hashCode() ?: 0)
+        result = 31 * result + (groups?.hashCode() ?: 0)
+        result = 31 * result + (groupProperties?.hashCode() ?: 0)
         return result
     }
 
@@ -114,7 +122,8 @@ class ExperimentUser internal constructor(
             "region=$region, dma=$dma, city=$city, language=$language, platform=$platform, " +
             "version=$version, os=$os, deviceManufacturer=$deviceManufacturer, " +
             "deviceBrand=$deviceBrand, deviceModel=$deviceModel, carrier=$carrier, " +
-            "library=$library, userProperties=$userProperties)"
+            "library=$library, userProperties=$userProperties, groups=$groups, " +
+            "groupProperties=$groupProperties)"
     }
 
     companion object {
@@ -141,6 +150,8 @@ class ExperimentUser internal constructor(
         private var carrier: String? = null
         private var library: String? = null
         private var userProperties: MutableMap<String, Any?>? = null
+        private var groups: MutableMap<String, Set<String>>? = null
+        private var groupProperties: MutableMap<String, MutableMap<String, MutableMap<String, Any?>>>? = null
 
         fun userId(userId: String?) = apply { this.userId = userId }
         fun deviceId(deviceId: String?) = apply { this.deviceId = deviceId }
@@ -167,6 +178,25 @@ class ExperimentUser internal constructor(
                 this[key] = value
             }
         }
+        fun groups(groups: Map<String, Set<String>>?) = apply {
+            this.groups = groups?.toMutableMap()
+        }
+        fun group(groupType: String, groupName: String) = apply {
+            this.groups = (this.groups ?: mutableMapOf()).apply { put(groupType, setOf(groupName)) }
+        }
+        fun groupProperties(groupProperties: Map<String, Map<String, Map<String, Any?>>>?) = apply {
+            this.groupProperties = groupProperties?.mapValues { groupTypes ->
+                groupTypes.value.toMutableMap().mapValues { groupNames ->
+                    groupNames.value.toMutableMap()
+                }.toMutableMap()
+            }?.toMutableMap()
+        }
+        fun groupProperty(groupType: String, groupName: String, key: String, value: Any?) = apply {
+            this.groupProperties = (this.groupProperties ?: mutableMapOf()).apply {
+                getOrPut(groupType) { mutableMapOf(groupName to mutableMapOf()) }
+                    .getOrPut(groupName) { mutableMapOf(key to value) }[key] = value
+            }
+        }
 
         fun build(): ExperimentUser {
             return ExperimentUser(
@@ -186,6 +216,8 @@ class ExperimentUser internal constructor(
                 carrier = carrier,
                 library = library,
                 userProperties = userProperties,
+                groups = groups,
+                groupProperties = groupProperties,
             )
         }
     }

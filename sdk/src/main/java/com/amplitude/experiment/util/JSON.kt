@@ -1,23 +1,8 @@
-@file:JvmName("JSONUtil")
-
-package com.amplitude.analytics.connector.util
+package com.amplitude.experiment.util
 
 import org.json.JSONArray
 import org.json.JSONObject
 import java.math.BigDecimal
-
-fun JSONObject.toUpdateUserPropertiesMap(): Map<String, Map<String, Any?>> {
-    val map = mutableMapOf<String, Map<String, Any?>>()
-    for (key in this.keys()) {
-        map[key] = when (val value = this[key]) {
-            is JSONObject -> value.toMap()
-            is JSONArray -> mapOf()
-            JSONObject.NULL -> mapOf()
-            else -> mapOf()
-        }
-    }
-    return map
-}
 
 fun Map<*, *>?.toJSONObject(): JSONObject? {
     if (this == null) {
