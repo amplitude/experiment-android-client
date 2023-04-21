@@ -1,6 +1,5 @@
 package com.amplitude.experiment.util
 
-import com.amplitude.analytics.connector.util.toJSONObject
 import com.amplitude.experiment.ExperimentUser
 import org.json.JSONException
 import org.json.JSONObject

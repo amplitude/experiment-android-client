@@ -35,9 +35,12 @@ class ExperimentUserTest {
             .deviceModel("deviceModel")
             .carrier("carrier")
             .userProperty("userPropertyKey", "value")
-            .groups(mapOf("groupType" to setOf("groupName")))
+//            .groups(mapOf("groupType" to setOf("groupName")))
+            .group("groupType", "groupName")
             .groupProperties(mapOf("groupType" to mapOf("groupName" to mapOf("k" to "v"))))
             .build()
+        val u2 = ExperimentUser.builder().library("asdf").build().merge(user)
+        println(u2.toJson())
 
         // Ordering matters here, based on toJson() extension function
         val expected = JSONObject()
@@ -194,5 +197,40 @@ class ExperimentUserTest {
 
         val user3 = user1.merge(null)
         Assert.assertEquals(user1, user3)
+    }
+
+    @Test
+    fun `test group and group property builder`() {
+        val user = ExperimentUser.builder().apply {
+            group("gt1", "gn1")
+            group("gt2", "gn2")
+            groupProperty("gt1", "gn1", "k", "v")
+            groupProperty("gt1", "gn1", "k2", "v2")
+            groupProperty("gt1", "gn2", "k", "v")
+            groupProperty("gt2", "gn1", "k", "v")
+        }.build()
+
+        val expected = ExperimentUser.builder().apply {
+            groups(mapOf("gt1" to setOf("gn1"), "gt2" to setOf("gn2")))
+            groupProperties(mapOf(
+                "gt1" to mapOf(
+                    "gn1" to mapOf(
+                        "k" to "v",
+                        "k2" to "v2",
+                    ),
+                    "gn2" to mapOf(
+                        "k" to "v"
+                    )
+                ),
+                "gt2" to mapOf(
+                    "gn1" to mapOf(
+                        "k" to "v"
+                    )
+                )
+            ))
+        }.build()
+        println(expected)
+        println(user)
+        Assert.assertEquals(expected, user)
     }
 }
