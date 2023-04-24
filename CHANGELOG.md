@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/amplitude/experiment-android-client/compare/1.8.1...1.9.0) (2023-04-24)
+
+
+### Features
+
+* add support for groups on user object ([#23](https://github.com/amplitude/experiment-android-client/issues/23)) ([c94b68a](https://github.com/amplitude/experiment-android-client/commit/c94b68a622aedaea48dc7340ab512f6d40d83d39))
+
 ## [1.8.1](https://github.com/amplitude/experiment-android-client/compare/1.8.0...1.8.1) (2022-12-23)
 
 
