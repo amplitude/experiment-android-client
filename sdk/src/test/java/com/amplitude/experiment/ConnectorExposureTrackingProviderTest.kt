@@ -26,7 +26,7 @@ class ConnectorExposureTrackingProviderTest {
 
         // Track event with variant
 
-        val exposureEvent1 = Exposure("test-key-1", "test")
+        val exposureEvent1 = Exposure("test-key-1", "test", null)
         val expectedTrack1 = AnalyticsEvent("\$exposure", mapOf("flag_key" to "test-key-1", "variant" to "test"))
 
         connectorExposureTrackingProvider.track(exposureEvent1)
@@ -41,7 +41,7 @@ class ConnectorExposureTrackingProviderTest {
 
         // Track new flag key event with same variant
 
-        val exposureEvent2 = Exposure("test-key-2", "test")
+        val exposureEvent2 = Exposure("test-key-2", "test", null)
         val expectedTrack2 = AnalyticsEvent("\$exposure", mapOf("flag_key" to "test-key-2", "variant" to "test"))
 
         eventBridge.recentEvent = null
@@ -63,7 +63,7 @@ class ConnectorExposureTrackingProviderTest {
 
         // Track event with variant
 
-        val exposureEvent1 = Exposure("test-key", "test")
+        val exposureEvent1 = Exposure("test-key", "test", null)
         val expectedTrack1 = AnalyticsEvent("\$exposure", mapOf("flag_key" to "test-key", "variant" to "test"))
 
         connectorExposureTrackingProvider.track(exposureEvent1)
@@ -78,7 +78,7 @@ class ConnectorExposureTrackingProviderTest {
 
         // Track same flag key event with new variant
 
-        val exposureEvent2 = Exposure("test-key", "test2")
+        val exposureEvent2 = Exposure("test-key", "test2", null)
         val expectedTrack2 = AnalyticsEvent("\$exposure", mapOf("flag_key" to "test-key", "variant" to "test2"))
 
         eventBridge.recentEvent = null
@@ -94,7 +94,7 @@ class ConnectorExposureTrackingProviderTest {
 
         // Track event with no variant
 
-        val exposureEvent3 = Exposure("test-key", null)
+        val exposureEvent3 = Exposure("test-key", null, null)
         val expectedTrack3 = AnalyticsEvent("\$exposure", mapOf("flag_key" to "test-key"))
 
         eventBridge.recentEvent = null
