@@ -49,7 +49,8 @@ interface ExposureTrackingProvider {
      *   "event_type": "$exposure",
      *   "event_properties": {
      *     "flag_key": "<flagKey>",
-     *     "variant": "<variant>"
+     *     "variant": "<variant>",
+     *     "experiment_key": "<expKey>",
      *   }
      * }
      * ```
@@ -62,6 +63,7 @@ interface ExposureTrackingProvider {
      *   new Properties()
      *     .putValue("flag_key", exposureEvent.flagKey)
      *     .putValue("variant", exposureEvent.variant)
+     *     .putValue("experiment_key", exposureEvent.experimentKey)
      * );
      * ```
      */

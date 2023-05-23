@@ -11,6 +11,9 @@ internal fun Variant.toJson(): String {
         if (payload != null) {
             jsonObject.put("payload", payload)
         }
+        if (expKey != null) {
+            jsonObject.put("expKey", expKey)
+        }
     } catch (e: JSONException) {
         Logger.w("Error converting Variant to json string", e)
     }
@@ -38,7 +41,11 @@ internal fun JSONObject?.toVariant(): Variant? {
             has("payload") -> get("payload")
             else -> null
         }
-        Variant(value, payload)
+        val expKey = when {
+            has("expKey") -> getString("expKey")
+            else -> null
+        }
+        Variant(value, payload, expKey)
     } catch (e: JSONException) {
         Logger.w("Error parsing Variant from json string $this")
         return null

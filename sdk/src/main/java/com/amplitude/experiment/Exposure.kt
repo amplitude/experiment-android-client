@@ -33,4 +33,5 @@ package com.amplitude.experiment
 data class Exposure internal constructor(
     val flagKey: String,
     val variant: String?,
+    val experimentKey: String?,
 )
