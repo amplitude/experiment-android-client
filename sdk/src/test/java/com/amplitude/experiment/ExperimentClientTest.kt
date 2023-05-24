@@ -380,4 +380,31 @@ class ExperimentClientTest {
         Assert.assertTrue(didExposureGetTracked)
         Assert.assertTrue(didUserPropertyGetSet)
     }
+
+    @Test
+    fun `test exposure through exposure tracking provider has experiment key from variant`() {
+        var didTrack = false
+        val exposureTrackingProvider = object : ExposureTrackingProvider {
+            override fun track(exposure: Exposure) {
+                Assert.assertEquals("flagKey", exposure.flagKey)
+                Assert.assertEquals("variant", exposure.variant)
+                Assert.assertEquals("experimentKey", exposure.experimentKey)
+                didTrack = true
+            }
+        }
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                debug = true,
+                exposureTrackingProvider = exposureTrackingProvider,
+                source = Source.INITIAL_VARIANTS,
+                initialVariants = mapOf("flagKey" to Variant("variant", null, "experimentKey"))
+            ),
+            OkHttpClient(),
+            InMemoryStorage(),
+            Experiment.executorService,
+        )
+        client.variant("flagKey")
+        Assert.assertTrue(didTrack)
+    }
 }
