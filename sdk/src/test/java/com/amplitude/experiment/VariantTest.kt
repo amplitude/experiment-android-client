@@ -26,10 +26,12 @@ class VariantTest {
         val jsonObject = JSONObject()
         jsonObject.put("value", "value")
         jsonObject.put("payload", "payload")
+        jsonObject.put("expKey", "expKey")
         val variant = jsonObject.toVariant()
         Assert.assertNotNull(variant)
         Assert.assertEquals("value", variant!!.value)
         Assert.assertEquals("payload", variant.payload)
+        Assert.assertEquals("expKey", variant.expKey)
     }
 
     @Test
@@ -45,9 +47,10 @@ class VariantTest {
     @Test
     fun `variant to json object`() {
         run {
-            val variant = Variant("value", null)
+            val variant = Variant("value", null, "expKey")
             val jsonObject = JSONObject()
             jsonObject.put("value", "value")
+            jsonObject.put("expKey", "expKey")
             Assert.assertEquals(jsonObject.toString(), variant.toJson())
         }
     }

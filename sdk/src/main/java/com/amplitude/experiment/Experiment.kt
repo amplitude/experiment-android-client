@@ -28,7 +28,8 @@ object Experiment {
      * instance name.
      *
      * @param application The Android Application context
-     * @param apiKey  The API key. This can be found in the Experiment settings and should not be null or empty.
+     * @param apiKey  The API key. This can be found in the Experiment settings
+     * and should not be null or empty.
      * @param config see [ExperimentConfig] for configuration options
      */
     @JvmStatic
@@ -67,11 +68,12 @@ object Experiment {
      * integrates with the installed and initialized instance of the amplitude
      * analytics SDK.
      *
-     * You must be using Amplitude-Android SDK version 2.36.0+ for this
-     * integration to work.
+     * You must be using Amplitude-Android SDK version 2.36.0+ or
+     * Amplitude-Kotlin 1.5.0+ for this integration to work.
      *
      * @param application The Android Application context
-     * @param apiKey  The API key. This can be found in the Experiment settings and should not be null or empty.
+     * @param apiKey  The API key. This can be found in the Experiment settings
+     * and should not be null or empty.
      * @param config see [ExperimentConfig] for configuration options
      */
     @JvmStatic

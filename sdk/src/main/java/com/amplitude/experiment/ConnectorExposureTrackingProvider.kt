@@ -14,6 +14,7 @@ internal class ConnectorExposureTrackingProvider(
                 eventProperties = mapOf(
                     "flag_key" to exposure.flagKey,
                     "variant" to exposure.variant,
+                    "experiment_key" to exposure.experimentKey,
                 ).filterNull()
             )
         )

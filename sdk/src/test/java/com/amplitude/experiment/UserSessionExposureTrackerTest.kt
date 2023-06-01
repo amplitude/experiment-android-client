@@ -12,14 +12,14 @@ class UserSessionExposureTrackerTest {
         val provider = TestExposureTrackingProvider()
         val tracker = UserSessionExposureTracker(provider)
 
-        val exposure = Exposure("flag", "variant")
+        val exposure = Exposure("flag", "variant", null)
         repeat(10) {
             tracker.track(exposure)
         }
         Assert.assertEquals(exposure, provider.lastExposure)
         Assert.assertEquals(1, provider.trackCount)
 
-        val exposure2 = Exposure("flag2", "variant")
+        val exposure2 = Exposure("flag2", "variant", null)
         repeat(10) {
             tracker.track(exposure2)
         }
@@ -32,11 +32,11 @@ class UserSessionExposureTrackerTest {
         val provider = TestExposureTrackingProvider()
         val tracker = UserSessionExposureTracker(provider)
 
-        val exposure = Exposure("flag", "variant")
+        val exposure = Exposure("flag", "variant", null)
         repeat(10) {
             tracker.track(exposure)
         }
-        val exposure2 = Exposure("flag", null)
+        val exposure2 = Exposure("flag", null, null)
         repeat(10) {
             tracker.track(exposure2)
         }
@@ -50,11 +50,11 @@ class UserSessionExposureTrackerTest {
         val provider = TestExposureTrackingProvider()
         val tracker = UserSessionExposureTracker(provider)
 
-        val exposure = Exposure("flag", "variant")
+        val exposure = Exposure("flag", "variant", null)
         repeat(10) {
             tracker.track(exposure)
         }
-        val exposure2 = Exposure("flag", "variant2")
+        val exposure2 = Exposure("flag", "variant2", null)
         repeat(10) {
             tracker.track(exposure2)
         }
@@ -67,7 +67,7 @@ class UserSessionExposureTrackerTest {
     fun `test track called again on user id change, null to value`() {
         val provider = TestExposureTrackingProvider()
         val tracker = UserSessionExposureTracker(provider)
-        val exposure = Exposure("flag", "variant")
+        val exposure = Exposure("flag", "variant", null)
         repeat(10) {
             tracker.track(exposure)
         }
@@ -82,7 +82,7 @@ class UserSessionExposureTrackerTest {
     fun `test track called again on device id change, null to value`() {
         val provider = TestExposureTrackingProvider()
         val tracker = UserSessionExposureTracker(provider)
-        val exposure = Exposure("flag", "variant")
+        val exposure = Exposure("flag", "variant", null)
         repeat(10) {
             tracker.track(exposure)
         }
@@ -97,7 +97,7 @@ class UserSessionExposureTrackerTest {
     fun `test track called again on user id change, value to null`() {
         val provider = TestExposureTrackingProvider()
         val tracker = UserSessionExposureTracker(provider)
-        val exposure = Exposure("flag", "variant")
+        val exposure = Exposure("flag", "variant", null)
         repeat(10) {
             tracker.track(exposure, ExperimentUser(userId = "uid"))
         }
@@ -112,7 +112,7 @@ class UserSessionExposureTrackerTest {
     fun `test track called again on device id change, value to null`() {
         val provider = TestExposureTrackingProvider()
         val tracker = UserSessionExposureTracker(provider)
-        val exposure = Exposure("flag", "variant")
+        val exposure = Exposure("flag", "variant", null)
         repeat(10) {
             tracker.track(exposure, ExperimentUser(deviceId = "did"))
         }
@@ -127,7 +127,7 @@ class UserSessionExposureTrackerTest {
     fun `test track called again on user id change, value to different value`() {
         val provider = TestExposureTrackingProvider()
         val tracker = UserSessionExposureTracker(provider)
-        val exposure = Exposure("flag", "variant")
+        val exposure = Exposure("flag", "variant", null)
         repeat(10) {
             tracker.track(exposure, ExperimentUser(userId = "uid"))
         }
@@ -142,7 +142,7 @@ class UserSessionExposureTrackerTest {
     fun `test track called again on device id change, value to different value`() {
         val provider = TestExposureTrackingProvider()
         val tracker = UserSessionExposureTracker(provider)
-        val exposure = Exposure("flag", "variant")
+        val exposure = Exposure("flag", "variant", null)
         repeat(10) {
             tracker.track(exposure, ExperimentUser(deviceId = "did"))
         }
@@ -157,7 +157,7 @@ class UserSessionExposureTrackerTest {
     fun `test track called again on user id and device id change, null to value`() {
         val provider = TestExposureTrackingProvider()
         val tracker = UserSessionExposureTracker(provider)
-        val exposure = Exposure("flag", "variant")
+        val exposure = Exposure("flag", "variant", null)
         repeat(10) {
             tracker.track(exposure)
         }
@@ -172,7 +172,7 @@ class UserSessionExposureTrackerTest {
     fun `test track called again on user id and device id change, value to null`() {
         val provider = TestExposureTrackingProvider()
         val tracker = UserSessionExposureTracker(provider)
-        val exposure = Exposure("flag", "variant")
+        val exposure = Exposure("flag", "variant", null)
         repeat(10) {
             tracker.track(exposure, ExperimentUser(userId = "uid", deviceId = "did"))
         }
@@ -187,7 +187,7 @@ class UserSessionExposureTrackerTest {
     fun `test track called again on user id and device id change, value to different value`() {
         val provider = TestExposureTrackingProvider()
         val tracker = UserSessionExposureTracker(provider)
-        val exposure = Exposure("flag", "variant")
+        val exposure = Exposure("flag", "variant", null)
         repeat(10) {
             tracker.track(exposure, ExperimentUser(userId = "uid", deviceId = "did"))
         }
