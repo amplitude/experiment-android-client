@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/amplitude/experiment-android-client/compare/1.9.0...1.10.0) (2023-06-02)
+
+
+### Features
+
+* add exp key to variant and exposure ([#26](https://github.com/amplitude/experiment-android-client/issues/26)) ([f25e458](https://github.com/amplitude/experiment-android-client/commit/f25e45882336f99ee0e134497374fd8f76c9a25a))
+
 # [1.9.0](https://github.com/amplitude/experiment-android-client/compare/1.8.1...1.9.0) (2023-04-24)
 
 
