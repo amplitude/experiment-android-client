@@ -118,4 +118,14 @@ object Experiment {
         }
         return instance
     }
+
+    @JvmStatic
+    fun getInstance(instanceName: String, apiKey: String): ExperimentClient? {
+        return instances.get(getInstanceKey(instanceName, apiKey))
+    }
+
+    @JvmStatic
+    fun getInstanceKey(instanceName: String, apiKey: String): String {
+        return "$instanceName.$apiKey"
+    }
 }
