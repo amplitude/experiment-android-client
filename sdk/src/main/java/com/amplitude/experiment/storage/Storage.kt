@@ -3,9 +3,7 @@ package com.amplitude.experiment.storage
 import com.amplitude.experiment.Variant
 
 internal interface Storage {
-    fun put(key: String, variant: Variant)
-    fun get(key: String): Variant?
-    fun remove(key: String)
-    fun getAll(): Map<String, Variant>
-    fun clear()
+    suspend fun get(key: String): String?
+    suspend fun put(key: String, value: String)
+    suspend fun delete(key: String)
 }
