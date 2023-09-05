@@ -23,9 +23,9 @@ class ExperimentClientTest {
 
     private val testUser = ExperimentUser(userId = "test_user")
 
-    private val serverVariant = Variant("on", "payload")
-    private val fallbackVariant = Variant("fallback", "payload")
-    private val initialVariant = Variant("initial")
+    private val serverVariant = Variant("on", "on", "payload")
+    private val fallbackVariant = Variant(value = "fallback", payload = "payload")
+    private val initialVariant = Variant(value = "initial")
 
     private val initialVariants = mapOf(
         INITIAL_KEY to initialVariant,
@@ -320,6 +320,7 @@ class ExperimentClientTest {
             override fun setUserProperty(event: ExperimentAnalyticsEvent) {
                 Assert.fail("analytics provider set() should not be called.")
             }
+
             override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
                 Assert.assertEquals("[Experiment] $INITIAL_KEY", event.userProperty)
             }
@@ -361,6 +362,7 @@ class ExperimentClientTest {
                 )
                 didUserPropertyGetSet = true
             }
+
             override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
                 Assert.fail("analytics provider unset() should not be called")
             }

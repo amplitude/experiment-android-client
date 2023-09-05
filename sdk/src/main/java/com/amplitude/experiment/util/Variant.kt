@@ -34,15 +34,14 @@ internal fun JSONObject?.toVariant(): Variant? {
     } else try {
         val key = when {
             has("key") -> getString("key")
-            else -> return null
+            else -> null
         }
         val value = when {
             has("value") -> getString("value")
-            has("key") -> getString("key")
-            else -> return null
+            else -> null
         }
         val payload = when {
-            has("payload") -> get("payload")
+            has("payload") -> getString("payload")
             else -> null
         }
         val expKey = when {
@@ -50,7 +49,7 @@ internal fun JSONObject?.toVariant(): Variant? {
             else -> null
         }
         val metadata = when {
-            has("expKey") -> getJSONObject("metadata").toMap()
+            has("metadata") -> getJSONObject("metadata").toMap()
             else -> emptyMap()
         }
         Variant(key, value, payload, expKey, metadata)
