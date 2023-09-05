@@ -32,6 +32,10 @@ internal fun JSONObject?.toVariant(): Variant? {
     return if (this == null) {
         return null
     } else try {
+        val key = when {
+            has("key") -> getString("key")
+            else -> return null
+        }
         val value = when {
             has("value") -> getString("value")
             has("key") -> getString("key")
@@ -45,7 +49,11 @@ internal fun JSONObject?.toVariant(): Variant? {
             has("expKey") -> getString("expKey")
             else -> null
         }
-        Variant(value, payload, expKey)
+        val metadata = when {
+            has("expKey") -> getJSONObject("metadata").toMap()
+            else -> emptyMap()
+        }
+        Variant(key, value, payload, expKey, metadata)
     } catch (e: JSONException) {
         Logger.w("Error parsing Variant from json string $this")
         return null
