@@ -31,8 +31,10 @@ internal class LoadStoreCache<V>(
         }
     }
 
-    private fun putAll(values: Map<String, V>) {
-        cache.putAll(values)
+    suspend fun putAll(values: Map<String, V>) {
+        mutex.withLock {
+            cache.putAll(values)
+        }
     }
 
     suspend fun remove(key: String) {
@@ -41,8 +43,10 @@ internal class LoadStoreCache<V>(
         }
     }
 
-    private fun clear() {
-        cache.clear()
+    suspend fun clear() {
+        mutex.withLock {
+            cache.clear()
+        }
     }
 
     suspend fun load() {
