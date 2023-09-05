@@ -1,5 +1,6 @@
 package com.amplitude.experiment.storage
 
+import com.amplitude.experiment.util.toMap
 import org.json.JSONObject
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -47,8 +48,8 @@ internal class LoadStoreCache<V>(
     suspend fun load() {
         mutex.withLock {
             val rawValues = storage.get(namespace)
-            val jsonValues: Map<String, Any> = try {
-                JSONObject(rawValues) as Map<String, Any>? ?: emptyMap()
+            val jsonValues: Map<String, Any?> = try {
+                JSONObject(rawValues).toMap()
             } catch (e: Exception) {
                 emptyMap()
             }
