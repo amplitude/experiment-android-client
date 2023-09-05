@@ -1,5 +1,6 @@
 package com.amplitude.experiment
 
+import com.amplitude.experiment.storage.LoadStoreCache
 import com.amplitude.experiment.analytics.ExposureEvent as OldExposureEvent
 import com.amplitude.experiment.storage.Storage
 import com.amplitude.experiment.util.AsyncFuture
@@ -34,6 +35,7 @@ import org.json.JSONArray
 internal class DefaultExperimentClient internal constructor(
     private val apiKey: String,
     private val config: ExperimentConfig,
+    private val variants: LoadStoreCache<Variant>,
     private val httpClient: OkHttpClient,
     private val storage: Storage,
     private val executorService: ScheduledExecutorService,
@@ -277,7 +279,7 @@ internal class DefaultExperimentClient internal constructor(
     private fun storeVariants(variants: Map<String, Variant>, options: FetchOptions?) = synchronized(storage) {
         val failedFlagKeys = options?.flagKeys ?.toMutableList() ?: mutableListOf()
         if (options?.flagKeys == null) {
-            storage.clear()
+            this.variants.clear()
         }
         for (entry in variants.entries) {
             storage.put(entry.key, entry.value)
