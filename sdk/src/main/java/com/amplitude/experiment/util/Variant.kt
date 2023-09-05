@@ -34,7 +34,7 @@ internal fun JSONObject?.toVariant(): Variant? {
     } else try {
         val key = when {
             has("key") -> getString("key")
-            else -> null
+            else -> return null
         }
         val value = when {
             has("value") -> getString("value")
