@@ -7,10 +7,7 @@ import org.json.JSONObject
 internal fun Variant.toJson(): String {
     val jsonObject = JSONObject()
     try {
-        jsonObject.put("key", key)
-        if (value != null) {
-            jsonObject.put("value", value)
-        }
+        jsonObject.put("value", value)
         if (payload != null) {
             jsonObject.put("payload", payload)
         }
@@ -44,7 +41,7 @@ internal fun JSONObject?.toVariant(): Variant? {
             else -> null
         }
         val payload = when {
-            has("payload") -> get("payload")
+            has("payload") -> getString("payload")
             else -> null
         }
         val expKey = when {
@@ -55,7 +52,7 @@ internal fun JSONObject?.toVariant(): Variant? {
             has("metadata") -> getJSONObject("metadata").toMap()
             else -> emptyMap()
         }
-        Variant(value, payload, expKey, key, metadata)
+        Variant(key, value, payload, expKey, metadata)
     } catch (e: JSONException) {
         Logger.w("Error parsing Variant from json string $this")
         return null

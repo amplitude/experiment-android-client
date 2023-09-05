@@ -110,11 +110,11 @@ internal class DefaultExperimentClient internal constructor(
         val exposedUser = getUserMergedWithProvider()
         val event = OldExposureEvent(exposedUser, key, variant, source)
         // Track the exposure event if an analytics provider is set
-        if (source.isFallback() || variant.key == null) {
+        if (source.isFallback() || variant.value == null) {
             userSessionExposureTracker?.track(Exposure(key, null, variant.expKey), exposedUser)
             analyticsProvider?.unsetUserProperty(event)
         } else {
-            userSessionExposureTracker?.track(Exposure(key, variant.key, variant.expKey), exposedUser)
+            userSessionExposureTracker?.track(Exposure(key, variant.value, variant.expKey), exposedUser)
             analyticsProvider?.setUserProperty(event)
             analyticsProvider?.track(event)
         }
@@ -218,7 +218,7 @@ internal class DefaultExperimentClient internal constructor(
             .toByteString()
             .base64Url()
         val url = serverUrl.newBuilder()
-            .addPathSegments("sdk/2/vardata")
+            .addPathSegments("sdk/vardata")
             .build()
         val builder = Request.Builder()
             .get()
