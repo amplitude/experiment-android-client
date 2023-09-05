@@ -2,6 +2,10 @@ package com.amplitude.experiment
 
 data class Variant @JvmOverloads constructor(
     /**
+     * The key of the variant.
+     */
+    @JvmField val key: String? = null,
+    /**
      * The value of the variant.
      */
     @JvmField val value: String? = null,
@@ -14,10 +18,6 @@ data class Variant @JvmOverloads constructor(
      */
     @JvmField val expKey: String? = null,
     /**
-     * The key of the variant.
-     */
-    @JvmField val key: String? = null,
-    /**
      * Flag, segment, and variant metadata produced as a result of
      * evaluation for the user. Used for system purposes.
      */
@@ -25,7 +25,7 @@ data class Variant @JvmOverloads constructor(
 ) {
 
     /**
-     * Useful for comparing a variant's key to a string in java.
+     * Useful for comparing a variant's value to a string in java.
      *
      * ```
      * variant.is("on");
@@ -34,10 +34,10 @@ data class Variant @JvmOverloads constructor(
      * is equivalent to
      *
      * ```
-     * "on".equals(variant.key);
+     * "on".equals(variant.value);
      * ```
      *
-     * @param value The value to compare with the key of this variant.
+     * @param value The value to compare with the value of this variant.
      */
-    fun `is`(value: String): Boolean = this.key == value
+    fun `is`(value: String): Boolean = this.value == value
 }
