@@ -36,6 +36,7 @@ import org.json.JSONArray
 internal class DefaultExperimentClient internal constructor(
     private val apiKey: String,
     private val config: ExperimentConfig,
+    private val variants: LoadStoreCache<Variant>,
     private val httpClient: OkHttpClient,
     private val storage: Storage,
     private val executorService: ScheduledExecutorService,
@@ -287,7 +288,7 @@ internal class DefaultExperimentClient internal constructor(
     private fun storeVariants(variants: Map<String, Variant>, options: FetchOptions?) = synchronized(storage) {
         val failedFlagKeys = options?.flagKeys ?.toMutableList() ?: mutableListOf()
         if (options?.flagKeys == null) {
-            storage.clear()
+            this.variants.clear()
         }
         for (entry in variants.entries) {
             storage.put(entry.key, entry.value)
