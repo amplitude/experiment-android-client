@@ -11,7 +11,7 @@ internal class InMemoryStorage : Storage {
         data[key] = variant
     }
 
-    override suspend operator fun get(key: String): Variant? {
+    override operator fun get(key: String): Variant? {
         return data[key]
     }
 
