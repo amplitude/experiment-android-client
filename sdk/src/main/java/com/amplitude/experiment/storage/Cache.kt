@@ -3,8 +3,6 @@ package com.amplitude.experiment.storage
 import com.amplitude.experiment.Variant
 import com.amplitude.experiment.util.toMap
 import org.json.JSONObject
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 class LoadStoreCache<V>(
     private val namespace: String,
