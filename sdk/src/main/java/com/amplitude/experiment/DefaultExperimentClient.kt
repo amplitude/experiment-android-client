@@ -4,6 +4,7 @@ import com.amplitude.experiment.storage.LoadStoreCache
 import com.amplitude.experiment.analytics.ExposureEvent as OldExposureEvent
 import com.amplitude.experiment.storage.Storage
 import com.amplitude.experiment.storage.getFlagStorage
+import com.amplitude.experiment.storage.getVariantStorage
 import com.amplitude.experiment.util.AsyncFuture
 import com.amplitude.experiment.util.Backoff
 import com.amplitude.experiment.util.BackoffConfig
@@ -36,13 +37,17 @@ import org.json.JSONArray
 internal class DefaultExperimentClient internal constructor(
     private val apiKey: String,
     private val config: ExperimentConfig,
-    private val variants: LoadStoreCache<Variant>,
     private val httpClient: OkHttpClient,
     private val storage: Storage,
     private val executorService: ScheduledExecutorService,
 ) : ExperimentClient {
 
     private var user: ExperimentUser? = null
+    private val variants = getVariantStorage(
+        this.apiKey,
+        this.config.instanceName,
+        storage,
+    );
     private val flags: LoadStoreCache<EvaluationFlag> = getFlagStorage(
         this.apiKey,
         this.config.instanceName,
@@ -142,6 +147,7 @@ internal class DefaultExperimentClient internal constructor(
                 }
                 return VariantAndSource(config.fallbackVariant, VariantSource.FALLBACK_CONFIG)
             }
+
             Source.INITIAL_VARIANTS -> {
                 // for source = InitialVariants, fallback order goes:
                 // 1. InitialFlags
@@ -356,7 +362,7 @@ enum class VariantSource(val type: String) {
 
     fun isFallback(): Boolean {
         return this == FALLBACK_INLINE ||
-            this == FALLBACK_CONFIG ||
-            this == SECONDARY_INITIAL_VARIANTS
+                this == FALLBACK_CONFIG ||
+                this == SECONDARY_INITIAL_VARIANTS
     }
 }
