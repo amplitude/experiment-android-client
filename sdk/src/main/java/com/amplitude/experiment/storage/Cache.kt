@@ -62,7 +62,7 @@ class LoadStoreCache<V>(
 
     }
 
-    suspend fun store(values: Map<String, V> = cache) = synchronized(cache) {
+    fun store(values: Map<String, V> = cache) = synchronized(cache) {
         storage.put(namespace, JSONObject(values).toString())
     }
 }
@@ -72,6 +72,13 @@ fun getVariantStorage(deploymentKey: String, instanceName: String, storage: Stor
     val namespace = "amp-exp-$instanceName-$truncatedDeployment"
     return LoadStoreCache(namespace, storage, ::transformVariantFromStorage)
 }
+
+fun getFlagStorage(deploymentKey: String, instanceName: String, storage: Storage): LoadStoreCache<EvaluationFlag> {
+    val truncatedDeployment = deploymentKey.takeLast(6)
+    val namespace = "amp-exp-$instanceName-$truncatedDeployment-flags"
+    return LoadStoreCache(namespace, storage)
+}
+
 
 fun transformVariantFromStorage(storageValue: Any?): Variant {
     return when (storageValue) {

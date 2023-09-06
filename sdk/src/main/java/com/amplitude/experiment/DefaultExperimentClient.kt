@@ -14,8 +14,6 @@ import com.amplitude.experiment.util.backoff
 import com.amplitude.experiment.util.merge
 import com.amplitude.experiment.util.toJson
 import com.amplitude.experiment.util.toVariant
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.runBlocking
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.HttpUrl
@@ -39,12 +37,12 @@ internal class DefaultExperimentClient internal constructor(
     private val apiKey: String,
     private val config: ExperimentConfig,
     private val httpClient: OkHttpClient,
-    private val storage: Storage,
+    storage: Storage,
     private val executorService: ScheduledExecutorService,
 ) : ExperimentClient {
 
     private var user: ExperimentUser? = null
-    private val variants = getVariantStorage(
+    private val variants: LoadStoreCache<Variant> = getVariantStorage(
         this.apiKey,
         this.config.instanceName,
         storage,
@@ -167,7 +165,8 @@ internal class DefaultExperimentClient internal constructor(
     }
 
     override fun clear() {
-        this.storage.clear()
+        this.variants.clear()
+        this.variants.store()
     }
 
     override fun getUser(): ExperimentUser? {
@@ -284,24 +283,26 @@ internal class DefaultExperimentClient internal constructor(
         return variants
     }
 
-    private suspend fun storeVariants(variants: Map<String, Variant>, options: FetchOptions?) = synchronized(variants) {
+    private fun storeVariants(variants: Map<String, Variant>, options: FetchOptions?) = synchronized(variants) {
         val failedFlagKeys = options?.flagKeys?.toMutableList() ?: mutableListOf()
         if (options?.flagKeys == null) {
             this.variants.clear()
         }
         for (entry in variants.entries) {
-            storage.put(entry.key, entry.value)
+            this.variants.put(entry.key, entry.value)
             failedFlagKeys.remove(entry.key)
         }
         for (key in failedFlagKeys) {
-            storage.remove(key)
+            this.variants.remove(key)
         }
+
+        this.variants.store()
         Logger.d("Stored variants: $variants")
     }
 
     private fun sourceVariants(): Map<String, Variant> {
         return when (config.source) {
-            Source.LOCAL_STORAGE -> storage.getAll()
+            Source.LOCAL_STORAGE -> this.variants.getAll()
             Source.INITIAL_VARIANTS -> config.initialVariants
         }
     }
@@ -309,7 +310,7 @@ internal class DefaultExperimentClient internal constructor(
     private fun secondaryVariants(): Map<String, Variant> {
         return when (config.source) {
             Source.LOCAL_STORAGE -> config.initialVariants
-            Source.INITIAL_VARIANTS -> storage.getAll()
+            Source.INITIAL_VARIANTS -> this.variants.getAll()
         }
     }
 

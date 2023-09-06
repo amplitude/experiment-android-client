@@ -53,7 +53,7 @@ object Experiment {
                     apiKey,
                     mergedConfig,
                     httpClient,
-                    SharedPrefsStorage(application, apiKey, instanceName),
+                    SharedPrefsStorage(application),
                     executorService,
                 )
                 instances[instanceKey] = newInstance
@@ -103,7 +103,7 @@ object Experiment {
                     apiKey,
                     configBuilder.build(),
                     httpClient,
-                    SharedPrefsStorage(application, apiKey, instanceName),
+                    SharedPrefsStorage(application),
                     executorService,
                 )
                 instances[instanceKey] = newInstance
