@@ -3,6 +3,7 @@ package com.amplitude.experiment
 import com.amplitude.experiment.storage.LoadStoreCache
 import com.amplitude.experiment.analytics.ExposureEvent as OldExposureEvent
 import com.amplitude.experiment.storage.Storage
+import com.amplitude.experiment.storage.getVariantStorage
 import com.amplitude.experiment.util.AsyncFuture
 import com.amplitude.experiment.util.Backoff
 import com.amplitude.experiment.util.BackoffConfig
@@ -13,6 +14,8 @@ import com.amplitude.experiment.util.backoff
 import com.amplitude.experiment.util.merge
 import com.amplitude.experiment.util.toJson
 import com.amplitude.experiment.util.toVariant
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.runBlocking
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.HttpUrl
@@ -35,13 +38,17 @@ import org.json.JSONArray
 internal class DefaultExperimentClient internal constructor(
     private val apiKey: String,
     private val config: ExperimentConfig,
-    private val variants: LoadStoreCache<Variant>,
     private val httpClient: OkHttpClient,
     private val storage: Storage,
     private val executorService: ScheduledExecutorService,
 ) : ExperimentClient {
 
     private var user: ExperimentUser? = null
+    private val variants = getVariantStorage(
+        this.apiKey,
+        this.config.instanceName,
+        storage,
+    );
 
     private val backoffLock = Any()
     private var backoff: Backoff? = null
@@ -133,6 +140,7 @@ internal class DefaultExperimentClient internal constructor(
                 }
                 return VariantAndSource(config.fallbackVariant, VariantSource.FALLBACK_CONFIG)
             }
+
             Source.INITIAL_VARIANTS -> {
                 // for source = InitialVariants, fallback order goes:
                 // 1. InitialFlags
@@ -276,8 +284,8 @@ internal class DefaultExperimentClient internal constructor(
         return variants
     }
 
-    private fun storeVariants(variants: Map<String, Variant>, options: FetchOptions?) = synchronized(storage) {
-        val failedFlagKeys = options?.flagKeys ?.toMutableList() ?: mutableListOf()
+    private suspend fun storeVariants(variants: Map<String, Variant>, options: FetchOptions?) = synchronized(variants) {
+        val failedFlagKeys = options?.flagKeys?.toMutableList() ?: mutableListOf()
         if (options?.flagKeys == null) {
             this.variants.clear()
         }
@@ -347,7 +355,7 @@ enum class VariantSource(val type: String) {
 
     fun isFallback(): Boolean {
         return this == FALLBACK_INLINE ||
-            this == FALLBACK_CONFIG ||
-            this == SECONDARY_INITIAL_VARIANTS
+                this == FALLBACK_CONFIG ||
+                this == SECONDARY_INITIAL_VARIANTS
     }
 }
