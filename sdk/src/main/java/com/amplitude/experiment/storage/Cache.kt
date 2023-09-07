@@ -73,7 +73,7 @@ fun getVariantStorage(deploymentKey: String, instanceName: String, storage: Stor
     return LoadStoreCache(namespace, storage, ::transformVariantFromStorage)
 }
 
-fun getFlagStorage(deploymentKey: String, instanceName: String, storage: Storage): LoadStoreCache<EvaluationFlag> {
+fun getFlagStorage(deploymentKey: String, instanceName: String, storage: Storage): LoadStoreCache<Any> {
     val truncatedDeployment = deploymentKey.takeLast(6)
     val namespace = "amp-exp-$instanceName-$truncatedDeployment-flags"
     return LoadStoreCache(namespace, storage)

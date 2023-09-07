@@ -1,8 +1,9 @@
 package com.amplitude.experiment
 
+import android.content.Context
 import com.amplitude.experiment.storage.LoadStoreCache
+import com.amplitude.experiment.storage.SharedPrefsStorage
 import com.amplitude.experiment.analytics.ExposureEvent as OldExposureEvent
-import com.amplitude.experiment.storage.Storage
 import com.amplitude.experiment.storage.getVariantStorage
 import com.amplitude.experiment.util.AsyncFuture
 import com.amplitude.experiment.util.Backoff
@@ -37,11 +38,12 @@ internal class DefaultExperimentClient internal constructor(
     private val apiKey: String,
     private val config: ExperimentConfig,
     private val httpClient: OkHttpClient,
-    storage: Storage,
+    appContext: Context,
     private val executorService: ScheduledExecutorService,
 ) : ExperimentClient {
 
     private var user: ExperimentUser? = null
+    private val storage = SharedPrefsStorage(appContext)
     private val variants: LoadStoreCache<Variant> = getVariantStorage(
         this.apiKey,
         this.config.instanceName,
