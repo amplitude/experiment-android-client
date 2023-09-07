@@ -161,7 +161,7 @@ class ExperimentClientTest {
     fun `clear the flag config in storage`() {
         generalClient.fetch(testUser).get()
         val variant = generalClient.variant("sdk-ci-test")
-        Assert.assertEquals(Variant("on", "on","payload"), variant)
+        Assert.assertEquals(Variant("on", "on", "payload"), variant)
         generalClient.clear()
         val clearedVariants = generalClient.all()
         Assert.assertEquals(0, clearedVariants.entries.size)
@@ -400,7 +400,7 @@ class ExperimentClientTest {
                 debug = true,
                 exposureTrackingProvider = exposureTrackingProvider,
                 source = Source.INITIAL_VARIANTS,
-                initialVariants = mapOf("flagKey" to Variant("variant", null, null, "experimentKey"))
+                initialVariants = mapOf("flagKey" to Variant("variant", expKey = "experimentKey"))
             ),
             OkHttpClient(),
             InMemoryStorage(),
