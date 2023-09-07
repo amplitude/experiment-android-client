@@ -24,31 +24,24 @@ class VariantTest {
     @Test
     fun `json object to variant`() {
         val jsonObject = JSONObject()
+        jsonObject.put("key", "key")
         jsonObject.put("value", "value")
         jsonObject.put("payload", "payload")
         jsonObject.put("expKey", "expKey")
         val variant = jsonObject.toVariant()
         Assert.assertNotNull(variant)
-        Assert.assertEquals("value", variant!!.value)
+        Assert.assertEquals("key", variant!!.key)
+        Assert.assertEquals("value", variant.value)
         Assert.assertEquals("payload", variant.payload)
         Assert.assertEquals("expKey", variant.expKey)
     }
 
     @Test
-    fun `json object to variant deprecated field`() {
-        val jsonObject = JSONObject()
-        jsonObject.put("key", "value")
-        val variant = jsonObject.toVariant()
-        Assert.assertNotNull(variant)
-        Assert.assertEquals("value", variant!!.value)
-        Assert.assertNull(variant.payload)
-    }
-
-    @Test
     fun `variant to json object`() {
         run {
-            val variant = Variant("value", null, "expKey")
+            val variant = Variant("key","value", null, "expKey")
             val jsonObject = JSONObject()
+            jsonObject.put("key", "key")
             jsonObject.put("value", "value")
             jsonObject.put("expKey", "expKey")
             Assert.assertEquals(jsonObject.toString(), variant.toJson())

@@ -400,7 +400,7 @@ class ExperimentClientTest {
                 debug = true,
                 exposureTrackingProvider = exposureTrackingProvider,
                 source = Source.INITIAL_VARIANTS,
-                initialVariants = mapOf("flagKey" to Variant("variant", null, "experimentKey"))
+                initialVariants = mapOf("flagKey" to Variant("variant", null, null, "experimentKey"))
             ),
             OkHttpClient(),
             InMemoryStorage(),

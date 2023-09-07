@@ -7,7 +7,10 @@ import org.json.JSONObject
 internal fun Variant.toJson(): String {
     val jsonObject = JSONObject()
     try {
-        jsonObject.put("value", value)
+        jsonObject.put("key", key)
+        if (value != null) {
+            jsonObject.put("value", value)
+        }
         if (payload != null) {
             jsonObject.put("payload", payload)
         }
