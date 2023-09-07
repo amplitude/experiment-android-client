@@ -6,7 +6,7 @@ import org.json.JSONObject
 internal class LoadStoreCache<V>(
     private val namespace: String,
     private val storage: Storage,
-    private val transformer: ((value: Any) -> V)? = null
+    private val transformer: ((value: Any) -> V)
 ) {
     private val cache: MutableMap<String, V> = mutableMapOf()
 
@@ -36,26 +36,17 @@ internal class LoadStoreCache<V>(
 
     fun load() = synchronized(cache) {
         val rawValues = storage.get(namespace)
-        val jsonValues: Map<String, Any?> = try {
-            JSONObject(rawValues).toMap()
-        } catch (e: Exception) {
-            emptyMap()
+        val jsonValues = when {
+            rawValues != null -> JSONObject(rawValues).toMap()
+            else -> emptyMap()
         }
-        val values: MutableMap<String, V> = mutableMapOf()
-        for (key in jsonValues.keys) {
+        val values = jsonValues.mapNotNull { entry ->
             try {
-                val value: V = if (transformer != null) {
-                    transformer?.let { it(jsonValues[key]!!) }
-                } else {
-                    jsonValues[key] as V
-                }
-                if (value != null) {
-                    values[key] = value
-                }
+                entry.key to transformer.invoke(entry.value!!)
             } catch (e: Exception) {
-                // Do nothing
+                null
             }
-        }
+        }.toMap()
         clear()
         putAll(values)
     }
