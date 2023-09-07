@@ -44,7 +44,7 @@ internal fun JSONObject?.toVariant(): Variant? {
             else -> null
         }
         val payload = when {
-            has("payload") -> getString("payload")
+            has("payload") -> get("payload")
             else -> null
         }
         val expKey = when {
