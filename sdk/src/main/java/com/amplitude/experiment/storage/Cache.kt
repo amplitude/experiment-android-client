@@ -36,10 +36,11 @@ internal class LoadStoreCache<V>(
 
     fun load() = synchronized(cache) {
         val rawValues = storage.get(namespace)
-        val jsonValues = when {
-            rawValues != null -> JSONObject(rawValues).toMap()
-            else -> emptyMap()
+        if (rawValues == null) {
+            clear()
+            return
         }
+        val jsonValues = JSONObject(rawValues).toMap()
         val values = jsonValues.mapNotNull { entry ->
             try {
                 entry.key to transformer.invoke(entry.value!!)
