@@ -34,10 +34,10 @@ data class Variant @JvmOverloads constructor(
      * is equivalent to
      *
      * ```
-     * "on".equals(variant.value);
+     * "on".equals(variant.key);
      * ```
      *
      * @param value The value to compare with the value of this variant.
      */
-    fun `is`(value: String): Boolean = this.value == value
+    fun `is`(key: String): Boolean = this.key == key
 }

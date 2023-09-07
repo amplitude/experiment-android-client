@@ -221,7 +221,7 @@ class ExperimentClientTest {
                 Assert.assertEquals(
                     mapOf(
                         "key" to KEY,
-                        "variant" to serverVariant.value,
+                        "variant" to serverVariant.key,
                         "source" to VariantSource.LOCAL_STORAGE.toString()
                     ),
                     event.properties
@@ -350,7 +350,7 @@ class ExperimentClientTest {
             override fun track(event: ExperimentAnalyticsEvent) {
                 Assert.assertEquals(
                     event.userProperties,
-                    mapOf("[Experiment] $KEY" to serverVariant.value)
+                    mapOf("[Experiment] $KEY" to serverVariant.key)
                 )
                 didExposureGetTracked = true
             }
