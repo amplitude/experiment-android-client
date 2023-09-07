@@ -37,7 +37,7 @@ data class Variant @JvmOverloads constructor(
      * "on".equals(variant.key);
      * ```
      *
-     * @param value The value to compare with the value of this variant.
+     * @param value The value to compare with the key of this variant.
      */
-    fun `is`(key: String): Boolean = this.key == key
+    fun `is`(value: String): Boolean = this.key == value
 }
