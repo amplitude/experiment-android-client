@@ -24,8 +24,8 @@ class ExperimentClientTest {
     private val testUser = ExperimentUser(userId = "test_user")
 
     private val serverVariant = Variant("on", "on", "payload")
-    private val fallbackVariant = Variant(value = "fallback", payload = "payload")
-    private val initialVariant = Variant(value = "initial")
+    private val fallbackVariant = Variant("fallback", payload = "payload")
+    private val initialVariant = Variant("initial")
 
     private val initialVariants = mapOf(
         INITIAL_KEY to initialVariant,
