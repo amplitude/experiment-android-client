@@ -25,7 +25,7 @@ data class Variant @JvmOverloads constructor(
 ) {
 
     /**
-     * Useful for comparing a variant's value to a string in java.
+     * Useful for comparing a variant's key to a string in java.
      *
      * ```
      * variant.is("on");
