@@ -55,7 +55,7 @@ internal fun JSONObject?.toVariant(): Variant? {
             has("metadata") -> getJSONObject("metadata").toMap()
             else -> emptyMap()
         }
-        Variant(key, value, payload, expKey, metadata)
+        Variant(value, payload, expKey, key, metadata)
     } catch (e: JSONException) {
         Logger.w("Error parsing Variant from json string $this")
         return null

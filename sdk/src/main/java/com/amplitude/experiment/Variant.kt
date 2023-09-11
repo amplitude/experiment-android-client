@@ -2,10 +2,6 @@ package com.amplitude.experiment
 
 data class Variant @JvmOverloads constructor(
     /**
-     * The key of the variant.
-     */
-    @JvmField val key: String? = null,
-    /**
      * The value of the variant.
      */
     @JvmField val value: String? = null,
@@ -17,6 +13,10 @@ data class Variant @JvmOverloads constructor(
      * The experiment key. Used to distinguish two experiments associated with the same flag.
      */
     @JvmField val expKey: String? = null,
+    /**
+     * The key of the variant.
+     */
+    @JvmField val key: String? = null,
     /**
      * Flag, segment, and variant metadata produced as a result of
      * evaluation for the user. Used for system purposes.
