@@ -3,6 +3,7 @@ package com.amplitude.experiment
 import com.amplitude.experiment.analytics.ExperimentAnalyticsEvent
 import com.amplitude.experiment.analytics.ExperimentAnalyticsProvider
 import com.amplitude.experiment.storage.SharedPrefsStorage
+import com.amplitude.experiment.storage.Storage
 import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.SystemLogger
 import okhttp3.OkHttpClient
@@ -22,7 +23,7 @@ class ExperimentClientTest {
         Logger.implementation = SystemLogger(true)
     }
 
-    private val mockStorage = Mockito.mock(SharedPrefsStorage::class.java)
+    private val mockStorage = Mockito.mock(Storage::class.java)
     private val testUser = ExperimentUser(userId = "test_user")
 
     private val serverVariant = Variant(key = "on", value = "on", payload = "payload")
