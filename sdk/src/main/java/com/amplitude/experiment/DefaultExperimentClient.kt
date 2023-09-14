@@ -219,7 +219,7 @@ internal class DefaultExperimentClient internal constructor(
             .toByteString()
             .base64Url()
         val url = serverUrl.newBuilder()
-            .addPathSegments("sdk/vardata")
+            .addPathSegments("sdk/v2/vardata")
             .build()
         val builder = Request.Builder()
             .get()
