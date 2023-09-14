@@ -1,6 +1,5 @@
 package com.amplitude.experiment
 
-import android.content.Context
 import com.amplitude.experiment.storage.LoadStoreCache
 import com.amplitude.experiment.analytics.ExposureEvent as OldExposureEvent
 import com.amplitude.experiment.storage.Storage
@@ -55,6 +54,7 @@ internal class DefaultExperimentClient internal constructor(
         storage,
     );
     init {
+        this.variants.load()
         this.flags.load()
     }
 
