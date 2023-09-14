@@ -7,7 +7,7 @@ import org.json.JSONObject
 class LoadStoreCache<V>(
     private val namespace: String,
     private val storage: Storage,
-    private val transformer: ((value: Any) -> V)? = null
+    private val transformer: ((value: Any) -> V)
 ) {
     private val cache: MutableMap<String, V> = mutableMapOf()
 
@@ -37,29 +37,20 @@ class LoadStoreCache<V>(
 
     fun load() = synchronized(cache) {
         val rawValues = storage.get(namespace)
-        val jsonValues: Map<String, Any?> = try {
-            JSONObject(rawValues).toMap()
-        } catch (e: Exception) {
-            emptyMap()
+        if (rawValues == null) {
+            clear()
+            return
         }
-        val values: MutableMap<String, V> = mutableMapOf()
-        for (key in jsonValues.keys) {
+        val jsonValues = JSONObject(rawValues).toMap()
+        val values = jsonValues.mapNotNull { entry ->
             try {
-                val value: V = if (transformer != null) {
-                    transformer?.let { it(jsonValues[key]!!) }
-                } else {
-                    jsonValues[key] as V
-                }
-                if (value != null) {
-                    values[key] = value
-                }
+                entry.key to transformer.invoke(entry.value!!)
             } catch (e: Exception) {
-                // Do nothing
+                null
             }
-        }
+        }.toMap()
         clear()
         putAll(values)
-
     }
 
     fun store(values: Map<String, V> = cache) = synchronized(cache) {
@@ -73,12 +64,11 @@ fun getVariantStorage(deploymentKey: String, instanceName: String, storage: Stor
     return LoadStoreCache(namespace, storage, ::transformVariantFromStorage)
 }
 
-fun getFlagStorage(deploymentKey: String, instanceName: String, storage: Storage): LoadStoreCache<Any> {
-    val truncatedDeployment = deploymentKey.takeLast(6)
-    val namespace = "amp-exp-$instanceName-$truncatedDeployment-flags"
-    return LoadStoreCache(namespace, storage)
-}
-
+//fun getFlagStorage(deploymentKey: String, instanceName: String, storage: Storage): LoadStoreCache<Any> {
+//    val truncatedDeployment = deploymentKey.takeLast(6)
+//    val namespace = "amp-exp-$instanceName-$truncatedDeployment-flags"
+//    return LoadStoreCache(namespace, storage)
+//}
 
 fun transformVariantFromStorage(storageValue: Any?): Variant {
     return when (storageValue) {
