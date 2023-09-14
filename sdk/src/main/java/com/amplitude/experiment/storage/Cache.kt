@@ -4,7 +4,7 @@ import com.amplitude.experiment.Variant
 import com.amplitude.experiment.util.toMap
 import org.json.JSONObject
 
-class LoadStoreCache<V>(
+internal class LoadStoreCache<V>(
     private val namespace: String,
     private val storage: Storage,
     private val transformer: ((value: Any) -> V)
@@ -58,7 +58,7 @@ class LoadStoreCache<V>(
     }
 }
 
-fun getVariantStorage(deploymentKey: String, instanceName: String, storage: Storage): LoadStoreCache<Variant> {
+internal fun getVariantStorage(deploymentKey: String, instanceName: String, storage: Storage): LoadStoreCache<Variant> {
     val truncatedDeployment = deploymentKey.takeLast(6)
     val namespace = "amp-exp-$instanceName-$truncatedDeployment"
     return LoadStoreCache(namespace, storage, ::transformVariantFromStorage)
