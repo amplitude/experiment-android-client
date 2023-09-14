@@ -1,15 +1,15 @@
 package com.amplitude.experiment
 
-import android.content.Context
 import com.amplitude.experiment.analytics.ExperimentAnalyticsEvent
 import com.amplitude.experiment.analytics.ExperimentAnalyticsProvider
+import com.amplitude.experiment.storage.SharedPrefsStorage
 import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.SystemLogger
 import okhttp3.OkHttpClient
 import org.junit.Assert
 import org.junit.Test
-import org.mockito.Mockito.mock
 import java.util.concurrent.ExecutionException
+import org.mockito.Mockito
 
 private const val API_KEY = "client-DvWljIjiiuqLbyjqdvBaLFfEBrAvGuA3"
 
@@ -22,16 +22,16 @@ class ExperimentClientTest {
         Logger.implementation = SystemLogger(true)
     }
 
+    private val mockStorage = Mockito.mock(SharedPrefsStorage::class.java)
     private val testUser = ExperimentUser(userId = "test_user")
 
-    private val serverVariant = Variant("on", "on", "payload")
-    private val fallbackVariant = Variant(value = "fallback", payload = "payload")
-    private val initialVariant = Variant(value = "initial")
-    private val appContext: Context = mock<Context>();
+    private val serverVariant = Variant(key = "on", value = "on", payload = "payload")
+    private val fallbackVariant = Variant(key = "fallback", payload = "payload")
+    private val initialVariant = Variant(key = "initial")
 
     private val initialVariants = mapOf(
         INITIAL_KEY to initialVariant,
-        KEY to Variant("off"),
+        KEY to Variant(key = "off"),
     )
 
     private val client = DefaultExperimentClient(
@@ -42,7 +42,7 @@ class ExperimentClientTest {
             initialVariants = initialVariants,
         ),
         OkHttpClient(),
-        appContext,
+        mockStorage,
         Experiment.executorService,
     )
 
@@ -55,7 +55,7 @@ class ExperimentClientTest {
             fetchTimeoutMillis = 1,
         ),
         OkHttpClient(),
-        appContext,
+        mockStorage,
         Experiment.executorService,
     )
 
@@ -67,7 +67,7 @@ class ExperimentClientTest {
             initialVariants = initialVariants,
         ),
         OkHttpClient(),
-        appContext,
+        mockStorage,
         Experiment.executorService,
     )
 
@@ -77,7 +77,7 @@ class ExperimentClientTest {
             debug = true,
         ),
         OkHttpClient(),
-        appContext,
+        mockStorage,
         Experiment.executorService,
     )
 
@@ -163,7 +163,7 @@ class ExperimentClientTest {
     fun `clear the flag config in storage`() {
         generalClient.fetch(testUser).get()
         val variant = generalClient.variant("sdk-ci-test")
-        Assert.assertEquals(Variant("on", "on","payload"), variant)
+        Assert.assertEquals(Variant(key = "on", value = "on", payload = "payload"), variant)
         generalClient.clear()
         val clearedVariants = generalClient.all()
         Assert.assertEquals(0, clearedVariants.entries.size)
@@ -223,7 +223,7 @@ class ExperimentClientTest {
                 Assert.assertEquals(
                     mapOf(
                         "key" to KEY,
-                        "variant" to serverVariant.value,
+                        "variant" to serverVariant.key,
                         "source" to VariantSource.LOCAL_STORAGE.toString()
                     ),
                     event.properties
@@ -251,7 +251,7 @@ class ExperimentClientTest {
                 analyticsProvider = analyticsProvider,
             ),
             OkHttpClient(),
-            appContext,
+            mockStorage,
             Experiment.executorService,
         )
         analyticsProviderClient.fetch(testUser).get()
@@ -294,7 +294,7 @@ class ExperimentClientTest {
                 analyticsProvider = analyticsProvider,
             ),
             OkHttpClient(),
-            appContext,
+            mockStorage,
             Experiment.executorService,
         )
         analyticsProviderClient.fetch(testUser).get()
@@ -336,7 +336,7 @@ class ExperimentClientTest {
                 analyticsProvider = analyticsProvider,
             ),
             OkHttpClient(),
-            appContext,
+            mockStorage,
             Experiment.executorService,
         )
         analyticsProviderClient.fetch(testUser).get()
@@ -352,7 +352,7 @@ class ExperimentClientTest {
             override fun track(event: ExperimentAnalyticsEvent) {
                 Assert.assertEquals(
                     event.userProperties,
-                    mapOf("[Experiment] $KEY" to serverVariant.value)
+                    mapOf("[Experiment] $KEY" to serverVariant.key)
                 )
                 didExposureGetTracked = true
             }
@@ -376,7 +376,7 @@ class ExperimentClientTest {
                 analyticsProvider = analyticsProvider,
             ),
             OkHttpClient(),
-            appContext,
+            mockStorage,
             Experiment.executorService,
         )
         analyticsProviderClient.fetch(testUser).get()
@@ -402,10 +402,10 @@ class ExperimentClientTest {
                 debug = true,
                 exposureTrackingProvider = exposureTrackingProvider,
                 source = Source.INITIAL_VARIANTS,
-                initialVariants = mapOf("flagKey" to Variant("variant", null, "experimentKey"))
+                initialVariants = mapOf("flagKey" to Variant(key = "variant", expKey = "experimentKey"))
             ),
             OkHttpClient(),
-            appContext,
+            mockStorage,
             Experiment.executorService,
         )
         client.variant("flagKey")

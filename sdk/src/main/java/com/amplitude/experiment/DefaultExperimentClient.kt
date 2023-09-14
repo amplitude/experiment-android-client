@@ -3,6 +3,7 @@ package com.amplitude.experiment
 import android.content.Context
 import com.amplitude.experiment.storage.LoadStoreCache
 import com.amplitude.experiment.storage.SharedPrefsStorage
+import com.amplitude.experiment.storage.Storage
 import com.amplitude.experiment.analytics.ExposureEvent as OldExposureEvent
 import com.amplitude.experiment.storage.getVariantStorage
 import com.amplitude.experiment.util.AsyncFuture
@@ -38,12 +39,11 @@ internal class DefaultExperimentClient internal constructor(
     private val apiKey: String,
     private val config: ExperimentConfig,
     private val httpClient: OkHttpClient,
-    appContext: Context,
+    storage: Storage,
     private val executorService: ScheduledExecutorService,
 ) : ExperimentClient {
 
     private var user: ExperimentUser? = null
-    private val storage = SharedPrefsStorage(appContext)
     private val variants: LoadStoreCache<Variant> = getVariantStorage(
         this.apiKey,
         this.config.instanceName,
@@ -109,11 +109,11 @@ internal class DefaultExperimentClient internal constructor(
         val exposedUser = getUserMergedWithProvider()
         val event = OldExposureEvent(exposedUser, key, variant, source)
         // Track the exposure event if an analytics provider is set
-        if (source.isFallback() || variant.value == null) {
+        if (source.isFallback() || variant.key == null) {
             userSessionExposureTracker?.track(Exposure(key, null, variant.expKey), exposedUser)
             analyticsProvider?.unsetUserProperty(event)
         } else {
-            userSessionExposureTracker?.track(Exposure(key, variant.value, variant.expKey), exposedUser)
+            userSessionExposureTracker?.track(Exposure(key, variant.key, variant.expKey), exposedUser)
             analyticsProvider?.setUserProperty(event)
             analyticsProvider?.track(event)
         }
