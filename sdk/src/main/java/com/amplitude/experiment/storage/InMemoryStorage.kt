@@ -3,6 +3,7 @@ package com.amplitude.experiment.storage
 import com.amplitude.experiment.Variant
 import java.util.concurrent.ConcurrentHashMap
 
+// test
 internal class InMemoryStorage : Storage {
 
     private val data: MutableMap<String, Variant> = ConcurrentHashMap()
