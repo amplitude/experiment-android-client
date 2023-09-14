@@ -1,8 +1,6 @@
 package com.amplitude.experiment
 
-import android.content.Context
 import com.amplitude.experiment.storage.LoadStoreCache
-import com.amplitude.experiment.storage.SharedPrefsStorage
 import com.amplitude.experiment.storage.Storage
 import com.amplitude.experiment.analytics.ExposureEvent as OldExposureEvent
 import com.amplitude.experiment.storage.getVariantStorage
@@ -49,6 +47,9 @@ internal class DefaultExperimentClient internal constructor(
         this.config.instanceName,
         storage,
     );
+    init {
+        this.variants.load()
+    }
 
     private val backoffLock = Any()
     private var backoff: Backoff? = null
