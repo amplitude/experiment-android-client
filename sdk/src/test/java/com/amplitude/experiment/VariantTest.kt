@@ -39,7 +39,7 @@ class VariantTest {
     @Test
     fun `variant to json object`() {
         run {
-            val variant = Variant("key","value", null, "expKey")
+            val variant = Variant("value", null, "expKey", "key")
             val jsonObject = JSONObject()
             jsonObject.put("key", "key")
             jsonObject.put("value", "value")
