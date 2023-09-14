@@ -23,13 +23,13 @@ class ExperimentClientTest {
 
     private val testUser = ExperimentUser(userId = "test_user")
 
-    private val serverVariant = Variant("on", "payload")
-    private val fallbackVariant = Variant("fallback", "payload")
-    private val initialVariant = Variant("initial")
+    private val serverVariant = Variant(key = "on", value = "on", payload = "payload")
+    private val fallbackVariant = Variant(key = "fallback", payload = "payload")
+    private val initialVariant = Variant(key = "initial")
 
     private val initialVariants = mapOf(
         INITIAL_KEY to initialVariant,
-        KEY to Variant("off"),
+        KEY to Variant(key = "off"),
     )
 
     private val client = DefaultExperimentClient(
@@ -94,7 +94,7 @@ class ExperimentClientTest {
         } catch (e: ExecutionException) {
             // Timeout is expected
             val variant = timeoutClient.variant(KEY)
-            Assert.assertEquals("off", variant.value)
+            Assert.assertEquals("off", variant.key)
             return
         }
         Assert.fail("expected timeout exception")
@@ -107,7 +107,7 @@ class ExperimentClientTest {
         } catch (e: ExecutionException) {
             // Timeout is expected
             val offVariant = timeoutClient.variant(KEY)
-            Assert.assertEquals("off", offVariant.value)
+            Assert.assertEquals("off", offVariant.key)
             // Wait for retry to succeed and check updated variant
             Thread.sleep(1000)
             val variant = timeoutClient.variant(KEY)
@@ -161,7 +161,7 @@ class ExperimentClientTest {
     fun `clear the flag config in storage`() {
         generalClient.fetch(testUser).get()
         val variant = generalClient.variant("sdk-ci-test")
-        Assert.assertEquals(Variant("on", "payload"), variant)
+        Assert.assertEquals(Variant(key = "on", value = "on", payload = "payload"), variant)
         generalClient.clear()
         val clearedVariants = generalClient.all()
         Assert.assertEquals(0, clearedVariants.entries.size)
@@ -174,7 +174,7 @@ class ExperimentClientTest {
         initialVariantSourceClient.fetch(testUser).get()
         variant = initialVariantSourceClient.variant(KEY)
         Assert.assertNotNull(variant)
-        Assert.assertEquals("off", variant.value)
+        Assert.assertEquals("off", variant.key)
         Assert.assertNull(variant.payload)
     }
 
@@ -221,7 +221,7 @@ class ExperimentClientTest {
                 Assert.assertEquals(
                     mapOf(
                         "key" to KEY,
-                        "variant" to serverVariant.value,
+                        "variant" to serverVariant.key,
                         "source" to VariantSource.LOCAL_STORAGE.toString()
                     ),
                     event.properties
@@ -320,6 +320,7 @@ class ExperimentClientTest {
             override fun setUserProperty(event: ExperimentAnalyticsEvent) {
                 Assert.fail("analytics provider set() should not be called.")
             }
+
             override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
                 Assert.assertEquals("[Experiment] $INITIAL_KEY", event.userProperty)
             }
@@ -349,7 +350,7 @@ class ExperimentClientTest {
             override fun track(event: ExperimentAnalyticsEvent) {
                 Assert.assertEquals(
                     event.userProperties,
-                    mapOf("[Experiment] $KEY" to serverVariant.value)
+                    mapOf("[Experiment] $KEY" to serverVariant.key)
                 )
                 didExposureGetTracked = true
             }
@@ -361,6 +362,7 @@ class ExperimentClientTest {
                 )
                 didUserPropertyGetSet = true
             }
+
             override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
                 Assert.fail("analytics provider unset() should not be called")
             }
@@ -398,7 +400,7 @@ class ExperimentClientTest {
                 debug = true,
                 exposureTrackingProvider = exposureTrackingProvider,
                 source = Source.INITIAL_VARIANTS,
-                initialVariants = mapOf("flagKey" to Variant("variant", null, "experimentKey"))
+                initialVariants = mapOf("flagKey" to Variant(key = "variant", expKey = "experimentKey"))
             ),
             OkHttpClient(),
             InMemoryStorage(),

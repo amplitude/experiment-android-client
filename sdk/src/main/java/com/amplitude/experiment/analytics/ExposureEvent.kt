@@ -33,11 +33,11 @@ class ExposureEvent(
     override val name: String = "[Experiment] Exposure"
     override val properties: Map<String, String?> = mapOf(
         "key" to key,
-        "variant" to variant.value,
+        "variant" to variant.key,
         "source" to source.toString(),
     )
     override val userProperties: Map<String, Any?> = mapOf(
-        "[Experiment] $key" to variant.value
+        "[Experiment] $key" to variant.key
     )
     override val userProperty: String = "[Experiment] $key"
 }
