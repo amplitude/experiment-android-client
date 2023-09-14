@@ -15,11 +15,11 @@ ext {
 apply from: "${rootDir}/gradle/publish-module.gradle"
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 30
 
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 31
+        targetSdkVersion 30
         versionName PUBLISH_VERSION
 
         consumerProguardFiles "consumer-rules.pro"
@@ -30,11 +30,6 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
-    }
-
-    compileOptions {
-        sourceCompatibility 1.8
-        targetCompatibility 1.8
     }
 }
 

@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.library'
     id 'kotlin-android'
+    id 'kotlin-android-extensions'
 }
 
 ext {
@@ -14,11 +15,11 @@ ext {
 apply from: "${rootDir}/gradle/publish-module.gradle"
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 30
 
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 31
+        targetSdkVersion 30
         versionName PUBLISH_VERSION
     }
 
