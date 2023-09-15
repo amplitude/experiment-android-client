@@ -28,11 +28,11 @@ internal fun JSONObject?.toFlag(): EvaluationFlag? {
         }
         val metadata = when {
             has("metadata") -> getJSONObject("metadata").toMap()
-            else -> emptyMap()
+            else -> null
         }
         EvaluationFlag(key, variants, segments, dependencies, metadata)
     } catch (e: JSONException) {
-        Logger.w("Error parsing Variant from json string $this")
+        Logger.w("Error parsing Flag from json string $this")
         return null
     }
 }

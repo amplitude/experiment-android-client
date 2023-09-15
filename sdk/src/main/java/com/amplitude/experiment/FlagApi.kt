@@ -3,7 +3,6 @@ package com.amplitude.experiment
 import com.amplitude.experiment.util.AsyncFuture
 import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.toFlag
-import com.amplitude.experiment.util.toVariant
 import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.json.JSONObject
