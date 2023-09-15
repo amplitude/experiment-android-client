@@ -73,7 +73,7 @@ internal fun getVariantStorage(deploymentKey: String, instanceName: String, stor
 //    return LoadStoreCache(namespace, storage)
 //}
 
-fun transformVariantFromStorage(storageValue: Any?): Variant {
+internal fun transformVariantFromStorage(storageValue: Any?): Variant {
     return when (storageValue) {
         is String -> {
             // From v0 string format
