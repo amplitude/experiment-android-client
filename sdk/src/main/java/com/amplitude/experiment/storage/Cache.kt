@@ -82,11 +82,11 @@ internal fun transformVariantFromStorage(storageValue: Any?): Variant {
 
         is Map<*, *> -> {
             // From v1 or v2 object format
-            val key = storageValue["key"] as? String
+            var key = storageValue["key"] as? String
             val value = storageValue["value"] as? String
             val payload = storageValue["payload"]
-            var metadata: MutableMap<String, Any>? = (storageValue["metadata"] as? Map<String, Any>)?.toMutableMap()
-            var experimentKey: String? = storageValue["expKey"] as? String
+            var metadata = (storageValue["metadata"] as? Map<String, Any?>)?.toMutableMap()
+            var experimentKey= storageValue["expKey"] as? String
 
             if (metadata != null && metadata["experimentKey"] != null) {
                 experimentKey = metadata["experimentKey"] as? String
@@ -95,20 +95,11 @@ internal fun transformVariantFromStorage(storageValue: Any?): Variant {
                 metadata["experimentKey"] = experimentKey
             }
 
-            val variant = Variant()
-
-            if (key != null) {
-                variant.key = key
-            } else if (value != null) {
-                variant.key = value
+            if (key == null && value != null) {
+                key = value
             }
 
-            value?.let { variant.value = it }
-            metadata?.let { variant.metadata = it }
-            payload?.let { variant.payload = it }
-            experimentKey?.let { variant.expKey = it }
-
-            variant
+            Variant(key = key, value = value, payload = payload, expKey = experimentKey, metadata = metadata)
         }
 
         else -> Variant()

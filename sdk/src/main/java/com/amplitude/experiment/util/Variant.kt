@@ -56,7 +56,7 @@ internal fun JSONObject?.toVariant(): Variant? {
         }
         val metadata = when {
             has("metadata") -> getJSONObject("metadata").toMap()
-            else -> emptyMap()
+            else -> null
         }
         Variant(value, payload, expKey, key, metadata)
     } catch (e: JSONException) {

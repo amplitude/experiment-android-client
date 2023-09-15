@@ -4,24 +4,24 @@ data class Variant @JvmOverloads constructor(
     /**
      * The value of the variant.
      */
-    @JvmField var value: String? = null,
+    @JvmField val value: String? = null,
     /**
      * The attached payload, if any.
      */
-    @JvmField var payload: Any? = null,
+    @JvmField val payload: Any? = null,
     /**
      * The experiment key. Used to distinguish two experiments associated with the same flag.
      */
-    @JvmField var expKey: String? = null,
+    @JvmField val expKey: String? = null,
     /**
      * The key of the variant.
      */
-    @JvmField var key: String? = null,
+    @JvmField val key: String? = null,
     /**
      * Flag, segment, and variant metadata produced as a result of
      * evaluation for the user. Used for system purposes.
      */
-    @JvmField var metadata: Map<String, Any?> = emptyMap()
+    @JvmField val metadata: Map<String, Any?>? = null
 ) {
 
     /**
