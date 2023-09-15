@@ -1,7 +1,9 @@
 package com.amplitude.experiment
 
+import com.amplitude.experiment.storage.LoadStoreCache
 import com.amplitude.experiment.analytics.ExposureEvent as OldExposureEvent
 import com.amplitude.experiment.storage.Storage
+import com.amplitude.experiment.storage.getFlagStorage
 import com.amplitude.experiment.util.AsyncFuture
 import com.amplitude.experiment.util.Backoff
 import com.amplitude.experiment.util.BackoffConfig
@@ -40,6 +42,14 @@ internal class DefaultExperimentClient internal constructor(
 ) : ExperimentClient {
 
     private var user: ExperimentUser? = null
+    private val flags: LoadStoreCache<EvaluationFlag> = getFlagStorage(
+        this.apiKey,
+        this.config.instanceName,
+        storage,
+    );
+    init {
+        this.flags.load()
+    }
 
     private val backoffLock = Any()
     private var backoff: Backoff? = null
