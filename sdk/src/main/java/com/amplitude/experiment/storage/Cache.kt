@@ -119,15 +119,7 @@ private fun transformFlagFromStorage(storageValue: Any?): EvaluationFlag {
             val dependencies = storageValue["dependencies"] as? List<String>
             var metadata: MutableMap<String, Any>? = (storageValue["metadata"] as? Map<String, Any>)?.toMutableMap()
 
-            val flag = EvaluationFlag()
-
-            key?.let { flag.key = it }
-            variants?.let { flag.variants = it }
-            segments?.let { flag.segments = it }
-            dependencies?.let { flag.dependencies = it }
-            metadata?.let { flag.metadata = it }
-
-            flag
+            EvaluationFlag(key, variants, segments,dependencies,metadata)
         }
         else -> EvaluationFlag()
     }
