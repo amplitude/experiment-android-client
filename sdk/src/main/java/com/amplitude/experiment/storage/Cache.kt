@@ -4,6 +4,9 @@ import com.amplitude.experiment.EvaluationFlag
 import com.amplitude.experiment.EvaluationSegment
 import com.amplitude.experiment.EvaluationVariant
 import com.amplitude.experiment.Variant
+import com.amplitude.experiment.EvaluationFlag
+import com.amplitude.experiment.EvaluationSegment
+import com.amplitude.experiment.EvaluationVariant
 import com.amplitude.experiment.util.toMap
 import org.json.JSONObject
 

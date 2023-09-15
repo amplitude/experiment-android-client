@@ -1,10 +1,10 @@
 package com.amplitude.experiment
 
 import com.amplitude.experiment.storage.LoadStoreCache
-import com.amplitude.experiment.analytics.ExposureEvent as OldExposureEvent
 import com.amplitude.experiment.storage.Storage
-import com.amplitude.experiment.storage.getFlagStorage
+import com.amplitude.experiment.analytics.ExposureEvent as OldExposureEvent
 import com.amplitude.experiment.storage.getVariantStorage
+import com.amplitude.experiment.storage.getFlagStorage
 import com.amplitude.experiment.util.AsyncFuture
 import com.amplitude.experiment.util.Backoff
 import com.amplitude.experiment.util.BackoffConfig
