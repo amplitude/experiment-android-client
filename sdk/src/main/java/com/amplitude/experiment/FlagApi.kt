@@ -5,6 +5,7 @@ import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.toFlag
 import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
 import java.util.concurrent.Future
@@ -18,7 +19,7 @@ data class GetFlagsOptions(
 )
 
 interface FlagApi {
-    suspend fun getFlags(options: GetFlagsOptions? = null): Future<Map<String, EvaluationFlag>>
+    fun getFlags(options: GetFlagsOptions? = null): Future<Map<String, EvaluationFlag>>
 }
 
 class SdkFlagApi(
@@ -26,7 +27,7 @@ class SdkFlagApi(
     private val serverUrl: String,
     private val httpClient: OkHttpClient
 ) : FlagApi {
-    override suspend fun getFlags(options: GetFlagsOptions?): Future<Map<String, EvaluationFlag>> {
+    override fun getFlags(options: GetFlagsOptions?): Future<Map<String, EvaluationFlag>> {
         val url = serverUrl.toHttpUrl().newBuilder()
             .addPathSegments("sdk/v2/flags")
             .build()
@@ -43,7 +44,7 @@ class SdkFlagApi(
 
         val request = builder.build()
         val call = httpClient.newCall(request)
-        val timeout = if (options == null || options.timeoutMillis == null) 0 else options.timeoutMillis
+        var timeout = if (options == null || options.timeoutMillis == null) 0 else options.timeoutMillis
         call.timeout().timeout(timeout, TimeUnit.MILLISECONDS)
         val future = AsyncFuture<Map<String, EvaluationFlag>>(call)
         call.enqueue(object : Callback {
@@ -51,14 +52,16 @@ class SdkFlagApi(
                 try {
                     Logger.d("Received fetch response: $response")
                     val body = response.body?.string() ?: ""
-                    val json = JSONObject(body)
+                    val jsonArray = JSONArray(body)
                     val flags = mutableMapOf<String, EvaluationFlag>()
-                    json.keys().forEach { key ->
-                        val flag = json.getJSONObject(key).toFlag()
+                    for (i in 0 until jsonArray.length()) {
+                        val json = jsonArray.getJSONObject(i)
+                        val flag = json.toFlag()
                         if (flag != null) {
-                            flags[key] = flag
+                            flags[json.getString("key")] = flag
                         }
                     }
+
                     future.complete(flags)
                 } catch (e: IOException) {
                     onFailure(call, e)

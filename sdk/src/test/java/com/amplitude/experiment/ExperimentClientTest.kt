@@ -411,4 +411,12 @@ class ExperimentClientTest {
         client.variant("flagKey")
         Assert.assertTrue(didTrack)
     }
+
+    @Test
+    fun `test getFlags`() {
+        val api =
+            SdkFlagApi(API_KEY, ExperimentConfig.Defaults.SERVER_URL, OkHttpClient())
+        val flags = api.getFlags(null).get()
+        print(flags)
+    }
 }
