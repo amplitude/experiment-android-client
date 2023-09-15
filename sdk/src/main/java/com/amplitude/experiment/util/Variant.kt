@@ -17,6 +17,9 @@ internal fun Variant.toJson(): String {
         if (expKey != null) {
             jsonObject.put("expKey", expKey)
         }
+        if (metadata != null) {
+            jsonObject.put("metadata", metadata)
+        }
     } catch (e: JSONException) {
         Logger.w("Error converting Variant to json string", e)
     }
