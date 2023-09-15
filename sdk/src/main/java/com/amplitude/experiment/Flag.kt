@@ -5,7 +5,7 @@ data class EvaluationFlag(
     var variants: Map<String, EvaluationVariant>? = null,
     var segments: List<EvaluationSegment>? = null,
     var dependencies: List<String>? = null,
-    var metadata: Map<String, Any>? = null
+    var metadata: Map<String, Any?>? = null
 )
 
 data class EvaluationVariant(
