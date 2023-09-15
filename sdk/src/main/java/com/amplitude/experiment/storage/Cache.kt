@@ -67,11 +67,11 @@ internal fun getVariantStorage(deploymentKey: String, instanceName: String, stor
     return LoadStoreCache(namespace, storage, ::transformVariantFromStorage)
 }
 
-//fun getFlagStorage(deploymentKey: String, instanceName: String, storage: Storage): LoadStoreCache<Any> {
-//    val truncatedDeployment = deploymentKey.takeLast(6)
-//    val namespace = "amp-exp-$instanceName-$truncatedDeployment-flags"
-//    return LoadStoreCache(namespace, storage)
-//}
+internal fun getFlagStorage(deploymentKey: String, instanceName: String, storage: Storage): LoadStoreCache<EvaluationFlag> {
+    val truncatedDeployment = deploymentKey.takeLast(6)
+    val namespace = "amp-exp-$instanceName-$truncatedDeployment-flags"
+    return LoadStoreCache(namespace, storage, ::transformFlagFromStorage)
+}
 
 internal fun transformVariantFromStorage(storageValue: Any?): Variant {
     return when (storageValue) {
@@ -118,12 +118,6 @@ internal fun transformVariantFromStorage(storageValue: Any?): Variant {
     }
 }
 
-internal fun getFlagStorage(deploymentKey: String, instanceName: String, storage: Storage): LoadStoreCache<EvaluationFlag> {
-    val truncatedDeployment = deploymentKey.takeLast(6)
-    val namespace = "amp-exp-$instanceName-$truncatedDeployment-flags"
-    return LoadStoreCache(namespace, storage, ::transformFlagFromStorage)
-}
-
 private fun transformFlagFromStorage(storageValue: Any?): EvaluationFlag {
     return when (storageValue) {
         is Map<*, *> -> {
@@ -144,7 +138,6 @@ private fun transformFlagFromStorage(storageValue: Any?): EvaluationFlag {
 
             flag
         }
-
         else -> EvaluationFlag()
     }
 }
