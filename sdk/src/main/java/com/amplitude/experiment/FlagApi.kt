@@ -6,7 +6,6 @@ import com.amplitude.experiment.util.toFlag
 import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.json.JSONArray
-import org.json.JSONObject
 import java.io.IOException
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -15,7 +14,7 @@ data class GetFlagsOptions(
     val libraryName: String,
     val libraryVersion: String,
     val evaluationMode: String? = null,
-    val timeoutMillis: Long? = null
+    val timeoutMillis: Long = ExperimentConfig.Defaults.FETCH_TIMEOUT_MILLIS
 )
 
 interface FlagApi {
@@ -38,14 +37,15 @@ class SdkFlagApi(
 
         options?.let {
             if (it.libraryName.isNotEmpty() && it.libraryVersion.isNotEmpty()) {
-                builder.addHeader("X-Amp-Exp-Library","${it.libraryName}/${it.libraryVersion}")
+                builder.addHeader("X-Amp-Exp-Library", "${it.libraryName}/${it.libraryVersion}")
             }
         }
 
         val request = builder.build()
         val call = httpClient.newCall(request)
-        var timeout = if (options == null || options.timeoutMillis == null) 0 else options.timeoutMillis
-        call.timeout().timeout(timeout, TimeUnit.MILLISECONDS)
+        if (options != null) {
+            call.timeout().timeout(options.timeoutMillis, TimeUnit.MILLISECONDS)
+        }
         val future = AsyncFuture<Map<String, EvaluationFlag>>(call)
         call.enqueue(object : Callback {
             override fun onResponse(call: Call, response: Response) {
@@ -54,8 +54,8 @@ class SdkFlagApi(
                     val body = response.body?.string() ?: ""
                     val jsonArray = JSONArray(body)
                     val flags = mutableMapOf<String, EvaluationFlag>()
-                    for (i in 0 until jsonArray.length()) {
-                        val json = jsonArray.getJSONObject(i)
+                    (0 until jsonArray.length()).forEach {
+                        val json = jsonArray.getJSONObject(it)
                         val flag = json.toFlag()
                         if (flag != null) {
                             flags[json.getString("key")] = flag

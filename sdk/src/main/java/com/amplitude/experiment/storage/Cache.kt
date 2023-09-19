@@ -67,7 +67,11 @@ internal fun getVariantStorage(deploymentKey: String, instanceName: String, stor
     return LoadStoreCache(namespace, storage, ::transformVariantFromStorage)
 }
 
-internal fun getFlagStorage(deploymentKey: String, instanceName: String, storage: Storage): LoadStoreCache<EvaluationFlag> {
+internal fun getFlagStorage(
+    deploymentKey: String,
+    instanceName: String,
+    storage: Storage
+): LoadStoreCache<EvaluationFlag> {
     val truncatedDeployment = deploymentKey.takeLast(6)
     val namespace = "amp-exp-$instanceName-$truncatedDeployment-flags"
     return LoadStoreCache(namespace, storage, ::transformFlagFromStorage)
@@ -89,7 +93,7 @@ internal fun transformVariantFromStorage(storageValue: Any?): Variant {
             val value = storageValue["value"] as? String
             val payload = storageValue["payload"]
             var metadata = (storageValue["metadata"] as? Map<String, Any?>)?.toMutableMap()
-            var experimentKey= storageValue["expKey"] as? String
+            var experimentKey = storageValue["expKey"] as? String
 
             if (metadata != null && metadata["experimentKey"] != null) {
                 experimentKey = metadata["experimentKey"] as? String
@@ -112,15 +116,15 @@ internal fun transformVariantFromStorage(storageValue: Any?): Variant {
 private fun transformFlagFromStorage(storageValue: Any?): EvaluationFlag {
     return when (storageValue) {
         is Map<*, *> -> {
-            // From v1 or v2 object format
             val key = storageValue["key"] as? String
             val variants = storageValue["variants"] as? Map<String, EvaluationVariant>
             val segments = storageValue["segments"] as? List<EvaluationSegment>
             val dependencies = storageValue["dependencies"] as? List<String>
             var metadata: MutableMap<String, Any>? = (storageValue["metadata"] as? Map<String, Any>)?.toMutableMap()
 
-            EvaluationFlag(key, variants, segments,dependencies,metadata)
+            EvaluationFlag(key, variants, segments, dependencies, metadata)
         }
+
         else -> EvaluationFlag()
     }
 }

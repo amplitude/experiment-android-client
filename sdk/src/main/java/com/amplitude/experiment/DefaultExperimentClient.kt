@@ -43,6 +43,7 @@ internal class DefaultExperimentClient internal constructor(
 ) : ExperimentClient {
 
     private var user: ExperimentUser? = null
+    private val flagApi = SdkFlagApi(this.apiKey, this.config.serverUrl, httpClient)
     private val variants: LoadStoreCache<Variant> = getVariantStorage(
         this.apiKey,
         this.config.instanceName,
@@ -53,6 +54,7 @@ internal class DefaultExperimentClient internal constructor(
         this.config.instanceName,
         storage,
     );
+
     init {
         this.variants.load()
         this.flags.load()
@@ -264,6 +266,20 @@ internal class DefaultExperimentClient internal constructor(
         })
         return future
     }
+
+    private fun doFlags() {
+        val flags = flagApi.getFlags(
+            GetFlagsOptions(
+                libraryName = "experiment-js-client",
+                libraryVersion = BuildConfig.VERSION_NAME,
+                timeoutMillis = config.fetchTimeoutMillis
+            )
+        )
+        this.flags.clear()
+        this.flags.putAll(flags.get())
+        this.flags.store()
+    }
+
 
     private fun startRetries(user: ExperimentUser, options: FetchOptions?) = synchronized(backoffLock) {
         backoff?.cancel()
