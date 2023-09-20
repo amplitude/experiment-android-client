@@ -1,16 +1,16 @@
 package com.amplitude.experiment.storage
 
 import com.amplitude.experiment.Variant
-import com.amplitude.experiment.EvaluationFlag
-import com.amplitude.experiment.EvaluationSegment
-import com.amplitude.experiment.EvaluationVariant
+import com.amplitude.experiment.evaluation.EvaluationFlag
+import com.amplitude.experiment.evaluation.EvaluationSegment
+import com.amplitude.experiment.evaluation.EvaluationVariant
 import com.amplitude.experiment.util.toMap
 import org.json.JSONObject
 
 internal class LoadStoreCache<V>(
     private val namespace: String,
     private val storage: Storage,
-    private val transformer: ((value: Any) -> V)
+    private val transformer: ((value: Any) -> V?)
 ) {
     private val cache: MutableMap<String, V> = mutableMapOf()
 
@@ -47,7 +47,12 @@ internal class LoadStoreCache<V>(
         val jsonValues = JSONObject(rawValues).toMap()
         val values = jsonValues.mapNotNull { entry ->
             try {
-                entry.key to transformer.invoke(entry.value!!)
+                val value = transformer.invoke(entry.value!!)
+                if (value != null) {
+                    entry.key to value
+                } else {
+                    null
+                }
             } catch (e: Exception) {
                 null
             }
@@ -77,7 +82,7 @@ internal fun getFlagStorage(
     return LoadStoreCache(namespace, storage, ::transformFlagFromStorage)
 }
 
-internal fun transformVariantFromStorage(storageValue: Any?): Variant {
+internal fun transformVariantFromStorage(storageValue: Any?): Variant? {
     return when (storageValue) {
         is String -> {
             // From v0 string format
@@ -109,22 +114,22 @@ internal fun transformVariantFromStorage(storageValue: Any?): Variant {
             Variant(key = key, value = value, payload = payload, expKey = experimentKey, metadata = metadata)
         }
 
-        else -> Variant()
+        else -> null
     }
 }
 
-private fun transformFlagFromStorage(storageValue: Any?): EvaluationFlag {
+private fun transformFlagFromStorage(storageValue: Any?): EvaluationFlag? {
     return when (storageValue) {
         is Map<*, *> -> {
-            val key = storageValue["key"] as? String
-            val variants = storageValue["variants"] as? Map<String, EvaluationVariant>
-            val segments = storageValue["segments"] as? List<EvaluationSegment>
-            val dependencies = storageValue["dependencies"] as? List<String>
+            val key = storageValue["key"] as String
+            val variants = storageValue["variants"] as Map<String, EvaluationVariant>
+            val segments = storageValue["segments"] as List<EvaluationSegment>
+            val dependencies = storageValue["dependencies"] as Set<String>
             var metadata: MutableMap<String, Any>? = (storageValue["metadata"] as? Map<String, Any>)?.toMutableMap()
 
             EvaluationFlag(key, variants, segments, dependencies, metadata)
         }
 
-        else -> EvaluationFlag()
+        else -> null
     }
 }

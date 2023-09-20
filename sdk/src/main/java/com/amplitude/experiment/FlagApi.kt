@@ -1,5 +1,6 @@
 package com.amplitude.experiment
 
+import com.amplitude.experiment.evaluation.EvaluationFlag
 import com.amplitude.experiment.util.AsyncFuture
 import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.toFlag

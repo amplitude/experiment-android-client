@@ -1,8 +1,8 @@
 package com.amplitude.experiment.util
 
-import com.amplitude.experiment.EvaluationFlag
-import com.amplitude.experiment.EvaluationSegment
-import com.amplitude.experiment.EvaluationVariant
+import com.amplitude.experiment.evaluation.EvaluationFlag
+import com.amplitude.experiment.evaluation.EvaluationSegment
+import com.amplitude.experiment.evaluation.EvaluationVariant
 import org.json.JSONException
 import org.json.JSONObject
 
@@ -14,18 +14,15 @@ internal fun JSONObject?.toFlag(): EvaluationFlag? {
             has("key") -> getString("key")
             else -> return null
         }
-        val variants = when {
-            has("variants") -> getJSONObject("variants").toMap() as Map<String, EvaluationVariant>?
-            else -> null
-        }
-        val segments = when {
-            has("segments") -> getJSONArray("segments").toList() as List<EvaluationSegment>?
-            else -> null
-        }
+        val variants = getJSONObject("variants").toMap() as Map<String, EvaluationVariant>
+
+        val segments = getJSONArray("segments").toList() as List<EvaluationSegment>
+
         val dependencies = when {
-            has("dependencies") -> getJSONArray("dependencies").toList() as List<String>?
+            has("dependencies") -> getJSONArray("dependencies").toList() as Set<String>
             else -> null
         }
+
         val metadata = when {
             has("metadata") -> getJSONObject("metadata").toMap()
             else -> null

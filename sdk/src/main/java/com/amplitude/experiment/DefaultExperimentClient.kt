@@ -1,5 +1,6 @@
 package com.amplitude.experiment
 
+import com.amplitude.experiment.evaluation.EvaluationFlag
 import com.amplitude.experiment.storage.LoadStoreCache
 import com.amplitude.experiment.storage.Storage
 import com.amplitude.experiment.analytics.ExposureEvent as OldExposureEvent
