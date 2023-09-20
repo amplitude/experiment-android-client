@@ -39,12 +39,14 @@ internal class DefaultExperimentClient internal constructor(
     private val apiKey: String,
     private val config: ExperimentConfig,
     private val httpClient: OkHttpClient,
-    private val storage: Storage,
+    storage: Storage,
     private val executorService: ScheduledExecutorService,
 ) : ExperimentClient {
 
     private var user: ExperimentUser? = null
+  
     private val flagApi = SdkFlagApi(this.apiKey, this.config.serverUrl, httpClient)
+
     private val variants: LoadStoreCache<Variant> = getVariantStorage(
         this.apiKey,
         this.config.instanceName,

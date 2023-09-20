@@ -113,7 +113,6 @@ internal fun transformVariantFromStorage(storageValue: Any?): Variant? {
 
             Variant(key = key, value = value, payload = payload, expKey = experimentKey, metadata = metadata)
         }
-
         else -> null
     }
 }
