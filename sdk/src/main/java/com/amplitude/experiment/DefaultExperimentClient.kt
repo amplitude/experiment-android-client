@@ -1,7 +1,9 @@
 package com.amplitude.experiment
 
-import com.amplitude.experiment.analytics.ExposureEvent as OldExposureEvent
+import com.amplitude.experiment.storage.LoadStoreCache
 import com.amplitude.experiment.storage.Storage
+import com.amplitude.experiment.analytics.ExposureEvent as OldExposureEvent
+import com.amplitude.experiment.storage.getVariantStorage
 import com.amplitude.experiment.util.AsyncFuture
 import com.amplitude.experiment.util.Backoff
 import com.amplitude.experiment.util.BackoffConfig
@@ -35,11 +37,19 @@ internal class DefaultExperimentClient internal constructor(
     private val apiKey: String,
     private val config: ExperimentConfig,
     private val httpClient: OkHttpClient,
-    private val storage: Storage,
+    storage: Storage,
     private val executorService: ScheduledExecutorService,
 ) : ExperimentClient {
 
     private var user: ExperimentUser? = null
+    private val variants: LoadStoreCache<Variant> = getVariantStorage(
+        this.apiKey,
+        this.config.instanceName,
+        storage,
+    );
+    init {
+        this.variants.load()
+    }
 
     private val backoffLock = Any()
     private var backoff: Backoff? = null
@@ -131,6 +141,7 @@ internal class DefaultExperimentClient internal constructor(
                 }
                 return VariantAndSource(config.fallbackVariant, VariantSource.FALLBACK_CONFIG)
             }
+
             Source.INITIAL_VARIANTS -> {
                 // for source = InitialVariants, fallback order goes:
                 // 1. InitialFlags
@@ -157,7 +168,8 @@ internal class DefaultExperimentClient internal constructor(
     }
 
     override fun clear() {
-        this.storage.clear()
+        this.variants.clear()
+        this.variants.store()
     }
 
     override fun getUser(): ExperimentUser? {
@@ -274,24 +286,26 @@ internal class DefaultExperimentClient internal constructor(
         return variants
     }
 
-    private fun storeVariants(variants: Map<String, Variant>, options: FetchOptions?) = synchronized(storage) {
-        val failedFlagKeys = options?.flagKeys ?.toMutableList() ?: mutableListOf()
+    private fun storeVariants(variants: Map<String, Variant>, options: FetchOptions?) = synchronized(variants) {
+        val failedFlagKeys = options?.flagKeys?.toMutableList() ?: mutableListOf()
         if (options?.flagKeys == null) {
-            storage.clear()
+            this.variants.clear()
         }
         for (entry in variants.entries) {
-            storage.put(entry.key, entry.value)
+            this.variants.put(entry.key, entry.value)
             failedFlagKeys.remove(entry.key)
         }
         for (key in failedFlagKeys) {
-            storage.remove(key)
+            this.variants.remove(key)
         }
+
+        this.variants.store()
         Logger.d("Stored variants: $variants")
     }
 
     private fun sourceVariants(): Map<String, Variant> {
         return when (config.source) {
-            Source.LOCAL_STORAGE -> storage.getAll()
+            Source.LOCAL_STORAGE -> this.variants.getAll()
             Source.INITIAL_VARIANTS -> config.initialVariants
         }
     }
@@ -299,7 +313,7 @@ internal class DefaultExperimentClient internal constructor(
     private fun secondaryVariants(): Map<String, Variant> {
         return when (config.source) {
             Source.LOCAL_STORAGE -> config.initialVariants
-            Source.INITIAL_VARIANTS -> storage.getAll()
+            Source.INITIAL_VARIANTS -> this.variants.getAll()
         }
     }
 
@@ -345,7 +359,7 @@ enum class VariantSource(val type: String) {
 
     fun isFallback(): Boolean {
         return this == FALLBACK_INLINE ||
-            this == FALLBACK_CONFIG ||
-            this == SECONDARY_INITIAL_VARIANTS
+                this == FALLBACK_CONFIG ||
+                this == SECONDARY_INITIAL_VARIANTS
     }
 }

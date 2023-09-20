@@ -21,7 +21,7 @@ data class Variant @JvmOverloads constructor(
      * Flag, segment, and variant metadata produced as a result of
      * evaluation for the user. Used for system purposes.
      */
-    @JvmField val metadata: Map<String, Any?> = emptyMap()
+    @JvmField val metadata: Map<String, Any?>? = null
 ) {
 
     /**

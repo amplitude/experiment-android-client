@@ -2,13 +2,14 @@ package com.amplitude.experiment
 
 import com.amplitude.experiment.analytics.ExperimentAnalyticsEvent
 import com.amplitude.experiment.analytics.ExperimentAnalyticsProvider
-import com.amplitude.experiment.storage.InMemoryStorage
+import com.amplitude.experiment.storage.Storage
 import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.SystemLogger
 import okhttp3.OkHttpClient
 import org.junit.Assert
 import org.junit.Test
 import java.util.concurrent.ExecutionException
+import org.mockito.Mockito
 
 private const val API_KEY = "client-DvWljIjiiuqLbyjqdvBaLFfEBrAvGuA3"
 
@@ -21,6 +22,7 @@ class ExperimentClientTest {
         Logger.implementation = SystemLogger(true)
     }
 
+    private val mockStorage = Mockito.mock(Storage::class.java)
     private val testUser = ExperimentUser(userId = "test_user")
 
     private val serverVariant = Variant(key = "on", value = "on", payload = "payload")
@@ -40,7 +42,7 @@ class ExperimentClientTest {
             initialVariants = initialVariants,
         ),
         OkHttpClient(),
-        InMemoryStorage(),
+        mockStorage,
         Experiment.executorService,
     )
 
@@ -53,7 +55,7 @@ class ExperimentClientTest {
             fetchTimeoutMillis = 1,
         ),
         OkHttpClient(),
-        InMemoryStorage(),
+        mockStorage,
         Experiment.executorService,
     )
 
@@ -65,7 +67,7 @@ class ExperimentClientTest {
             initialVariants = initialVariants,
         ),
         OkHttpClient(),
-        InMemoryStorage(),
+        mockStorage,
         Experiment.executorService,
     )
 
@@ -75,7 +77,7 @@ class ExperimentClientTest {
             debug = true,
         ),
         OkHttpClient(),
-        InMemoryStorage(),
+        mockStorage,
         Experiment.executorService,
     )
 
@@ -249,7 +251,7 @@ class ExperimentClientTest {
                 analyticsProvider = analyticsProvider,
             ),
             OkHttpClient(),
-            InMemoryStorage(),
+            mockStorage,
             Experiment.executorService,
         )
         analyticsProviderClient.fetch(testUser).get()
@@ -292,7 +294,7 @@ class ExperimentClientTest {
                 analyticsProvider = analyticsProvider,
             ),
             OkHttpClient(),
-            InMemoryStorage(),
+            mockStorage,
             Experiment.executorService,
         )
         analyticsProviderClient.fetch(testUser).get()
@@ -334,7 +336,7 @@ class ExperimentClientTest {
                 analyticsProvider = analyticsProvider,
             ),
             OkHttpClient(),
-            InMemoryStorage(),
+            mockStorage,
             Experiment.executorService,
         )
         analyticsProviderClient.fetch(testUser).get()
@@ -374,7 +376,7 @@ class ExperimentClientTest {
                 analyticsProvider = analyticsProvider,
             ),
             OkHttpClient(),
-            InMemoryStorage(),
+            mockStorage,
             Experiment.executorService,
         )
         analyticsProviderClient.fetch(testUser).get()
@@ -403,7 +405,7 @@ class ExperimentClientTest {
                 initialVariants = mapOf("flagKey" to Variant(key = "variant", expKey = "experimentKey"))
             ),
             OkHttpClient(),
-            InMemoryStorage(),
+            mockStorage,
             Experiment.executorService,
         )
         client.variant("flagKey")

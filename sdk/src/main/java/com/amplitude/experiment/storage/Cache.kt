@@ -1,5 +1,6 @@
 package com.amplitude.experiment.storage
 
+import com.amplitude.experiment.Variant
 import com.amplitude.experiment.util.toMap
 import org.json.JSONObject
 
@@ -54,5 +55,53 @@ internal class LoadStoreCache<V>(
 
     fun store(values: Map<String, V> = cache) = synchronized(cache) {
         storage.put(namespace, JSONObject(values).toString())
+    }
+}
+
+internal fun getVariantStorage(deploymentKey: String, instanceName: String, storage: Storage): LoadStoreCache<Variant> {
+    val truncatedDeployment = deploymentKey.takeLast(6)
+    val namespace = "amp-exp-$instanceName-$truncatedDeployment"
+    return LoadStoreCache(namespace, storage, ::transformVariantFromStorage)
+}
+
+//fun getFlagStorage(deploymentKey: String, instanceName: String, storage: Storage): LoadStoreCache<Any> {
+//    val truncatedDeployment = deploymentKey.takeLast(6)
+//    val namespace = "amp-exp-$instanceName-$truncatedDeployment-flags"
+//    return LoadStoreCache(namespace, storage)
+//}
+
+internal fun transformVariantFromStorage(storageValue: Any?): Variant {
+    return when (storageValue) {
+        is String -> {
+            // From v0 string format
+            Variant(
+                key = storageValue,
+                value = storageValue
+            )
+        }
+
+        is Map<*, *> -> {
+            // From v1 or v2 object format
+            var key = storageValue["key"] as? String
+            val value = storageValue["value"] as? String
+            val payload = storageValue["payload"]
+            var metadata = (storageValue["metadata"] as? Map<String, Any?>)?.toMutableMap()
+            var experimentKey= storageValue["expKey"] as? String
+
+            if (metadata != null && metadata["experimentKey"] != null) {
+                experimentKey = metadata["experimentKey"] as? String
+            } else if (experimentKey != null) {
+                metadata = metadata ?: HashMap()
+                metadata["experimentKey"] = experimentKey
+            }
+
+            if (key == null && value != null) {
+                key = value
+            }
+
+            Variant(key = key, value = value, payload = payload, expKey = experimentKey, metadata = metadata)
+        }
+
+        else -> Variant()
     }
 }
