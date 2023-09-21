@@ -2,15 +2,17 @@ package com.amplitude.experiment.storage
 
 import com.amplitude.experiment.Variant
 import com.amplitude.experiment.evaluation.EvaluationFlag
-import com.amplitude.experiment.evaluation.EvaluationSegment
-import com.amplitude.experiment.evaluation.EvaluationVariant
-import com.amplitude.experiment.util.toMap
+import com.amplitude.experiment.evaluation.json
+import com.amplitude.experiment.util.toFlag
+import com.amplitude.experiment.util.toVariant
+import com.amplitude.experiment.util.toJson
+import kotlinx.serialization.decodeFromString
 import org.json.JSONObject
 
-internal class LoadStoreCache<V>(
+internal class LoadStoreCache<V : Any>(
     private val namespace: String,
     private val storage: Storage,
-    private val transformer: ((value: Any) -> V?)
+    private val transformer: ((value: String) -> V?)
 ) {
     private val cache: MutableMap<String, V> = mutableMapOf()
 
@@ -44,10 +46,10 @@ internal class LoadStoreCache<V>(
             clear()
             return
         }
-        val jsonValues = JSONObject(rawValues).toMap()
-        val values = jsonValues.mapNotNull { entry ->
+
+        val values = rawValues.mapNotNull { entry ->
             try {
-                val value = transformer.invoke(entry.value!!)
+                val value = transformer.invoke(entry.value)
                 if (value != null) {
                     entry.key to value
                 } else {
@@ -61,8 +63,20 @@ internal class LoadStoreCache<V>(
         putAll(values)
     }
 
-    fun store(values: Map<String, V> = cache) = synchronized(cache) {
-        storage.put(namespace, JSONObject(values).toString())
+    fun store(values: MutableMap<String, V> = cache) = synchronized(cache) {
+        val stringValues = values.mapNotNull { entry ->
+            try {
+                val value = transformStringFromV(entry.value)
+                if (value != null) {
+                    entry.key to value
+                } else {
+                    null
+                }
+            } catch (e: Exception) {
+                null
+            }
+        }.toMap()
+        storage.put(namespace, stringValues)
     }
 }
 
@@ -82,53 +96,19 @@ internal fun getFlagStorage(
     return LoadStoreCache(namespace, storage, ::transformFlagFromStorage)
 }
 
-internal fun transformVariantFromStorage(storageValue: Any?): Variant? {
-    return when (storageValue) {
-        is String -> {
-            // From v0 string format
-            Variant(
-                key = storageValue,
-                value = storageValue
-            )
-        }
+internal fun transformVariantFromStorage(storageValue: String): Variant? {
+    return storageValue.toVariant()
+}
 
-        is Map<*, *> -> {
-            // From v1 or v2 object format
-            var key = storageValue["key"] as? String
-            val value = storageValue["value"] as? String
-            val payload = storageValue["payload"]
-            var metadata = (storageValue["metadata"] as? Map<String, Any?>)?.toMutableMap()
-            var experimentKey = storageValue["expKey"] as? String
+private fun transformFlagFromStorage(storageValue: String): EvaluationFlag? {
+    return json.decodeFromString<JSONObject>(storageValue).toFlag()
+}
 
-            if (metadata != null && metadata["experimentKey"] != null) {
-                experimentKey = metadata["experimentKey"] as? String
-            } else if (experimentKey != null) {
-                metadata = metadata ?: HashMap()
-                metadata["experimentKey"] = experimentKey
-            }
-
-            if (key == null && value != null) {
-                key = value
-            }
-
-            Variant(key = key, value = value, payload = payload, expKey = experimentKey, metadata = metadata)
-        }
+private fun transformStringFromV(value: Any): String? {
+    return when (value) {
+        is Variant -> value.toJson()
+        is EvaluationFlag -> value.toJson()
         else -> null
     }
 }
 
-private fun transformFlagFromStorage(storageValue: Any?): EvaluationFlag? {
-    return when (storageValue) {
-        is Map<*, *> -> {
-            val key = storageValue["key"] as String
-            val variants = storageValue["variants"] as Map<String, EvaluationVariant>
-            val segments = storageValue["segments"] as List<EvaluationSegment>
-            val dependencies = storageValue["dependencies"] as Set<String>
-            var metadata: MutableMap<String, Any>? = (storageValue["metadata"] as? Map<String, Any>)?.toMutableMap()
-
-            EvaluationFlag(key, variants, segments, dependencies, metadata)
-        }
-
-        else -> null
-    }
-}
