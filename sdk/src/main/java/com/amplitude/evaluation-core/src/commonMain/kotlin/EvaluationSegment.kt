@@ -1,6 +1,9 @@
+@file:UseSerializers(AnySerializer::class)
+
 package com.amplitude.experiment.evaluation
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.UseSerializers
 
 @Serializable
 data class EvaluationSegment(
