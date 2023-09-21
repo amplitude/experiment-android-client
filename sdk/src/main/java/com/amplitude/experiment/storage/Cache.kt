@@ -4,13 +4,16 @@ import com.amplitude.experiment.Variant
 import com.amplitude.experiment.evaluation.EvaluationFlag
 import com.amplitude.experiment.evaluation.EvaluationSegment
 import com.amplitude.experiment.evaluation.EvaluationVariant
+import com.amplitude.experiment.evaluation.json
 import com.amplitude.experiment.util.toMap
+import com.amplitude.experiment.util.toVariant
+import kotlinx.serialization.decodeFromString
 import org.json.JSONObject
 
 internal class LoadStoreCache<V>(
     private val namespace: String,
     private val storage: Storage,
-    private val transformer: ((value: Any) -> V?)
+    private val transformer: ((value: String) -> V?)
 ) {
     private val cache: MutableMap<String, V> = mutableMapOf()
 
@@ -44,10 +47,10 @@ internal class LoadStoreCache<V>(
             clear()
             return
         }
-        val jsonValues = JSONObject(rawValues).toMap()
-        val values = jsonValues.mapNotNull { entry ->
+
+        val values = rawValues.mapNotNull { entry ->
             try {
-                val value = transformer.invoke(entry.value!!)
+                val value = transformer.invoke(entry.value)
                 if (value != null) {
                     entry.key to value
                 } else {
@@ -82,7 +85,7 @@ internal fun getFlagStorage(
     return LoadStoreCache(namespace, storage, ::transformFlagFromStorage)
 }
 
-internal fun transformVariantFromStorage(storageValue: Any?): Variant? {
+internal fun transformVariantFromStorage(storageValue: String): Variant? {
     return when (storageValue) {
         is String -> {
             // From v0 string format
