@@ -1,7 +1,6 @@
 package com.amplitude.experiment
 
 import com.amplitude.experiment.storage.transformVariantFromStorage
-import com.amplitude.experiment.util.toJson
 import org.json.JSONObject
 import org.junit.Assert
 import org.junit.Test
@@ -12,10 +11,9 @@ class TransformVariantFromStorageTest {
 
     @Test
     fun `v0 variant transformation`() {
-        val storedVariant =  Variant("on").toJson()
         Assert.assertEquals(
             Variant(key = "on", value = "on"),
-            transformVariantFromStorage(storedVariant)
+            transformVariantFromStorage("on")
         )
     }
 

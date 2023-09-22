@@ -8,7 +8,7 @@ import org.json.JSONObject
 
 internal fun String?.toFlag(): EvaluationFlag? {
     return if (this == null) {
-        return null
+        null
     } else {
         JSONObject(this).toFlag()
     }
@@ -35,7 +35,7 @@ internal fun EvaluationFlag.toJson(): String {
 
 internal fun JSONObject?.toFlag(): EvaluationFlag? {
     return if (this == null) {
-        return null
+        null
     } else try {
         val key = when {
             has("key") -> getString("key")
@@ -57,6 +57,6 @@ internal fun JSONObject?.toFlag(): EvaluationFlag? {
         EvaluationFlag(key, variants, segments, dependencies, metadata)
     } catch (e: JSONException) {
         Logger.w("Error parsing Flag from json string $this")
-        return null
+        null
     }
 }

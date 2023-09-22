@@ -28,15 +28,19 @@ internal fun Variant.toJson(): String {
 
 internal fun String?.toVariant(): Variant? {
     return if (this == null) {
-        return null
+        null
     } else {
-        JSONObject(this).toVariant()
+        try {
+            JSONObject(this).toVariant()
+        } catch (e: JSONException) {
+            Variant(key = this, value = this)
+        }
     }
 }
 
 internal fun JSONObject?.toVariant(): Variant? {
     return if (this == null) {
-        return null
+        null
     } else try {
         var key = when {
             has("key") -> getString("key")
@@ -76,6 +80,6 @@ internal fun JSONObject?.toVariant(): Variant? {
         Variant(value, payload, expKey, key, metadata)
     } catch (e: JSONException) {
         Logger.w("Error parsing Variant from json string $this")
-        return null
+        null
     }
 }
