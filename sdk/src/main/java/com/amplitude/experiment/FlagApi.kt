@@ -59,9 +59,7 @@ internal class SdkFlagApi(
                     (0 until jsonArray.length()).forEach {
                         val jsonString = jsonArray.getJSONObject(it).toString()
                         val flag = json.decodeFromString<EvaluationFlag>(jsonString)
-                        if (flag != null) {
-                            flags[flag.key] = flag
-                        }
+                        flags[flag.key] = flag
                     }
 
                     future.complete(flags)
