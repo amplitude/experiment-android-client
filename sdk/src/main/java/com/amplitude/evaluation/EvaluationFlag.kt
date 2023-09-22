@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 
 @Serializable
-data class EvaluationFlag(
+internal data class EvaluationFlag(
     // The flag key. Must be unique for deployment.
     val key: String,
 

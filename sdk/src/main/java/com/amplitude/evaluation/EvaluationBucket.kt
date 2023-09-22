@@ -3,7 +3,7 @@ package com.amplitude.experiment.evaluation
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class EvaluationBucket(
+internal data class EvaluationBucket(
     // How to select the prop from the context.
     val selector: List<String>,
 

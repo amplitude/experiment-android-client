@@ -1,6 +1,6 @@
 package com.amplitude.experiment.evaluation
 
-enum class Level {
+internal enum class Level {
     VERBOSE,
     DEBUG,
     INFO,
@@ -8,7 +8,7 @@ enum class Level {
     ERROR
 }
 
-interface Logger {
+internal interface Logger {
     fun verbose(log: () -> String)
     fun debug(log: () -> String)
     fun info(log: () -> String)
@@ -16,7 +16,7 @@ interface Logger {
     fun error(e: Throwable? = null, log: () -> String)
 }
 
-class DefaultLogger(
+internal class DefaultLogger(
     private val level: Level = Level.ERROR,
     private val tag: String = "Experiment"
 ) : Logger {

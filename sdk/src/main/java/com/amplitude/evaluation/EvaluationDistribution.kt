@@ -3,7 +3,7 @@ package com.amplitude.experiment.evaluation
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class EvaluationDistribution(
+internal data class EvaluationDistribution(
     // The key of the variant to deliver if this range matches.
     val variant: String,
 

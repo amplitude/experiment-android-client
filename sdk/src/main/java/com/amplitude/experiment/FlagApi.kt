@@ -1,9 +1,10 @@
 package com.amplitude.experiment
 
 import com.amplitude.experiment.evaluation.EvaluationFlag
+import com.amplitude.experiment.evaluation.json
 import com.amplitude.experiment.util.AsyncFuture
 import com.amplitude.experiment.util.Logger
-import com.amplitude.experiment.util.toFlag
+import kotlinx.serialization.decodeFromString
 import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.json.JSONArray
@@ -11,18 +12,18 @@ import java.io.IOException
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
-data class GetFlagsOptions(
+internal data class GetFlagsOptions(
     val libraryName: String,
     val libraryVersion: String,
     val evaluationMode: String? = null,
     val timeoutMillis: Long = ExperimentConfig.Defaults.FETCH_TIMEOUT_MILLIS
 )
 
-interface FlagApi {
+internal interface FlagApi {
     fun getFlags(options: GetFlagsOptions? = null): Future<Map<String, EvaluationFlag>>
 }
 
-class SdkFlagApi(
+internal class SdkFlagApi(
     private val deploymentKey: String,
     private val serverUrl: String,
     private val httpClient: OkHttpClient
@@ -56,10 +57,10 @@ class SdkFlagApi(
                     val jsonArray = JSONArray(body)
                     val flags = mutableMapOf<String, EvaluationFlag>()
                     (0 until jsonArray.length()).forEach {
-                        val json = jsonArray.getJSONObject(it)
-                        val flag = json.toFlag()
+                        val jsonString = jsonArray.getString(it)
+                        val flag = json.decodeFromString<EvaluationFlag>(jsonString)
                         if (flag != null) {
-                            flags[json.getString("key")] = flag
+                            flags[flag.key] = flag
                         }
                     }
 

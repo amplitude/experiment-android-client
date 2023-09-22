@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 
 @Serializable
-data class EvaluationVariant(
+internal data class EvaluationVariant(
     val key: String,
     val value: Any? = null,
     val payload: Any? = null,

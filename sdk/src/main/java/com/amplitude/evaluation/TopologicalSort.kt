@@ -1,12 +1,12 @@
 package com.amplitude.experiment.evaluation
 
-class CycleException(val cycle: Set<String>) : RuntimeException() {
+internal class CycleException(val cycle: Set<String>) : RuntimeException() {
     override val message: String
         get() = "Detected a cycle between flags $cycle"
 }
 
 @Throws(CycleException::class)
-fun topologicalSort(
+internal fun topologicalSort(
     flagConfigs: List<EvaluationFlag>,
     flagKeys: Set<String> = setOf()
 ): List<EvaluationFlag> {
@@ -14,7 +14,7 @@ fun topologicalSort(
 }
 
 @Throws(CycleException::class)
-fun topologicalSort(
+internal fun topologicalSort(
     flagConfigs: Map<String, EvaluationFlag>,
     flagKeys: Set<String> = setOf()
 ): List<EvaluationFlag> {

@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 
 @Serializable
-data class EvaluationSegment(
+internal data class EvaluationSegment(
     // How to bucket the user given a matching condition.
     val bucket: EvaluationBucket? = null,
 

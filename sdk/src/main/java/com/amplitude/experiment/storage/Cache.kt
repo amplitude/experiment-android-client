@@ -2,14 +2,17 @@ package com.amplitude.experiment.storage
 
 import com.amplitude.experiment.Variant
 import com.amplitude.experiment.evaluation.EvaluationFlag
-import com.amplitude.experiment.util.toFlag
+import com.amplitude.experiment.evaluation.json
 import com.amplitude.experiment.util.toVariant
 import com.amplitude.experiment.util.toJson
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 
-internal class LoadStoreCache<V : Any>(
+internal class LoadStoreCache<V>(
     private val namespace: String,
     private val storage: Storage,
-    private val transformer: ((value: String) -> V?)
+    private val decoder: ((value: String) -> V?),
+    private val encoder: ((value: V) -> String)
 ) {
     private val cache: MutableMap<String, V> = mutableMapOf()
 
@@ -41,7 +44,7 @@ internal class LoadStoreCache<V : Any>(
         val rawValues = storage.get(namespace)
         val values = rawValues.mapNotNull { entry ->
             try {
-                val value = transformer.invoke(entry.value)
+                val value = decoder.invoke(entry.value)
                 if (value != null) {
                     entry.key to value
                 } else {
@@ -58,7 +61,7 @@ internal class LoadStoreCache<V : Any>(
     fun store(values: MutableMap<String, V> = cache) = synchronized(cache) {
         val stringValues = values.mapNotNull { entry ->
             try {
-                val value = transformStringFromV(entry.value)
+                val value = encoder(entry.value)
                 if (value != null) {
                     entry.key to value
                 } else {
@@ -75,7 +78,7 @@ internal class LoadStoreCache<V : Any>(
 internal fun getVariantStorage(deploymentKey: String, instanceName: String, storage: Storage): LoadStoreCache<Variant> {
     val truncatedDeployment = deploymentKey.takeLast(6)
     val namespace = "amp-exp-$instanceName-$truncatedDeployment"
-    return LoadStoreCache(namespace, storage, ::transformVariantFromStorage)
+    return LoadStoreCache(namespace, storage, ::decodeVariantFromStorage, ::encodeVariantToStorage)
 }
 
 internal fun getFlagStorage(
@@ -85,22 +88,21 @@ internal fun getFlagStorage(
 ): LoadStoreCache<EvaluationFlag> {
     val truncatedDeployment = deploymentKey.takeLast(6)
     val namespace = "amp-exp-$instanceName-$truncatedDeployment-flags"
-    return LoadStoreCache(namespace, storage, ::transformFlagFromStorage)
+    return LoadStoreCache(namespace, storage, ::decodeFlagFromStorage, ::encodeFlagToStorage)
 }
 
-internal fun transformVariantFromStorage(storageValue: String): Variant? {
+internal fun decodeVariantFromStorage(storageValue: String): Variant? {
     return storageValue.toVariant()
 }
 
-internal fun transformFlagFromStorage(storageValue: String): EvaluationFlag? {
-    return storageValue.toFlag()
+internal fun decodeFlagFromStorage(storageValue: String): EvaluationFlag? {
+    return json.decodeFromString<EvaluationFlag>(storageValue)
 }
 
-internal fun transformStringFromV(value: Any): String? {
-    return when (value) {
-        is Variant -> value.toJson()
-        is EvaluationFlag -> value.toJson()
-        else -> null
-    }
+internal fun encodeVariantToStorage(value: Variant): String {
+    return value.toJson()
 }
 
+internal fun encodeFlagToStorage(value: EvaluationFlag): String {
+    return json.encodeToString(value)
+}

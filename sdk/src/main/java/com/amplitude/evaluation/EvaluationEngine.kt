@@ -5,14 +5,14 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonArray
 
-interface EvaluationEngine {
+internal interface EvaluationEngine {
     fun evaluate(
         context: EvaluationContext,
         flags: List<EvaluationFlag>
     ): Map<String, EvaluationVariant>
 }
 
-class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) : EvaluationEngine {
+internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) : EvaluationEngine {
 
     data class EvaluationTarget(
         val context: EvaluationContext,

@@ -3,7 +3,7 @@ package com.amplitude.experiment.evaluation
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class EvaluationCondition(
+internal data class EvaluationCondition(
     // How to select the property from the evaluation state.
     val selector: List<String>,
 

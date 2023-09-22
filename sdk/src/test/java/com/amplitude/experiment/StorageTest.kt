@@ -1,6 +1,6 @@
 package com.amplitude.experiment
 
-import com.amplitude.experiment.storage.transformVariantFromStorage
+import com.amplitude.experiment.storage.decodeVariantFromStorage
 import org.json.JSONObject
 import org.junit.Assert
 import org.junit.Test
@@ -12,7 +12,7 @@ class TransformVariantFromStorageTest {
         val storedVariant = JSONObject(mapOf("value" to "on")).toString()
         Assert.assertEquals(
             Variant(key = "on", value = "on"),
-            transformVariantFromStorage(storedVariant)
+            decodeVariantFromStorage(storedVariant)
         )
     }
 
@@ -26,7 +26,7 @@ class TransformVariantFromStorageTest {
         ).toString()
         Assert.assertEquals(
             Variant(key = "on", value = "on", payload = mapOf("k" to "v")),
-            transformVariantFromStorage(storedVariant)
+            decodeVariantFromStorage(storedVariant)
         )
     }
 
@@ -47,7 +47,7 @@ class TransformVariantFromStorageTest {
                 expKey = "exp-1",
                 metadata = mapOf("experimentKey" to "exp-1")
             ),
-            transformVariantFromStorage(storedVariant)
+            decodeVariantFromStorage(storedVariant)
         )
     }
 
@@ -61,7 +61,7 @@ class TransformVariantFromStorageTest {
         ).toString()
         Assert.assertEquals(
             Variant(key = "treatment", value = "on"),
-            transformVariantFromStorage(storedVariant)
+            decodeVariantFromStorage(storedVariant)
         )
     }
 
@@ -80,7 +80,7 @@ class TransformVariantFromStorageTest {
                 value = "on",
                 payload = mapOf("k" to "v")
             ),
-            transformVariantFromStorage(storedVariant)
+            decodeVariantFromStorage(storedVariant)
         )
     }
 
@@ -102,7 +102,7 @@ class TransformVariantFromStorageTest {
                 expKey = "exp-1",
                 metadata = mapOf("experimentKey" to "exp-1")
             ),
-            transformVariantFromStorage(storedVariant)
+            decodeVariantFromStorage(storedVariant)
         )
     }
 
@@ -124,7 +124,7 @@ class TransformVariantFromStorageTest {
                 expKey = "exp-1",
                 metadata = mapOf("experimentKey" to "exp-1")
             ),
-            transformVariantFromStorage(storedVariant)
+            decodeVariantFromStorage(storedVariant)
         )
     }
 }
