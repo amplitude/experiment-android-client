@@ -7,16 +7,6 @@ import org.junit.Test
 
 class TransformVariantFromStorageTest {
 
-    private val payload = "payload"
-
-    @Test
-    fun `v0 variant transformation`() {
-        Assert.assertEquals(
-            Variant(key = "on", value = "on"),
-            transformVariantFromStorage("on")
-        )
-    }
-
     @Test
     fun `v1 variant transformation`() {
         val storedVariant = JSONObject(mapOf("value" to "on")).toString()
@@ -31,11 +21,11 @@ class TransformVariantFromStorageTest {
         val storedVariant = JSONObject(
             mapOf(
                 "value" to "on",
-                "payload" to payload
+                "payload" to mapOf("k" to "v")
             )
         ).toString()
         Assert.assertEquals(
-            Variant(key = "on", value = "on", payload = payload),
+            Variant(key = "on", value = "on", payload = mapOf("k" to "v")),
             transformVariantFromStorage(storedVariant)
         )
     }
@@ -45,7 +35,7 @@ class TransformVariantFromStorageTest {
         val storedVariant = JSONObject(
             mapOf(
                 "value" to "on",
-                "payload" to payload,
+                "payload" to mapOf("k" to "v"),
                 "expKey" to "exp-1"
             )
         ).toString()
@@ -53,7 +43,7 @@ class TransformVariantFromStorageTest {
             Variant(
                 key = "on",
                 value = "on",
-                payload = payload,
+                payload = mapOf("k" to "v"),
                 expKey = "exp-1",
                 metadata = mapOf("experimentKey" to "exp-1")
             ),
@@ -81,14 +71,14 @@ class TransformVariantFromStorageTest {
             mapOf(
                 "key" to "treatment",
                 "value" to "on",
-                "payload" to payload
+                "payload" to mapOf("k" to "v")
             )
         ).toString()
         Assert.assertEquals(
             Variant(
                 key = "treatment",
                 value = "on",
-                payload = payload
+                payload = mapOf("k" to "v")
             ),
             transformVariantFromStorage(storedVariant)
         )
@@ -100,7 +90,7 @@ class TransformVariantFromStorageTest {
             mapOf(
                 "key" to "treatment",
                 "value" to "on",
-                "payload" to payload,
+                "payload" to mapOf("k" to "v"),
                 "expKey" to "exp-1"
             )
         ).toString()
@@ -108,7 +98,7 @@ class TransformVariantFromStorageTest {
             Variant(
                 key = "treatment",
                 value = "on",
-                payload = payload,
+                payload = mapOf("k" to "v"),
                 expKey = "exp-1",
                 metadata = mapOf("experimentKey" to "exp-1")
             ),
@@ -122,7 +112,7 @@ class TransformVariantFromStorageTest {
             mapOf(
                 "key" to "treatment",
                 "value" to "on",
-                "payload" to payload,
+                "payload" to mapOf("k" to "v"),
                 "metadata" to mapOf("experimentKey" to "exp-1")
             )
         ).toString()
@@ -130,7 +120,7 @@ class TransformVariantFromStorageTest {
             Variant(
                 key = "treatment",
                 value = "on",
-                payload = payload,
+                payload = mapOf("k" to "v"),
                 expKey = "exp-1",
                 metadata = mapOf("experimentKey" to "exp-1")
             ),

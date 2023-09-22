@@ -30,11 +30,7 @@ internal fun String?.toVariant(): Variant? {
     return if (this == null) {
         null
     } else {
-        try {
-            JSONObject(this).toVariant()
-        } catch (e: JSONException) {
-            Variant(key = this, value = this)
-        }
+        JSONObject(this).toVariant()
     }
 }
 
@@ -59,9 +55,18 @@ internal fun JSONObject?.toVariant(): Variant? {
         }
 
         val payload = when {
-            has("payload") -> get("payload")
+            has("payload") -> {
+                val payload = get("payload")
+                if (payload is JSONObject) {
+                    payload.toMap()
+                } else {
+                    payload
+                }
+            }
+
             else -> null
         }
+
         var expKey = when {
             has("expKey") -> getString("expKey")
             else -> null
