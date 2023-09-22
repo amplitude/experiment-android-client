@@ -2,12 +2,9 @@ package com.amplitude.experiment.storage
 
 import com.amplitude.experiment.Variant
 import com.amplitude.experiment.evaluation.EvaluationFlag
-import com.amplitude.experiment.evaluation.json
 import com.amplitude.experiment.util.toFlag
 import com.amplitude.experiment.util.toVariant
 import com.amplitude.experiment.util.toJson
-import kotlinx.serialization.decodeFromString
-import org.json.JSONObject
 
 internal class LoadStoreCache<V : Any>(
     private val namespace: String,
@@ -42,11 +39,6 @@ internal class LoadStoreCache<V : Any>(
 
     fun load() = synchronized(cache) {
         val rawValues = storage.get(namespace)
-        if (rawValues == null) {
-            clear()
-            return
-        }
-
         val values = rawValues.mapNotNull { entry ->
             try {
                 val value = transformer.invoke(entry.value)
@@ -100,11 +92,11 @@ internal fun transformVariantFromStorage(storageValue: String): Variant? {
     return storageValue.toVariant()
 }
 
-private fun transformFlagFromStorage(storageValue: String): EvaluationFlag? {
-    return json.decodeFromString<JSONObject>(storageValue).toFlag()
+internal fun transformFlagFromStorage(storageValue: String): EvaluationFlag? {
+    return storageValue.toFlag()
 }
 
-private fun transformStringFromV(value: Any): String? {
+internal fun transformStringFromV(value: Any): String? {
     return when (value) {
         is Variant -> value.toJson()
         is EvaluationFlag -> value.toJson()

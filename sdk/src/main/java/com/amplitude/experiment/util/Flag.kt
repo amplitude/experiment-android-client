@@ -1,11 +1,18 @@
 package com.amplitude.experiment.util
 
-import com.amplitude.experiment.Variant
 import com.amplitude.experiment.evaluation.EvaluationFlag
 import com.amplitude.experiment.evaluation.EvaluationSegment
 import com.amplitude.experiment.evaluation.EvaluationVariant
 import org.json.JSONException
 import org.json.JSONObject
+
+internal fun String?.toFlag(): EvaluationFlag? {
+    return if (this == null) {
+        return null
+    } else {
+        JSONObject(this).toFlag()
+    }
+}
 
 internal fun EvaluationFlag.toJson(): String {
     val jsonObject = JSONObject()
