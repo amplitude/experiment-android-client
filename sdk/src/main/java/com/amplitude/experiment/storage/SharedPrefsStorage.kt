@@ -1,6 +1,7 @@
 package com.amplitude.experiment.storage
 
 import android.content.Context
+import android.content.SharedPreferences
 
 /**
  * Simple SharedPrefs backed storage for caching assigned variant values locally.
@@ -17,16 +18,28 @@ internal class SharedPrefsStorage(
         this.appContext = appContext
     }
 
-    override fun get(key: String): String? = synchronized(this) {
-        return appContext.getSharedPreferences(key, Context.MODE_PRIVATE).getString(key, "")
+    override fun get(key: String): Map<String, String> = synchronized(this) {
+        val sharedPrefs = appContext.getSharedPreferences(key, Context.MODE_PRIVATE)
+        val result = mutableMapOf<String, String>()
+        for ((spKey, spValue) in sharedPrefs.all) {
+            if (spValue is String) {
+                result[spKey] = spValue
+            }
+        }
+        return result
     }
 
-    override fun put(key: String, value: String): Unit = synchronized(this) {
-        appContext.getSharedPreferences(key, Context.MODE_PRIVATE).edit().putString(key, value)
+    override fun put(key: String, value: Map<String, String>): Unit = synchronized(this) {
+        val editor = appContext.getSharedPreferences(key, Context.MODE_PRIVATE).edit()
+        editor.clear()
+        for ((k, v) in value) {
+            editor.putString(k, v)
+        }
+        editor.commit()
     }
 
 
     override fun delete(key: String): Unit = synchronized(this) {
-        appContext.getSharedPreferences(key, Context.MODE_PRIVATE).edit().remove(key)
+        appContext.getSharedPreferences(key, Context.MODE_PRIVATE).edit().remove(key).commit()
     }
 }

@@ -28,7 +28,7 @@ internal fun Variant.toJson(): String {
 
 internal fun String?.toVariant(): Variant? {
     return if (this == null) {
-        return null
+        null
     } else {
         JSONObject(this).toVariant()
     }
@@ -36,31 +36,55 @@ internal fun String?.toVariant(): Variant? {
 
 internal fun JSONObject?.toVariant(): Variant? {
     return if (this == null) {
-        return null
+        null
     } else try {
-        val key = when {
+        var key = when {
             has("key") -> getString("key")
-            else -> return null
+            else -> null
         }
         val value = when {
             has("value") -> getString("value")
             else -> null
         }
+
+        if (key == null && value == null) {
+            return null
+        }
+        if (key == null && value != null) {
+            key = value
+        }
+
         val payload = when {
-            has("payload") -> get("payload")
+            has("payload") -> {
+                val payload = get("payload")
+                if (payload is JSONObject) {
+                    payload.toMap()
+                } else {
+                    payload
+                }
+            }
+
             else -> null
         }
-        val expKey = when {
+
+        var expKey = when {
             has("expKey") -> getString("expKey")
             else -> null
         }
-        val metadata = when {
+        var metadata = when {
             has("metadata") -> getJSONObject("metadata").toMap()
             else -> null
+        }?.toMutableMap()
+        if (metadata != null && metadata["experimentKey"] != null) {
+            expKey = metadata["experimentKey"] as? String
+        } else if (expKey != null) {
+            metadata = metadata ?: HashMap()
+            metadata["experimentKey"] = expKey
         }
+
         Variant(value, payload, expKey, key, metadata)
     } catch (e: JSONException) {
         Logger.w("Error parsing Variant from json string $this")
-        return null
+        null
     }
 }
