@@ -1,6 +1,9 @@
 package com.amplitude.experiment
 
+import com.amplitude.experiment.BuildConfig.VERSION_NAME
 import com.amplitude.experiment.evaluation.EvaluationFlag
+import com.amplitude.experiment.evaluation.EvaluationVariant
+import com.amplitude.experiment.evaluation.topologicalSort
 import com.amplitude.experiment.storage.LoadStoreCache
 import com.amplitude.experiment.storage.Storage
 import com.amplitude.experiment.analytics.ExposureEvent as OldExposureEvent
@@ -34,6 +37,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import kotlin.jvm.Throws
 import org.json.JSONArray
+import kotlin.math.exp
 
 internal class DefaultExperimentClient internal constructor(
     private val apiKey: String,
@@ -44,7 +48,7 @@ internal class DefaultExperimentClient internal constructor(
 ) : ExperimentClient {
 
     private var user: ExperimentUser? = null
-  
+
     private val flagApi = SdkFlagApi(this.apiKey, this.config.serverUrl, httpClient)
 
     private val variants: LoadStoreCache<Variant> = getVariantStorage(
@@ -367,9 +371,274 @@ internal class DefaultExperimentClient internal constructor(
             .library("experiment-android-client/${BuildConfig.VERSION_NAME}")
             .build().merge(providedUser)
     }
+
+
+    private fun addContext(user: ExperimentUser): ExperimentUser {
+        val providedUser = this.userProvider?.getUser()
+        val mergedUserProperties = (
+                (user.userProperties ?: emptyMap()) +
+                        (providedUser?.userProperties ?: emptyMap())
+                )
+
+        return user.copyToBuilder()
+            .library("experiment-android-client/$VERSION_NAME")
+            .userProperties(mergedUserProperties)
+            .build()
+    }
+
+    private fun evaluate(flagKeys: Set<String>): Map<String,Variant> {
+        val user = addContext(this.user)
+        val flags = topologicalSort(this.flags.getAll(), flagKeys)
+        val evaluationVariants = this.engine.evaluate(mapOf("user" to user), flags)
+        val variants = mutableMapOf<String,Variant>()
+
+        for ((flagKey, evaluationVariant) in evaluationVariants) {
+            variants[flagKey] = translateFromEvaluationVariant(evaluationVariant)
+        }
+
+        return variants
+    }
+
+    private fun translateFromEvaluationVariant(
+        evaluationVariant: EvaluationVariant
+    ): Variant {
+        if (evaluationVariant == null) {
+            return Variant()
+        }
+        val experimentKey = evaluationVariant.metadata?.get("experimentKey").toString()
+
+        val key = when {
+            evaluationVariant.key != null -> evaluationVariant.key
+            else -> null
+        }
+
+        val value = when {
+            evaluationVariant.value != null -> evaluationVariant.value.toString()
+            else -> null
+        }
+
+        val expKey = when {
+            experimentKey != null -> experimentKey
+            else -> null
+        }
+
+        val payload = when {
+            evaluationVariant.payload != null -> evaluationVariant.payload
+            else -> null
+        }
+
+        val metadata = when {
+            evaluationVariant.metadata != null -> evaluationVariant.metadata
+            else -> null
+        }
+
+        return Variant(value, payload, expKey, key, metadata)
+    }
+
+    private fun convertVariant(value: String?): Variant {
+        if (value.isNullOrEmpty()) {
+            return Variant()
+        }
+        return Variant(key = value, value = value)
+    }
+
+    private fun convertVariant(value: Variant?): Variant {
+        if (value == null) {
+            return Variant()
+        }
+        return value
+    }
+
+    /**
+     * This function assumes the flag exists and is local evaluation mode. For
+     * local evaluation, fallback order goes:
+     *
+     *  1. Local evaluation
+     *  2. Inline function fallback
+     *  3. Initial variants
+     *  4. Config fallback
+     *
+     * If there is a default variant and no fallback, return the default variant.
+     */
+    private fun localEvaluationVariantAndSource(
+        key: String,
+        flag: EvaluationFlag,
+        fallback: String? = null
+    ): VariantAndSource {
+        var defaultVariantAndSource: VariantAndSource = VariantAndSource()
+        // Local evaluation
+        val variant = evaluate(flag.key)[key]
+        val source = VariantSource.LocalEvaluation
+        val isLocalEvaluationDefault = variant?.metadata?.default as? Boolean
+        if (variant != null && isLocalEvaluationDefault != true) {
+            return VariantAndSource(
+                variant = convertVariant(variant),
+                source = source,
+                hasDefaultVariant = false
+            )
+        } else if (isLocalEvaluationDefault == true) {
+            defaultVariantAndSource = VariantAndSource(
+                variant = convertVariant(variant),
+                source = source,
+                hasDefaultVariant = true
+            )
+        }
+        // Inline fallback
+        if (fallback != null) {
+            return VariantAndSource(
+                variant = convertVariant(fallback),
+                source = VariantSource.FallbackInline,
+                hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
+            )
+        }
+        // Initial variants
+        val initialVariant = config.initialVariants[key]
+        if (initialVariant != null) {
+            return VariantAndSource(
+                variant = convertVariant(initialVariant),
+                source = VariantSource.SecondaryInitialVariants,
+                hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
+            )
+        }
+        // Configured fallback, or default variant
+        val fallbackVariant = convertVariant(config.fallbackVariant)
+        val fallbackVariantAndSource = VariantAndSource(
+            variant = fallbackVariant,
+            source = VariantSource.FallbackConfig,
+            hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
+        )
+        if (!isNullUndefinedOrEmpty(fallbackVariant)) {
+            return fallbackVariantAndSource
+        }
+        return defaultVariantAndSource
+    }
+
+    /**
+     * For Source.LocalStorage, fallback order goes:
+     *
+     *  1. Local Storage
+     *  2. Inline function fallback
+     *  3. InitialFlags
+     *  4. Config fallback
+     *
+     * If there is a default variant and no fallback, return the default variant.
+     */
+    private fun localStorageVariantAndSource(
+        key: String,
+        fallback: String? = null
+    ): VariantAndSource {
+        var defaultVariantAndSource: VariantAndSource = VariantAndSource()
+        // Local storage
+        val localStorageVariant = variants.getAll()[key]
+        val isLocalStorageDefault = localStorageVariant?.metadata?.default as? Boolean
+        if (localStorageVariant != null && isLocalStorageDefault != true) {
+            return VariantAndSource(
+                variant = convertVariant(localStorageVariant),
+                source = VariantSource.LocalStorage,
+                hasDefaultVariant = false
+            )
+        } else if (isLocalStorageDefault == true) {
+            defaultVariantAndSource = VariantAndSource(
+                variant = convertVariant(localStorageVariant),
+                source = VariantSource.LocalStorage,
+                hasDefaultVariant = true
+            )
+        }
+        // Inline fallback
+        if (fallback != null) {
+            return VariantAndSource(
+                variant = convertVariant(fallback),
+                source = VariantSource.FallbackInline,
+                hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
+            )
+        }
+        // Initial variants
+        val initialVariant = config.initialVariants[key]
+        if (initialVariant != null) {
+            return VariantAndSource(
+                variant = convertVariant(initialVariant),
+                source = VariantSource.SecondaryInitialVariants,
+                hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
+            )
+        }
+        // Configured fallback, or default variant
+        val fallbackVariant = convertVariant(config.fallbackVariant)
+        val fallbackVariantAndSource = VariantAndSource(
+            variant = fallbackVariant,
+            source = VariantSource.FallbackConfig,
+            hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
+        )
+        if (!isNullUndefinedOrEmpty(fallbackVariant)) {
+            return fallbackVariantAndSource
+        }
+        return defaultVariantAndSource
+    }
+
+    /**
+     * For Source.InitialVariants, fallback order goes:
+     *
+     *  1. Initial variants
+     *  2. Local storage
+     *  3. Inline function fallback
+     *  4. Config fallback
+     *
+     * If there is a default variant and no fallback, return the default variant.
+     */
+    private fun initialVariantsVariantAndSource(
+        key: String,
+        fallback: String? = null
+    ): VariantAndSource {
+        var defaultVariantAndSource: VariantAndSource = VariantAndSource()
+        // Initial variants
+        val initialVariantsVariant = config.initialVariants[key]
+        if (initialVariantsVariant != null) {
+            return VariantAndSource(
+                variant = convertVariant(initialVariantsVariant),
+                source = VariantSource.InitialVariants,
+                hasDefaultVariant = false
+            )
+        }
+        // Local storage
+        val localStorageVariant = variants.getAll()[key]
+        val isLocalStorageDefault = localStorageVariant?.metadata?.default as? Boolean
+        if (localStorageVariant != null && isLocalStorageDefault != true) {
+            return VariantAndSource(
+                variant = convertVariant(localStorageVariant),
+                source = VariantSource.LocalStorage,
+                hasDefaultVariant = false
+            )
+        } else if (isLocalStorageDefault == true) {
+            defaultVariantAndSource = VariantAndSource(
+                variant = convertVariant(localStorageVariant),
+                source = VariantSource.LocalStorage,
+                hasDefaultVariant = true
+            )
+        }
+        // Inline fallback
+        if (fallback != null) {
+            return VariantAndSource(
+                variant = convertVariant(fallback),
+                source = VariantSource.FallbackInline,
+                hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
+            )
+        }
+        // Configured fallback, or default variant
+        val fallbackVariant = convertVariant(config.fallbackVariant)
+        val fallbackVariantAndSource = VariantAndSource(
+            variant = fallbackVariant,
+            source = VariantSource.FallbackConfig,
+            hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
+        )
+        if (!isNullOrEmpty(fallbackVariant)) {
+            return fallbackVariantAndSource
+        }
+        return defaultVariantAndSource
+    }
+
+
 }
 
-data class VariantAndSource(val variant: Variant, val source: VariantSource)
+data class VariantAndSource(val variant: Variant, val source: VariantSource, val hasDefaultVariant: Boolean? = null)
 
 enum class VariantSource(val type: String) {
     LOCAL_STORAGE("storage"),
