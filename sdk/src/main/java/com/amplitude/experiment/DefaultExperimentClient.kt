@@ -56,12 +56,12 @@ internal class DefaultExperimentClient internal constructor(
         this.apiKey,
         this.config.instanceName,
         storage,
-    );
+    )
     private val flags: LoadStoreCache<EvaluationFlag> = getFlagStorage(
         this.apiKey,
         this.config.instanceName,
         storage,
-    );
+    )
 
     init {
         this.variants.load()
@@ -127,18 +127,18 @@ internal class DefaultExperimentClient internal constructor(
         legacyExposureInternal(key, variantAndSource.variant, variantAndSource.source)
 
         // Do not track exposure for fallback variants that are not associated with a default variant.
-        val fallback = isFallback(variantAndSource?.source)
-        if (fallback && !variantAndSource?.hasDefaultVariant!!) {
+        val fallback = isFallback(variantAndSource.source)
+        if (fallback && !variantAndSource.hasDefaultVariant!!) {
             return
         }
 
-        val experimentKey = variantAndSource?.variant?.expKey
-        var variant: String? = null;
-        val metadata = variantAndSource?.variant?.metadata
+        val experimentKey = variantAndSource.variant.expKey
+        var variant: String? = null
+        val metadata = variantAndSource.variant.metadata
         if (!fallback && (metadata?.get("default") == null)) {
-            variantAndSource?.variant?.key?.let {
+            variantAndSource.variant.key?.let {
                 variant = it
-            } ?: variantAndSource?.variant?.value?.let {
+            } ?: variantAndSource.variant.value?.let {
                 variant = it
             }
         }
@@ -153,8 +153,8 @@ internal class DefaultExperimentClient internal constructor(
         val exposedUser = getUserMergedWithProvider()
         val event = OldExposureEvent(exposedUser, key, variant, source)
         // Track the exposure event if an analytics provider is set
-        if (source?.isFallback() || variant.key == null) {
-            userSessionExposureTracker?.track(Exposure(key, null, variant?.expKey), exposedUser)
+        if (source.isFallback() || variant.key == null) {
+            userSessionExposureTracker?.track(Exposure(key, null, variant.expKey), exposedUser)
             analyticsProvider?.unsetUserProperty(event)
         } else {
             userSessionExposureTracker?.track(Exposure(key, variant.key, variant.expKey), exposedUser)
@@ -172,18 +172,18 @@ internal class DefaultExperimentClient internal constructor(
     }
 
     private fun isFallback(source: VariantSource?): Boolean {
-        return source == null || source == VariantSource.FALLBACK_INLINE || source == VariantSource.FALLBACK_CONFIG || source == VariantSource.SECONDARY_INITIAL_VARIANTS
+        return source == null || source.isFallback()
     }
 
     private fun resolveVariantAndSource(key: String, fallback: Variant? = null): VariantAndSource {
         var variantAndSource: VariantAndSource
-        when (config.source) {
-            Source.LOCAL_STORAGE -> variantAndSource = localStorageVariantAndSource(key, fallback)
-            Source.INITIAL_VARIANTS -> variantAndSource = initialVariantsVariantAndSource(key, fallback)
+        variantAndSource = when (config.source) {
+            Source.LOCAL_STORAGE -> localStorageVariantAndSource(key, fallback)
+            Source.INITIAL_VARIANTS -> initialVariantsVariantAndSource(key, fallback)
 
         }
         val flag = this.flags.get(key)
-        if (flag != null && (isLocalEvaluationMode(flag) || variantAndSource.variant == null)) {
+        if (flag != null && (isLocalEvaluationMode(flag) || variantAndSource.variant.isNull())) {
             variantAndSource = this.localEvaluationVariantAndSource(key, flag, fallback)
         }
         return variantAndSource
@@ -390,9 +390,7 @@ internal class DefaultExperimentClient internal constructor(
                         (providedUser?.userProperties ?: emptyMap())
                 )
 
-        var builder = ExperimentUser.builder()
-
-        return builder
+        return ExperimentUser.builder()
             .library("experiment-android-client/$VERSION_NAME")
             .merge(this.config.userProvider?.getUser()).merge(this.user)
             .userProperties(mergedUserProperties)
@@ -416,15 +414,8 @@ internal class DefaultExperimentClient internal constructor(
     private fun translateFromEvaluationVariant(
         evaluationVariant: EvaluationVariant
     ): Variant {
-        if (evaluationVariant == null) {
-            return Variant()
-        }
-        val experimentKey = evaluationVariant.metadata?.get("experimentKey").toString()
 
-        val key = when {
-            evaluationVariant.key != null -> evaluationVariant.key
-            else -> null
-        }
+        val experimentKey = evaluationVariant.metadata?.get("experimentKey")?.toString()
 
         val value = when {
             evaluationVariant.value != null -> evaluationVariant.value.toString()
@@ -446,7 +437,7 @@ internal class DefaultExperimentClient internal constructor(
             else -> null
         }
 
-        return Variant(value, payload, expKey, key, metadata)
+        return Variant(value, payload, expKey, evaluationVariant.key, metadata)
     }
 
     private fun convertVariant(value: Variant?): Variant {
