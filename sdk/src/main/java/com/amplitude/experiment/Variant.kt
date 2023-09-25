@@ -40,4 +40,7 @@ data class Variant @JvmOverloads constructor(
      * @param value The value to compare with the key of this variant.
      */
     fun `is`(value: String): Boolean = this.key == value
+
+    fun `isNull`(): Boolean =
+        this.key == null && this.value == null && this.payload == null && this.expKey == null && this.metadata == null
 }

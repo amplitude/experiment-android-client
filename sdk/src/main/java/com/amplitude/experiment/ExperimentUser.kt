@@ -119,11 +119,11 @@ class ExperimentUser internal constructor(
 
     override fun toString(): String {
         return "ExperimentUser(userId=$userId, deviceId=$deviceId, country=$country, " +
-            "region=$region, dma=$dma, city=$city, language=$language, platform=$platform, " +
-            "version=$version, os=$os, deviceManufacturer=$deviceManufacturer, " +
-            "deviceBrand=$deviceBrand, deviceModel=$deviceModel, carrier=$carrier, " +
-            "library=$library, userProperties=$userProperties, groups=$groups, " +
-            "groupProperties=$groupProperties)"
+                "region=$region, dma=$dma, city=$city, language=$language, platform=$platform, " +
+                "version=$version, os=$os, deviceManufacturer=$deviceManufacturer, " +
+                "deviceBrand=$deviceBrand, deviceModel=$deviceModel, carrier=$carrier, " +
+                "library=$library, userProperties=$userProperties, groups=$groups, " +
+                "groupProperties=$groupProperties)"
     }
 
     companion object {
@@ -166,6 +166,7 @@ class ExperimentUser internal constructor(
         fun deviceManufacturer(deviceManufacturer: String?) = apply {
             this.deviceManufacturer = deviceManufacturer
         }
+
         fun deviceBrand(deviceBrand: String?) = apply { this.deviceBrand = deviceBrand }
         fun deviceModel(deviceModel: String?) = apply { this.deviceModel = deviceModel }
         fun carrier(carrier: String?) = apply { this.carrier = carrier }
@@ -173,17 +174,21 @@ class ExperimentUser internal constructor(
         fun userProperties(userProperties: Map<String, Any?>?) = apply {
             this.userProperties = userProperties?.toMutableMap()
         }
+
         fun userProperty(key: String, value: Any?) = apply {
             userProperties = (userProperties ?: mutableMapOf()).apply {
                 this[key] = value
             }
         }
+
         fun groups(groups: Map<String, Set<String>>?) = apply {
             this.groups = groups?.toMutableMap()
         }
+
         fun group(groupType: String, groupName: String) = apply {
             this.groups = (this.groups ?: mutableMapOf()).apply { put(groupType, setOf(groupName)) }
         }
+
         fun groupProperties(groupProperties: Map<String, Map<String, Map<String, Any?>>>?) = apply {
             this.groupProperties = groupProperties?.mapValues { groupTypes ->
                 groupTypes.value.toMutableMap().mapValues { groupNames ->
@@ -191,11 +196,38 @@ class ExperimentUser internal constructor(
                 }.toMutableMap()
             }?.toMutableMap()
         }
+
         fun groupProperty(groupType: String, groupName: String, key: String, value: Any?) = apply {
             this.groupProperties = (this.groupProperties ?: mutableMapOf()).apply {
                 getOrPut(groupType) { mutableMapOf(groupName to mutableMapOf()) }
                     .getOrPut(groupName) { mutableMapOf(key to value) }[key] = value
             }
+        }
+
+        fun merge(mergeUser: ExperimentUser?) : Builder {
+            if (mergeUser == null) {
+                return this
+            }
+
+            userId(mergeUser.userId ?: this.userId)
+            deviceId(mergeUser.deviceId ?: this.deviceId)
+            country(mergeUser.country ?: this.country)
+            region(mergeUser.region ?: this.region)
+            dma(mergeUser.dma ?: this.dma)
+            city(mergeUser.city ?: this.city)
+            language(mergeUser.language ?: this.language)
+            platform(mergeUser.platform ?: this.platform)
+            version(mergeUser.version ?: this.version)
+            os(mergeUser.os ?: this.os)
+            deviceManufacturer(mergeUser.deviceManufacturer ?: this.deviceManufacturer)
+            deviceBrand(mergeUser.deviceBrand ?: this.deviceBrand)
+            deviceModel(mergeUser.deviceModel ?: this.deviceModel)
+            carrier(mergeUser.carrier ?: this.carrier)
+            library(mergeUser.library ?: this.library)
+            userProperties(mergeUser.userProperties ?: this.userProperties)
+            groups(mergeUser.groups ?: this.groups)
+            groupProperties(mergeUser.groupProperties ?: this.groupProperties)
+            return this
         }
 
         fun build(): ExperimentUser {

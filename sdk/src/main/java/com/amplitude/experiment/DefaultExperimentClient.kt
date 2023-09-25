@@ -1,6 +1,8 @@
 package com.amplitude.experiment
 
 import com.amplitude.experiment.BuildConfig.VERSION_NAME
+import com.amplitude.experiment.evaluation.*
+import com.amplitude.experiment.evaluation.EvaluationEngineImpl
 import com.amplitude.experiment.evaluation.EvaluationFlag
 import com.amplitude.experiment.evaluation.EvaluationVariant
 import com.amplitude.experiment.evaluation.topologicalSort
@@ -37,7 +39,6 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import kotlin.jvm.Throws
 import org.json.JSONArray
-import kotlin.math.exp
 
 internal class DefaultExperimentClient internal constructor(
     private val apiKey: String,
@@ -48,8 +49,8 @@ internal class DefaultExperimentClient internal constructor(
 ) : ExperimentClient {
 
     private var user: ExperimentUser? = null
-
     private val flagApi = SdkFlagApi(this.apiKey, this.config.serverUrl, httpClient)
+    private val engine = EvaluationEngineImpl()
 
     private val variants: LoadStoreCache<Variant> = getVariantStorage(
         this.apiKey,
@@ -112,22 +113,48 @@ internal class DefaultExperimentClient internal constructor(
         val variant = variantAndSource.variant
         val source = variantAndSource.source
         if (config.automaticExposureTracking) {
-            exposureInternal(key, variant, source)
+            legacyExposureInternal(key, variant, source)
         }
         return variant
     }
 
     override fun exposure(key: String) {
-        val variantAndSource = resolveVariantAndSource(key, null)
-        exposureInternal(key, variantAndSource.variant, variantAndSource.source)
+        val variantAndSource = resolveVariantAndSource(key)
+        exposureInternal(key, variantAndSource)
     }
 
-    private fun exposureInternal(key: String, variant: Variant, source: VariantSource) {
+    private fun exposureInternal(key: String, variantAndSource: VariantAndSource) {
+        legacyExposureInternal(key, variantAndSource.variant, variantAndSource.source)
+
+        // Do not track exposure for fallback variants that are not associated with a default variant.
+        val fallback = isFallback(variantAndSource?.source)
+        if (fallback && !variantAndSource?.hasDefaultVariant!!) {
+            return
+        }
+
+        val experimentKey = variantAndSource?.variant?.expKey
+        var variant: String? = null;
+        val metadata = variantAndSource?.variant?.metadata
+        if (!fallback && (metadata?.get("default") == null)) {
+            variantAndSource?.variant?.key?.let {
+                variant = it
+            } ?: variantAndSource?.variant?.value?.let {
+                variant = it
+            }
+        }
+
+        val exposure = Exposure(key, variant, experimentKey, metadata)
+
+        userSessionExposureTracker?.track(exposure)
+    }
+
+
+    private fun legacyExposureInternal(key: String, variant: Variant, source: VariantSource) {
         val exposedUser = getUserMergedWithProvider()
         val event = OldExposureEvent(exposedUser, key, variant, source)
         // Track the exposure event if an analytics provider is set
-        if (source.isFallback() || variant.key == null) {
-            userSessionExposureTracker?.track(Exposure(key, null, variant.expKey), exposedUser)
+        if (source?.isFallback() || variant.key == null) {
+            userSessionExposureTracker?.track(Exposure(key, null, variant?.expKey), exposedUser)
             analyticsProvider?.unsetUserProperty(event)
         } else {
             userSessionExposureTracker?.track(Exposure(key, variant.key, variant.expKey), exposedUser)
@@ -136,47 +163,30 @@ internal class DefaultExperimentClient internal constructor(
         }
     }
 
-    private fun resolveVariantAndSource(key: String, fallback: Variant?): VariantAndSource {
-        val sourceVariant = sourceVariants()[key]
-        when (config.source) {
-            Source.LOCAL_STORAGE -> {
-                // for source = LocalStorage, fallback order goes:
-                // 1. Local Storage
-                // 2. Function fallback
-                // 3. InitialFlags
-                // 4. Config fallback
-                if (sourceVariant != null) {
-                    return VariantAndSource(sourceVariant, VariantSource.LOCAL_STORAGE)
-                }
-                if (fallback != null) {
-                    return VariantAndSource(fallback, VariantSource.FALLBACK_INLINE)
-                }
-                val secondaryVariant = secondaryVariants()[key]
-                if (secondaryVariant != null) {
-                    return VariantAndSource(secondaryVariant, VariantSource.SECONDARY_INITIAL_VARIANTS)
-                }
-                return VariantAndSource(config.fallbackVariant, VariantSource.FALLBACK_CONFIG)
-            }
+    private fun isLocalEvaluationMode(flag: EvaluationFlag?): Boolean {
+        return flag?.metadata?.get("evaluationMode") == "local"
+    }
 
-            Source.INITIAL_VARIANTS -> {
-                // for source = InitialVariants, fallback order goes:
-                // 1. InitialFlags
-                // 2. Local Storage
-                // 3. Function fallback
-                // 4. Config fallback
-                if (sourceVariant != null) {
-                    return VariantAndSource(sourceVariant, VariantSource.INITIAL_VARIANTS)
-                }
-                val secondaryVariant = secondaryVariants()[key]
-                if (secondaryVariant != null) {
-                    return VariantAndSource(secondaryVariant, VariantSource.SECONDARY_LOCAL_STORAGE)
-                }
-                if (fallback != null) {
-                    return VariantAndSource(fallback, VariantSource.FALLBACK_INLINE)
-                }
-                return VariantAndSource(config.fallbackVariant, VariantSource.FALLBACK_CONFIG)
-            }
+    private fun isRemoteEvaluationMode(flag: EvaluationFlag?): Boolean {
+        return flag?.metadata?.get("evaluationMode") == "remote"
+    }
+
+    private fun isFallback(source: VariantSource?): Boolean {
+        return source == null || source == VariantSource.FALLBACK_INLINE || source == VariantSource.FALLBACK_CONFIG || source == VariantSource.SECONDARY_INITIAL_VARIANTS
+    }
+
+    private fun resolveVariantAndSource(key: String, fallback: Variant? = null): VariantAndSource {
+        var variantAndSource: VariantAndSource
+        when (config.source) {
+            Source.LOCAL_STORAGE -> variantAndSource = localStorageVariantAndSource(key, fallback)
+            Source.INITIAL_VARIANTS -> variantAndSource = initialVariantsVariantAndSource(key, fallback)
+
         }
+        val flag = this.flags.get(key)
+        if (flag != null && (isLocalEvaluationMode(flag) || variantAndSource.variant == null)) {
+            variantAndSource = this.localEvaluationVariantAndSource(key, flag, fallback)
+        }
+        return variantAndSource
     }
 
     override fun all(): Map<String, Variant> {
@@ -373,24 +383,28 @@ internal class DefaultExperimentClient internal constructor(
     }
 
 
-    private fun addContext(user: ExperimentUser): ExperimentUser {
-        val providedUser = this.userProvider?.getUser()
+    private fun addContext(user: ExperimentUser?): ExperimentUser {
+        val providedUser = this.config.userProvider?.getUser()
         val mergedUserProperties = (
-                (user.userProperties ?: emptyMap()) +
+                (user?.userProperties ?: emptyMap()) +
                         (providedUser?.userProperties ?: emptyMap())
                 )
 
-        return user.copyToBuilder()
+        var builder = ExperimentUser.builder()
+
+        return builder
             .library("experiment-android-client/$VERSION_NAME")
+            .merge(this.config.userProvider?.getUser()).merge(this.user)
             .userProperties(mergedUserProperties)
             .build()
     }
 
-    private fun evaluate(flagKeys: Set<String>): Map<String,Variant> {
+    private fun evaluate(flagKeys: Set<String>): Map<String, Variant> {
         val user = addContext(this.user)
         val flags = topologicalSort(this.flags.getAll(), flagKeys)
-        val evaluationVariants = this.engine.evaluate(mapOf("user" to user), flags)
-        val variants = mutableMapOf<String,Variant>()
+        val context = EvaluationContext().apply { put("user", user) }
+        val evaluationVariants = this.engine.evaluate(context, flags)
+        val variants = mutableMapOf<String, Variant>()
 
         for ((flagKey, evaluationVariant) in evaluationVariants) {
             variants[flagKey] = translateFromEvaluationVariant(evaluationVariant)
@@ -435,13 +449,6 @@ internal class DefaultExperimentClient internal constructor(
         return Variant(value, payload, expKey, key, metadata)
     }
 
-    private fun convertVariant(value: String?): Variant {
-        if (value.isNullOrEmpty()) {
-            return Variant()
-        }
-        return Variant(key = value, value = value)
-    }
-
     private fun convertVariant(value: Variant?): Variant {
         if (value == null) {
             return Variant()
@@ -463,13 +470,13 @@ internal class DefaultExperimentClient internal constructor(
     private fun localEvaluationVariantAndSource(
         key: String,
         flag: EvaluationFlag,
-        fallback: String? = null
+        fallback: Variant? = null
     ): VariantAndSource {
-        var defaultVariantAndSource: VariantAndSource = VariantAndSource()
+        var defaultVariantAndSource = VariantAndSource()
         // Local evaluation
-        val variant = evaluate(flag.key)[key]
-        val source = VariantSource.LocalEvaluation
-        val isLocalEvaluationDefault = variant?.metadata?.default as? Boolean
+        val variant = evaluate(setOf(flag.key))[key]
+        val source = VariantSource.LOCAL_EVALUATION
+        val isLocalEvaluationDefault = variant?.metadata?.get("default") as? Boolean
         if (variant != null && isLocalEvaluationDefault != true) {
             return VariantAndSource(
                 variant = convertVariant(variant),
@@ -487,7 +494,7 @@ internal class DefaultExperimentClient internal constructor(
         if (fallback != null) {
             return VariantAndSource(
                 variant = convertVariant(fallback),
-                source = VariantSource.FallbackInline,
+                source = VariantSource.FALLBACK_INLINE,
                 hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
             )
         }
@@ -496,7 +503,7 @@ internal class DefaultExperimentClient internal constructor(
         if (initialVariant != null) {
             return VariantAndSource(
                 variant = convertVariant(initialVariant),
-                source = VariantSource.SecondaryInitialVariants,
+                source = VariantSource.SECONDARY_INITIAL_VARIANTS,
                 hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
             )
         }
@@ -504,10 +511,10 @@ internal class DefaultExperimentClient internal constructor(
         val fallbackVariant = convertVariant(config.fallbackVariant)
         val fallbackVariantAndSource = VariantAndSource(
             variant = fallbackVariant,
-            source = VariantSource.FallbackConfig,
+            source = VariantSource.FALLBACK_CONFIG,
             hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
         )
-        if (!isNullUndefinedOrEmpty(fallbackVariant)) {
+        if (!fallbackVariant.isNull()) {
             return fallbackVariantAndSource
         }
         return defaultVariantAndSource
@@ -525,22 +532,22 @@ internal class DefaultExperimentClient internal constructor(
      */
     private fun localStorageVariantAndSource(
         key: String,
-        fallback: String? = null
+        fallback: Variant?
     ): VariantAndSource {
-        var defaultVariantAndSource: VariantAndSource = VariantAndSource()
+        var defaultVariantAndSource = VariantAndSource()
         // Local storage
         val localStorageVariant = variants.getAll()[key]
-        val isLocalStorageDefault = localStorageVariant?.metadata?.default as? Boolean
+        val isLocalStorageDefault = localStorageVariant?.metadata?.get("default") as? Boolean
         if (localStorageVariant != null && isLocalStorageDefault != true) {
             return VariantAndSource(
                 variant = convertVariant(localStorageVariant),
-                source = VariantSource.LocalStorage,
+                source = VariantSource.LOCAL_STORAGE,
                 hasDefaultVariant = false
             )
         } else if (isLocalStorageDefault == true) {
             defaultVariantAndSource = VariantAndSource(
                 variant = convertVariant(localStorageVariant),
-                source = VariantSource.LocalStorage,
+                source = VariantSource.LOCAL_STORAGE,
                 hasDefaultVariant = true
             )
         }
@@ -548,7 +555,7 @@ internal class DefaultExperimentClient internal constructor(
         if (fallback != null) {
             return VariantAndSource(
                 variant = convertVariant(fallback),
-                source = VariantSource.FallbackInline,
+                source = VariantSource.FALLBACK_INLINE,
                 hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
             )
         }
@@ -557,7 +564,7 @@ internal class DefaultExperimentClient internal constructor(
         if (initialVariant != null) {
             return VariantAndSource(
                 variant = convertVariant(initialVariant),
-                source = VariantSource.SecondaryInitialVariants,
+                source = VariantSource.SECONDARY_INITIAL_VARIANTS,
                 hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
             )
         }
@@ -565,10 +572,10 @@ internal class DefaultExperimentClient internal constructor(
         val fallbackVariant = convertVariant(config.fallbackVariant)
         val fallbackVariantAndSource = VariantAndSource(
             variant = fallbackVariant,
-            source = VariantSource.FallbackConfig,
+            source = VariantSource.FALLBACK_CONFIG,
             hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
         )
-        if (!isNullUndefinedOrEmpty(fallbackVariant)) {
+        if (!fallbackVariant.isNull()) {
             return fallbackVariantAndSource
         }
         return defaultVariantAndSource
@@ -586,31 +593,31 @@ internal class DefaultExperimentClient internal constructor(
      */
     private fun initialVariantsVariantAndSource(
         key: String,
-        fallback: String? = null
+        fallback: Variant? = null
     ): VariantAndSource {
-        var defaultVariantAndSource: VariantAndSource = VariantAndSource()
+        var defaultVariantAndSource = VariantAndSource()
         // Initial variants
         val initialVariantsVariant = config.initialVariants[key]
         if (initialVariantsVariant != null) {
             return VariantAndSource(
                 variant = convertVariant(initialVariantsVariant),
-                source = VariantSource.InitialVariants,
+                source = VariantSource.INITIAL_VARIANTS,
                 hasDefaultVariant = false
             )
         }
         // Local storage
         val localStorageVariant = variants.getAll()[key]
-        val isLocalStorageDefault = localStorageVariant?.metadata?.default as? Boolean
+        val isLocalStorageDefault = localStorageVariant?.metadata?.get("default") as? Boolean
         if (localStorageVariant != null && isLocalStorageDefault != true) {
             return VariantAndSource(
                 variant = convertVariant(localStorageVariant),
-                source = VariantSource.LocalStorage,
+                source = VariantSource.LOCAL_STORAGE,
                 hasDefaultVariant = false
             )
         } else if (isLocalStorageDefault == true) {
             defaultVariantAndSource = VariantAndSource(
                 variant = convertVariant(localStorageVariant),
-                source = VariantSource.LocalStorage,
+                source = VariantSource.LOCAL_STORAGE,
                 hasDefaultVariant = true
             )
         }
@@ -618,7 +625,7 @@ internal class DefaultExperimentClient internal constructor(
         if (fallback != null) {
             return VariantAndSource(
                 variant = convertVariant(fallback),
-                source = VariantSource.FallbackInline,
+                source = VariantSource.FALLBACK_INLINE,
                 hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
             )
         }
@@ -626,10 +633,10 @@ internal class DefaultExperimentClient internal constructor(
         val fallbackVariant = convertVariant(config.fallbackVariant)
         val fallbackVariantAndSource = VariantAndSource(
             variant = fallbackVariant,
-            source = VariantSource.FallbackConfig,
+            source = VariantSource.FALLBACK_CONFIG,
             hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
         )
-        if (!isNullOrEmpty(fallbackVariant)) {
+        if (fallbackVariant.isNull()) {
             return fallbackVariantAndSource
         }
         return defaultVariantAndSource
@@ -638,7 +645,11 @@ internal class DefaultExperimentClient internal constructor(
 
 }
 
-data class VariantAndSource(val variant: Variant, val source: VariantSource, val hasDefaultVariant: Boolean? = null)
+data class VariantAndSource(
+    val variant: Variant = Variant(),
+    val source: VariantSource = VariantSource.FALLBACK_CONFIG,
+    val hasDefaultVariant: Boolean? = null
+)
 
 enum class VariantSource(val type: String) {
     LOCAL_STORAGE("storage"),
@@ -646,7 +657,8 @@ enum class VariantSource(val type: String) {
     SECONDARY_LOCAL_STORAGE("secondary-storage"),
     SECONDARY_INITIAL_VARIANTS("secondary-initial"),
     FALLBACK_INLINE("fallback-inline"),
-    FALLBACK_CONFIG("fallback-config");
+    FALLBACK_CONFIG("fallback-config"),
+    LOCAL_EVALUATION("local-evaluation");
 
     override fun toString(): String {
         return type
