@@ -7,7 +7,6 @@ import com.amplitude.experiment.util.Logger
 import kotlinx.serialization.decodeFromString
 import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.json.JSONArray
 import java.io.IOException
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -54,14 +53,8 @@ internal class SdkFlagApi(
                 try {
                     Logger.d("Received fetch response: $response")
                     val body = response.body?.string() ?: ""
-                    val jsonArray = JSONArray(body)
-                    val flags = mutableMapOf<String, EvaluationFlag>()
-                    (0 until jsonArray.length()).forEach {
-                        val jsonString = jsonArray.getJSONObject(it).toString()
-                        val flag = json.decodeFromString<EvaluationFlag>(jsonString)
-                        flags[flag.key] = flag
-                    }
-
+                    val flags = json.decodeFromString<List<EvaluationFlag>>(body)
+                        .associateBy { it.key }
                     future.complete(flags)
                 } catch (e: IOException) {
                     onFailure(call, e)
