@@ -126,7 +126,7 @@ internal class DefaultExperimentClient internal constructor(
 
         // Do not track exposure for fallback variants that are not associated with a default variant.
         val fallback = isFallback(variantAndSource.source)
-        if (fallback && !variantAndSource.hasDefaultVariant!!) {
+        if (fallback && (variantAndSource.hasDefaultVariant == null || !variantAndSource.hasDefaultVariant)) {
             return
         }
 
