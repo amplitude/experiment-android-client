@@ -7,7 +7,6 @@ import com.amplitude.experiment.util.Logger
 import kotlinx.serialization.decodeFromString
 import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.json.JSONArray
 import java.io.IOException
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
