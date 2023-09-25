@@ -110,12 +110,10 @@ internal class DefaultExperimentClient internal constructor(
 
     override fun variant(key: String, fallback: Variant?): Variant {
         val variantAndSource = resolveVariantAndSource(key, fallback)
-        val variant = variantAndSource.variant
-        val source = variantAndSource.source
         if (config.automaticExposureTracking) {
-            legacyExposureInternal(key, variant, source)
+            exposureInternal(key, variantAndSource)
         }
-        return variant
+        return variantAndSource.variant
     }
 
     override fun exposure(key: String) {
