@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import kotlin.jvm.Throws
 import org.json.JSONArray
+import org.json.JSONException
 
 internal class DefaultExperimentClient internal constructor(
     private val apiKey: String,
@@ -234,8 +235,8 @@ internal class DefaultExperimentClient internal constructor(
                     Logger.d("Received fetch response: $response")
                     val variants = parseResponse(response)
                     future.complete(variants)
-                } catch (e: IOException) {
-                    onFailure(call, e)
+                } catch (e: Exception) {
+                    future.completeExceptionally(e)
                 }
             }
 
