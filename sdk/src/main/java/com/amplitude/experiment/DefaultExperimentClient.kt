@@ -235,8 +235,11 @@ internal class DefaultExperimentClient internal constructor(
                     Logger.d("Received fetch response: $response")
                     val variants = parseResponse(response)
                     future.complete(variants)
-                } catch (e: IOException) {
-                    onFailure(call, e)
+                } catch (e: Exception) {
+                    when (e) {
+                        is IOException -> onFailure(call, e)
+                        is JSONException -> future.completeExceptionally(e)
+                    }
                 }
             }
 
@@ -264,18 +267,14 @@ internal class DefaultExperimentClient internal constructor(
             throw IOException("fetch error response: $response")
         }
         val body = response.body?.string() ?: ""
+        val json = JSONObject(body)
         val variants = mutableMapOf<String, Variant>()
-        try {
-            val json = JSONObject(body)
             json.keys().forEach { key ->
                 val variant = json.getJSONObject(key).toVariant()
                 if (variant != null) {
                     variants[key] = variant
                 }
             }
-        } catch (e: JSONException) {
-            Logger.w("Error converting fetch variants response to JSONObject", e)
-        }
         return variants
     }
 
