@@ -236,10 +236,7 @@ internal class DefaultExperimentClient internal constructor(
                     val variants = parseResponse(response)
                     future.complete(variants)
                 } catch (e: Exception) {
-                    when (e) {
-                        is IOException -> onFailure(call, e)
-                        is JSONException -> future.completeExceptionally(e)
-                    }
+                    future.completeExceptionally(e)
                 }
             }
 
