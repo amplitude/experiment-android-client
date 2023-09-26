@@ -276,7 +276,6 @@ internal class DefaultExperimentClient internal constructor(
             }
         } catch (e: JSONException) {
             Logger.w("Error converting fetch variants response to JSONObject", e)
-            return variants
         }
         return variants
     }
