@@ -438,13 +438,6 @@ internal class DefaultExperimentClient internal constructor(
         return Variant(value, payload, expKey, evaluationVariant.key, metadata)
     }
 
-    private fun convertVariant(value: Variant?): Variant {
-        if (value == null) {
-            return Variant()
-        }
-        return value
-    }
-
     /**
      * This function assumes the flag exists and is local evaluation mode. For
      * local evaluation, fallback order goes:
@@ -468,13 +461,13 @@ internal class DefaultExperimentClient internal constructor(
         val isLocalEvaluationDefault = variant?.metadata?.get("default") as? Boolean
         if (variant != null && isLocalEvaluationDefault != true) {
             return VariantAndSource(
-                variant = convertVariant(variant),
+                variant = variant,
                 source = source,
                 hasDefaultVariant = false
             )
         } else if (isLocalEvaluationDefault == true) {
             defaultVariantAndSource = VariantAndSource(
-                variant = convertVariant(variant),
+                variant = variant,
                 source = source,
                 hasDefaultVariant = true
             )
@@ -482,7 +475,7 @@ internal class DefaultExperimentClient internal constructor(
         // Inline fallback
         if (fallback != null) {
             return VariantAndSource(
-                variant = convertVariant(fallback),
+                variant = fallback,
                 source = VariantSource.FALLBACK_INLINE,
                 hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
             )
@@ -491,13 +484,13 @@ internal class DefaultExperimentClient internal constructor(
         val initialVariant = config.initialVariants[key]
         if (initialVariant != null) {
             return VariantAndSource(
-                variant = convertVariant(initialVariant),
+                variant = initialVariant,
                 source = VariantSource.SECONDARY_INITIAL_VARIANTS,
                 hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
             )
         }
         // Configured fallback, or default variant
-        val fallbackVariant = convertVariant(config.fallbackVariant)
+        val fallbackVariant = config.fallbackVariant
         val fallbackVariantAndSource = VariantAndSource(
             variant = fallbackVariant,
             source = VariantSource.FALLBACK_CONFIG,
@@ -529,13 +522,13 @@ internal class DefaultExperimentClient internal constructor(
         val isLocalStorageDefault = localStorageVariant?.metadata?.get("default") as? Boolean
         if (localStorageVariant != null && isLocalStorageDefault != true) {
             return VariantAndSource(
-                variant = convertVariant(localStorageVariant),
+                variant = localStorageVariant,
                 source = VariantSource.LOCAL_STORAGE,
                 hasDefaultVariant = false
             )
         } else if (isLocalStorageDefault == true) {
             defaultVariantAndSource = VariantAndSource(
-                variant = convertVariant(localStorageVariant),
+                variant = localStorageVariant,
                 source = VariantSource.LOCAL_STORAGE,
                 hasDefaultVariant = true
             )
@@ -543,7 +536,7 @@ internal class DefaultExperimentClient internal constructor(
         // Inline fallback
         if (fallback != null) {
             return VariantAndSource(
-                variant = convertVariant(fallback),
+                variant = fallback,
                 source = VariantSource.FALLBACK_INLINE,
                 hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
             )
@@ -552,13 +545,13 @@ internal class DefaultExperimentClient internal constructor(
         val initialVariant = config.initialVariants[key]
         if (initialVariant != null) {
             return VariantAndSource(
-                variant = convertVariant(initialVariant),
+                variant = initialVariant,
                 source = VariantSource.SECONDARY_INITIAL_VARIANTS,
                 hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
             )
         }
         // Configured fallback, or default variant
-        val fallbackVariant = convertVariant(config.fallbackVariant)
+        val fallbackVariant = config.fallbackVariant
         val fallbackVariantAndSource = VariantAndSource(
             variant = fallbackVariant,
             source = VariantSource.FALLBACK_CONFIG,
@@ -589,7 +582,7 @@ internal class DefaultExperimentClient internal constructor(
         val initialVariantsVariant = config.initialVariants[key]
         if (initialVariantsVariant != null) {
             return VariantAndSource(
-                variant = convertVariant(initialVariantsVariant),
+                variant = initialVariantsVariant,
                 source = VariantSource.INITIAL_VARIANTS,
                 hasDefaultVariant = false
             )
@@ -599,13 +592,13 @@ internal class DefaultExperimentClient internal constructor(
         val isLocalStorageDefault = localStorageVariant?.metadata?.get("default") as? Boolean
         if (localStorageVariant != null && isLocalStorageDefault != true) {
             return VariantAndSource(
-                variant = convertVariant(localStorageVariant),
+                variant = localStorageVariant,
                 source = VariantSource.LOCAL_STORAGE,
                 hasDefaultVariant = false
             )
         } else if (isLocalStorageDefault == true) {
             defaultVariantAndSource = VariantAndSource(
-                variant = convertVariant(localStorageVariant),
+                variant = localStorageVariant,
                 source = VariantSource.LOCAL_STORAGE,
                 hasDefaultVariant = true
             )
@@ -613,13 +606,13 @@ internal class DefaultExperimentClient internal constructor(
         // Inline fallback
         if (fallback != null) {
             return VariantAndSource(
-                variant = convertVariant(fallback),
+                variant = fallback,
                 source = VariantSource.FALLBACK_INLINE,
                 hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
             )
         }
         // Configured fallback, or default variant
-        val fallbackVariant = convertVariant(config.fallbackVariant)
+        val fallbackVariant = config.fallbackVariant
         val fallbackVariantAndSource = VariantAndSource(
             variant = fallbackVariant,
             source = VariantSource.FALLBACK_CONFIG,
