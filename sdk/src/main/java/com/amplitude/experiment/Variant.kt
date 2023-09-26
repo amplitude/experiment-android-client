@@ -41,6 +41,6 @@ data class Variant @JvmOverloads constructor(
      */
     fun `is`(value: String): Boolean = this.key == value
 
-    fun `isNullOrEmpty`(): Boolean =
+    fun isNullOrEmpty(): Boolean =
         this.key == null && this.value == null && this.payload == null && this.expKey == null && this.metadata == null
 }

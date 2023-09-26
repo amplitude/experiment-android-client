@@ -181,7 +181,7 @@ internal class DefaultExperimentClient internal constructor(
 
         }
         val flag = this.flags.get(key)
-        if (flag != null && (isLocalEvaluationMode(flag) || variantAndSource.variant.`isNullOrEmpty`())) {
+        if (flag != null && (isLocalEvaluationMode(flag) || variantAndSource.variant.isNullOrEmpty())) {
             variantAndSource = this.localEvaluationVariantAndSource(key, flag, fallback)
         }
         return variantAndSource
@@ -496,7 +496,7 @@ internal class DefaultExperimentClient internal constructor(
             source = VariantSource.FALLBACK_CONFIG,
             hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
         )
-        if (!fallbackVariant.`isNullOrEmpty`()) {
+        if (!fallbackVariant.isNullOrEmpty()) {
             return fallbackVariantAndSource
         }
         return defaultVariantAndSource
@@ -557,7 +557,7 @@ internal class DefaultExperimentClient internal constructor(
             source = VariantSource.FALLBACK_CONFIG,
             hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
         )
-        if (!fallbackVariant.`isNullOrEmpty`()) {
+        if (!fallbackVariant.isNullOrEmpty()) {
             return fallbackVariantAndSource
         }
         return defaultVariantAndSource
@@ -618,7 +618,7 @@ internal class DefaultExperimentClient internal constructor(
             source = VariantSource.FALLBACK_CONFIG,
             hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
         )
-        if (fallbackVariant.`isNullOrEmpty`()) {
+        if (fallbackVariant.isNullOrEmpty()) {
             return fallbackVariantAndSource
         }
         return defaultVariantAndSource
