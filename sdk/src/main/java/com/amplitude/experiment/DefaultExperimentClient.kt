@@ -11,6 +11,7 @@ import com.amplitude.experiment.storage.Storage
 import com.amplitude.experiment.analytics.ExposureEvent as OldExposureEvent
 import com.amplitude.experiment.storage.getVariantStorage
 import com.amplitude.experiment.storage.getFlagStorage
+import com.amplitude.experiment.util.*
 import com.amplitude.experiment.util.AsyncFuture
 import com.amplitude.experiment.util.Backoff
 import com.amplitude.experiment.util.BackoffConfig
@@ -161,14 +162,6 @@ internal class DefaultExperimentClient internal constructor(
         }
     }
 
-    private fun isLocalEvaluationMode(flag: EvaluationFlag?): Boolean {
-        return flag?.metadata?.get("evaluationMode") == "local"
-    }
-
-    private fun isRemoteEvaluationMode(flag: EvaluationFlag?): Boolean {
-        return flag?.metadata?.get("evaluationMode") == "remote"
-    }
-
     private fun isFallback(source: VariantSource?): Boolean {
         return source == null || source.isFallback()
     }
@@ -181,7 +174,7 @@ internal class DefaultExperimentClient internal constructor(
 
         }
         val flag = this.flags.get(key)
-        if (flag != null && (isLocalEvaluationMode(flag) || variantAndSource.variant.isNullOrEmpty())) {
+        if (flag != null && (flag.isLocalEvaluationMode() || variantAndSource.variant.isNullOrEmpty())) {
             variantAndSource = this.localEvaluationVariantAndSource(key, flag, fallback)
         }
         return variantAndSource
@@ -383,10 +376,7 @@ internal class DefaultExperimentClient internal constructor(
 
     private fun addContext(user: ExperimentUser?): ExperimentUser {
         val providedUser = this.config.userProvider?.getUser()
-        val mergedUserProperties = (
-                (user?.userProperties ?: emptyMap()) +
-                        (providedUser?.userProperties ?: emptyMap())
-                )
+        val mergedUserProperties = (user?.userProperties ?: emptyMap()) + (providedUser?.userProperties ?: emptyMap())
 
         return ExperimentUser.builder()
             .library("experiment-android-client/$VERSION_NAME")

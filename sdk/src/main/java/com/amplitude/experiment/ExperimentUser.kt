@@ -205,9 +205,7 @@ class ExperimentUser internal constructor(
         }
 
         fun merge(mergeUser: ExperimentUser?) : Builder {
-            if (mergeUser == null) {
-                return this
-            }
+            if (mergeUser == null) return this
 
             userId(mergeUser.userId ?: this.userId)
             deviceId(mergeUser.deviceId ?: this.deviceId)
