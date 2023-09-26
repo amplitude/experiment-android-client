@@ -269,12 +269,12 @@ internal class DefaultExperimentClient internal constructor(
         val body = response.body?.string() ?: ""
         val json = JSONObject(body)
         val variants = mutableMapOf<String, Variant>()
-            json.keys().forEach { key ->
-                val variant = json.getJSONObject(key).toVariant()
-                if (variant != null) {
-                    variants[key] = variant
-                }
+        json.keys().forEach { key ->
+            val variant = json.getJSONObject(key).toVariant()
+            if (variant != null) {
+                variants[key] = variant
             }
+        }
         return variants
     }
 
