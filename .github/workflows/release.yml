@@ -94,7 +94,7 @@ jobs:
         run: |
           npx \
           -p lodash \
-          -p semantic-release@ \
+          -p semantic-release \
           -p @semantic-release/changelog \
           -p @semantic-release/git \
           -p @google/semantic-release-replace-plugin \
