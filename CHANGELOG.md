@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/amplitude/experiment-android-client/compare/1.10.0...1.10.1) (2023-09-26)
+
+
+### Bug Fixes
+
+* Catch JSONException from parsing vardata response ([#33](https://github.com/amplitude/experiment-android-client/issues/33)) ([cabbb5d](https://github.com/amplitude/experiment-android-client/commit/cabbb5dae19620e37b3877cffaa1fe35061ee97d))
+
 # [1.10.0](https://github.com/amplitude/experiment-android-client/compare/1.9.0...1.10.0) (2023-06-02)
 
 
