@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import kotlin.jvm.Throws
 import org.json.JSONArray
+import org.json.JSONException
 
 internal class DefaultExperimentClient internal constructor(
     private val apiKey: String,
@@ -131,6 +132,7 @@ internal class DefaultExperimentClient internal constructor(
                 }
                 return VariantAndSource(config.fallbackVariant, VariantSource.FALLBACK_CONFIG)
             }
+
             Source.INITIAL_VARIANTS -> {
                 // for source = InitialVariants, fallback order goes:
                 // 1. InitialFlags
@@ -263,19 +265,24 @@ internal class DefaultExperimentClient internal constructor(
             throw IOException("fetch error response: $response")
         }
         val body = response.body?.string() ?: ""
-        val json = JSONObject(body)
         val variants = mutableMapOf<String, Variant>()
-        json.keys().forEach { key ->
-            val variant = json.getJSONObject(key).toVariant()
-            if (variant != null) {
-                variants[key] = variant
+        try {
+            val json = JSONObject(body)
+            json.keys().forEach { key ->
+                val variant = json.getJSONObject(key).toVariant()
+                if (variant != null) {
+                    variants[key] = variant
+                }
             }
+        } catch (e: JSONException) {
+            Logger.w("Error converting response to JSONObject", e)
+            return variants
         }
         return variants
     }
 
     private fun storeVariants(variants: Map<String, Variant>, options: FetchOptions?) = synchronized(storage) {
-        val failedFlagKeys = options?.flagKeys ?.toMutableList() ?: mutableListOf()
+        val failedFlagKeys = options?.flagKeys?.toMutableList() ?: mutableListOf()
         if (options?.flagKeys == null) {
             storage.clear()
         }
@@ -345,7 +352,7 @@ enum class VariantSource(val type: String) {
 
     fun isFallback(): Boolean {
         return this == FALLBACK_INLINE ||
-            this == FALLBACK_CONFIG ||
-            this == SECONDARY_INITIAL_VARIANTS
+                this == FALLBACK_CONFIG ||
+                this == SECONDARY_INITIAL_VARIANTS
     }
 }
