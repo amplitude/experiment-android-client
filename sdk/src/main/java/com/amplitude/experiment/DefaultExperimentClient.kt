@@ -127,19 +127,16 @@ internal class DefaultExperimentClient internal constructor(
 
         // Do not track exposure for fallback variants that are not associated with a default variant.
         val fallback = isFallback(variantAndSource.source)
-        if (fallback && (variantAndSource.hasDefaultVariant == null || !variantAndSource.hasDefaultVariant)) {
+        if (fallback && !variantAndSource.hasDefaultVariant) {
             return
         }
 
         val experimentKey = variantAndSource.variant.expKey
-        var variant: String? = null
         val metadata = variantAndSource.variant.metadata
-        if (!fallback && (metadata?.get("default") == null)) {
-            variantAndSource.variant.key?.let {
-                variant = it
-            } ?: variantAndSource.variant.value?.let {
-                variant = it
-            }
+        var variant = if (!fallback && !variantAndSource.variant.isDefaultVariant()) {
+            variantAndSource.variant.key ?: variantAndSource.variant.value
+        } else {
+            null
         }
 
         val exposure = Exposure(key, variant, experimentKey, metadata)
@@ -352,7 +349,7 @@ internal class DefaultExperimentClient internal constructor(
         val user = this.user ?: ExperimentUser()
         return user.copyToBuilder()
             .library("experiment-android-client/${BuildConfig.VERSION_NAME}")
-            .build().merge(userProvider?.getUser())
+            .build().merge(config.userProvider?.getUser())
     }
 
     @Throws(IllegalStateException::class)
@@ -373,30 +370,17 @@ internal class DefaultExperimentClient internal constructor(
             .build().merge(providedUser)
     }
 
-
-    private fun addContext(user: ExperimentUser?): ExperimentUser {
-        val providedUser = this.config.userProvider?.getUser()
-        val mergedUserProperties = (user?.userProperties ?: emptyMap()) + (providedUser?.userProperties ?: emptyMap())
-
-        return ExperimentUser.builder()
-            .library("experiment-android-client/$VERSION_NAME")
-            .merge(this.config.userProvider?.getUser()).merge(this.user)
-            .userProperties(mergedUserProperties)
-            .build()
-    }
-
     private fun evaluate(flagKeys: Set<String>): Map<String, Variant> {
-        val user = addContext(this.user)
-        val flags = topologicalSort(this.flags.getAll(), flagKeys)
-        val context = EvaluationContext().apply { put("user", user) }
-        val evaluationVariants = this.engine.evaluate(context, flags)
-        val variants = mutableMapOf<String, Variant>()
-
-        for ((flagKey, evaluationVariant) in evaluationVariants) {
-            variants[flagKey] = translateFromEvaluationVariant(evaluationVariant)
+        val user = getUserMergedWithProvider()
+        val flags = try {
+            topologicalSort(this.flags.getAll(), flagKeys)
+        } catch (e: Exception) {
+            Logger.w("Error during topological sort of flags", e)
+            return emptyMap()
         }
-
-        return variants
+        val context = EvaluationContext().apply { put("user", user.toEvaluationContext()) }
+        val evaluationVariants = this.engine.evaluate(context, flags)
+        return evaluationVariants.mapValues { translateFromEvaluationVariant(it.value) }
     }
 
     private fun translateFromEvaluationVariant(
@@ -404,22 +388,18 @@ internal class DefaultExperimentClient internal constructor(
     ): Variant {
 
         val experimentKey = evaluationVariant.metadata?.get("experimentKey")?.toString()
-
         val value = when {
             evaluationVariant.value != null -> evaluationVariant.value.toString()
             else -> null
         }
-
         val expKey = when {
             experimentKey != null -> experimentKey
             else -> null
         }
-
         val payload = when {
             evaluationVariant.payload != null -> evaluationVariant.payload
             else -> null
         }
-
         val metadata = when {
             evaluationVariant.metadata != null -> evaluationVariant.metadata
             else -> null
@@ -620,7 +600,7 @@ internal class DefaultExperimentClient internal constructor(
 data class VariantAndSource(
     val variant: Variant = Variant(),
     val source: VariantSource = VariantSource.FALLBACK_CONFIG,
-    val hasDefaultVariant: Boolean? = null
+    val hasDefaultVariant: Boolean = false
 )
 
 enum class VariantSource(val type: String) {

@@ -1,5 +1,7 @@
 package com.amplitude.experiment
 
+import com.amplitude.experiment.evaluation.EvaluationContext
+
 /**
  * The user to fetch experiment/flag variants for. This is an immutable object
  * that can be created using an [ExperimentUser.Builder]. Example usage:
@@ -65,6 +67,30 @@ class ExperimentUser internal constructor(
             .userProperties(this.userProperties)
             .groups(this.groups)
             .groupProperties(this.groupProperties)
+    }
+
+    internal fun toEvaluationContext(): EvaluationContext {
+        val context = EvaluationContext()
+        val groups = mutableMapOf<String, Map<String, Any?>>()
+        if (this.groups != null) {
+            this.groups.forEach { (groupType, groupNames) ->
+                if (groupNames.isNotEmpty()) {
+                    val groupName = groupNames.first()
+                    val groupNameMap = mutableMapOf<String, Any>().apply { put("group_name", groupName) }
+                    val groupProperties = this.groupProperties?.get(groupType)?.get(groupName)
+                    if (groupProperties != null) {
+                        groupNameMap["group_properties"] = groupProperties
+                    }
+                    groups[groupType] = groupNameMap
+                }
+            }
+            context.apply { put("groups", groups) }
+        }
+        val builder = copyToBuilder()
+        builder.groups(null)
+        builder.groupProperties(null)
+        context.apply { put("user", builder.build()) }
+        return context
     }
 
     override fun equals(other: Any?): Boolean {
@@ -202,30 +228,6 @@ class ExperimentUser internal constructor(
                 getOrPut(groupType) { mutableMapOf(groupName to mutableMapOf()) }
                     .getOrPut(groupName) { mutableMapOf(key to value) }[key] = value
             }
-        }
-
-        fun merge(mergeUser: ExperimentUser?) : Builder {
-            if (mergeUser == null) return this
-
-            userId(mergeUser.userId ?: this.userId)
-            deviceId(mergeUser.deviceId ?: this.deviceId)
-            country(mergeUser.country ?: this.country)
-            region(mergeUser.region ?: this.region)
-            dma(mergeUser.dma ?: this.dma)
-            city(mergeUser.city ?: this.city)
-            language(mergeUser.language ?: this.language)
-            platform(mergeUser.platform ?: this.platform)
-            version(mergeUser.version ?: this.version)
-            os(mergeUser.os ?: this.os)
-            deviceManufacturer(mergeUser.deviceManufacturer ?: this.deviceManufacturer)
-            deviceBrand(mergeUser.deviceBrand ?: this.deviceBrand)
-            deviceModel(mergeUser.deviceModel ?: this.deviceModel)
-            carrier(mergeUser.carrier ?: this.carrier)
-            library(mergeUser.library ?: this.library)
-            userProperties(mergeUser.userProperties ?: this.userProperties)
-            groups(mergeUser.groups ?: this.groups)
-            groupProperties(mergeUser.groupProperties ?: this.groupProperties)
-            return this
         }
 
         fun build(): ExperimentUser {

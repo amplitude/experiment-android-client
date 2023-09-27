@@ -43,4 +43,9 @@ data class Variant @JvmOverloads constructor(
 
     fun isNullOrEmpty(): Boolean =
         this.key == null && this.value == null && this.payload == null && this.expKey == null && this.metadata == null
+
+    fun isDefaultVariant(): Boolean {
+        val isDefault = metadata?.get("default") as? Boolean
+        return isDefault ?: false
+    }
 }
