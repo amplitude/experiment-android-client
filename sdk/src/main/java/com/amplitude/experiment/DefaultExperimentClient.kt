@@ -81,7 +81,7 @@ internal class DefaultExperimentClient internal constructor(
             config.serverUrl.toHttpUrl()
         }
 
-    private val flagsServerUrl =
+    private val flagsServerUrl: HttpUrl =
         if (config.flagsServerUrl == ExperimentConfig.Defaults.FLAGS_SERVER_URL && config.serverZone.lowercase() == "eu") {
             euFlagsServerUrl.toHttpUrl()
         } else {
