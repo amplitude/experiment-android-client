@@ -75,11 +75,18 @@ internal class DefaultExperimentClient internal constructor(
     )
 
     private val serverUrl: HttpUrl =
-        if (config.serverZone.lowercase() == "eu") euServerUrl.toHttpUrl() else config.serverUrl.toHttpUrl()
-
+        if (config.serverUrl == ExperimentConfig.Defaults.SERVER_URL && config.serverZone.lowercase() == "eu") {
+            euServerUrl.toHttpUrl()
+        } else {
+            config.serverUrl.toHttpUrl()
+        }
 
     private val flagsServerUrl =
-        if (config.serverZone.lowercase() == "eu") euFlagsServerUrl.toHttpUrl() else config.flagsServerUrl.toHttpUrl()
+        if (config.flagsServerUrl == ExperimentConfig.Defaults.FLAGS_SERVER_URL && config.serverZone.lowercase() == "eu") {
+            euFlagsServerUrl.toHttpUrl()
+        } else {
+            config.flagsServerUrl.toHttpUrl()
+        }
 
     private val flagApi = SdkFlagApi(this.apiKey, flagsServerUrl, httpClient)
 
