@@ -73,7 +73,9 @@ class ExperimentUser internal constructor(
         val context = EvaluationContext()
         val groups = mutableMapOf<String, Map<String, Any?>>()
         if (this.groups != null) {
-            this.groups.forEach { (groupType, groupNames) ->
+            for (entry in this.groups) {
+                val groupType = entry.key
+                val groupNames = entry.value
                 if (groupNames.isNotEmpty()) {
                     val groupName = groupNames.first()
                     val groupNameMap = mutableMapOf<String, Any>().apply { put("group_name", groupName) }
