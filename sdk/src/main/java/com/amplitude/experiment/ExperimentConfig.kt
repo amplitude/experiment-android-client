@@ -27,6 +27,10 @@ class ExperimentConfig internal constructor(
     @JvmField
     val serverUrl: String = Defaults.SERVER_URL,
     @JvmField
+    val flagsServerUrl: String = Defaults.FLAGS_SERVER_URL,
+    @JvmField
+    val serverZone: String = Defaults.SERVER_ZONE,
+    @JvmField
     val fetchTimeoutMillis: Long = Defaults.FETCH_TIMEOUT_MILLIS,
     @JvmField
     val retryFetchOnFailure: Boolean = Defaults.RETRY_FETCH_ON_FAILURE,
@@ -84,6 +88,16 @@ class ExperimentConfig internal constructor(
         const val SERVER_URL = "https://api.lab.amplitude.com/"
 
         /**
+         * "https://flag.lab.amplitude.com/"
+         */
+        const val FLAGS_SERVER_URL = "https://flag.lab.amplitude.com/"
+
+        /**
+         * "US"
+         */
+        const val SERVER_ZONE = "US"
+
+        /**
          * 10000
          */
         const val FETCH_TIMEOUT_MILLIS = 10000L
@@ -135,6 +149,8 @@ class ExperimentConfig internal constructor(
         private var initialVariants = Defaults.INITIAL_VARIANTS
         private var source = Defaults.SOURCE
         private var serverUrl = Defaults.SERVER_URL
+        private var flagsServerUrl = Defaults.FLAGS_SERVER_URL
+        private var serverZone = Defaults.SERVER_ZONE
         private var fetchTimeoutMillis = Defaults.FETCH_TIMEOUT_MILLIS
         private var retryFetchOnFailure = Defaults.RETRY_FETCH_ON_FAILURE
         private var automaticExposureTracking = Defaults.AUTOMATIC_EXPOSURE_TRACKING
@@ -165,6 +181,14 @@ class ExperimentConfig internal constructor(
 
         fun serverUrl(serverUrl: String) = apply {
             this.serverUrl = serverUrl
+        }
+
+        fun flagsServerUrl(flagsServerUrl: String) = apply {
+            this.flagsServerUrl = flagsServerUrl
+        }
+
+        fun serverZone(serverZone: String) = apply {
+            this.serverZone = serverZone
         }
 
         fun fetchTimeoutMillis(fetchTimeoutMillis: Long) = apply {
@@ -204,6 +228,8 @@ class ExperimentConfig internal constructor(
                 initialVariants = initialVariants,
                 source = source,
                 serverUrl = serverUrl,
+                flagsServerUrl = flagsServerUrl,
+                serverZone = serverZone,
                 fetchTimeoutMillis = fetchTimeoutMillis,
                 retryFetchOnFailure = retryFetchOnFailure,
                 automaticExposureTracking = automaticExposureTracking,
@@ -223,6 +249,8 @@ class ExperimentConfig internal constructor(
             .initialVariants(initialVariants)
             .source(source)
             .serverUrl(serverUrl)
+            .flagsServerUrl(flagsServerUrl)
+            .serverZone(serverZone)
             .fetchTimeoutMillis(fetchTimeoutMillis)
             .retryFetchOnFailure(retryFetchOnFailure)
             .automaticExposureTracking(automaticExposureTracking)

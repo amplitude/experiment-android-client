@@ -35,6 +35,9 @@ import java.util.concurrent.TimeoutException
 import kotlin.jvm.Throws
 import org.json.JSONArray
 
+internal const val euServerUrl = "https://api.lab.eu.amplitude.com";
+internal const val euFlagsServerUrl = "https://flag.lab.eu.amplitude.com";
+
 internal class DefaultExperimentClient internal constructor(
     private val apiKey: String,
     private val config: ExperimentConfig,
@@ -44,8 +47,6 @@ internal class DefaultExperimentClient internal constructor(
 ) : ExperimentClient {
 
     private var user: ExperimentUser? = null
-  
-    private val flagApi = SdkFlagApi(this.apiKey, this.config.serverUrl, httpClient)
 
     private val variants: LoadStoreCache<Variant> = getVariantStorage(
         this.apiKey,
@@ -73,7 +74,14 @@ internal class DefaultExperimentClient internal constructor(
         scalar = 1.5f,
     )
 
-    private val serverUrl: HttpUrl = config.serverUrl.toHttpUrl()
+    private val serverUrl: HttpUrl =
+        if (config.serverZone.lowercase() == "eu") euServerUrl.toHttpUrl() else config.serverUrl.toHttpUrl()
+
+
+    private val flagsServerUrl =
+        if (config.serverZone.lowercase() == "eu") euFlagsServerUrl.toHttpUrl() else config.flagsServerUrl.toHttpUrl()
+
+    private val flagApi = SdkFlagApi(this.apiKey, flagsServerUrl, httpClient)
 
     @Deprecated("moved to experiment config")
     private var userProvider: ExperimentUserProvider? = config.userProvider

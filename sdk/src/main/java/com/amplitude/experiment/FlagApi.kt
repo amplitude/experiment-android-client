@@ -24,11 +24,11 @@ internal interface FlagApi {
 
 internal class SdkFlagApi(
     private val deploymentKey: String,
-    private val serverUrl: String,
+    private val serverUrl: HttpUrl,
     private val httpClient: OkHttpClient
 ) : FlagApi {
     override fun getFlags(options: GetFlagsOptions?): Future<Map<String, EvaluationFlag>> {
-        val url = serverUrl.toHttpUrl().newBuilder()
+        val url = serverUrl.newBuilder()
             .addPathSegments("sdk/v2/flags")
             .build()
 
