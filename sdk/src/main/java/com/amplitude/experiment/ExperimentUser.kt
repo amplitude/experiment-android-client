@@ -84,12 +84,12 @@ class ExperimentUser internal constructor(
                     groups[groupType] = groupNameMap
                 }
             }
-            context.apply { put("groups", groups) }
+            context["groups"] = groups
         }
         val builder = copyToBuilder()
         builder.groups(null)
         builder.groupProperties(null)
-        context.apply { put("user", builder.build()) }
+        context["user"] = builder.build()
         return context
     }
 
