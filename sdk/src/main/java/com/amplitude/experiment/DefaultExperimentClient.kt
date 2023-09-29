@@ -150,10 +150,8 @@ internal class DefaultExperimentClient internal constructor(
         val event = OldExposureEvent(exposedUser, key, variant, source)
         // Track the exposure event if an analytics provider is set
         if (source.isFallback() || variant.key == null) {
-            userSessionExposureTracker?.track(Exposure(key, null, variant.expKey), exposedUser)
             analyticsProvider?.unsetUserProperty(event)
         } else {
-            userSessionExposureTracker?.track(Exposure(key, variant.key, variant.expKey), exposedUser)
             analyticsProvider?.setUserProperty(event)
             analyticsProvider?.track(event)
         }
