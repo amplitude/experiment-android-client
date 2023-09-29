@@ -1,5 +1,7 @@
 package com.amplitude.experiment
 
+import com.amplitude.experiment.evaluation.EvaluationContext
+
 /**
  * The user to fetch experiment/flag variants for. This is an immutable object
  * that can be created using an [ExperimentUser.Builder]. Example usage:
@@ -67,6 +69,32 @@ class ExperimentUser internal constructor(
             .groupProperties(this.groupProperties)
     }
 
+    internal fun toEvaluationContext(): EvaluationContext {
+        val context = EvaluationContext()
+        val groups = mutableMapOf<String, Map<String, Any?>>()
+        if (this.groups != null) {
+            for (entry in this.groups) {
+                val groupType = entry.key
+                val groupNames = entry.value
+                if (groupNames.isNotEmpty()) {
+                    val groupName = groupNames.first()
+                    val groupNameMap = mutableMapOf<String, Any>().apply { put("group_name", groupName) }
+                    val groupProperties = this.groupProperties?.get(groupType)?.get(groupName)
+                    if (groupProperties != null) {
+                        groupNameMap["group_properties"] = groupProperties
+                    }
+                    groups[groupType] = groupNameMap
+                }
+            }
+            context["groups"] = groups
+        }
+        val builder = copyToBuilder()
+        builder.groups(null)
+        builder.groupProperties(null)
+        context["user"] = builder.build()
+        return context
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -119,11 +147,11 @@ class ExperimentUser internal constructor(
 
     override fun toString(): String {
         return "ExperimentUser(userId=$userId, deviceId=$deviceId, country=$country, " +
-            "region=$region, dma=$dma, city=$city, language=$language, platform=$platform, " +
-            "version=$version, os=$os, deviceManufacturer=$deviceManufacturer, " +
-            "deviceBrand=$deviceBrand, deviceModel=$deviceModel, carrier=$carrier, " +
-            "library=$library, userProperties=$userProperties, groups=$groups, " +
-            "groupProperties=$groupProperties)"
+                "region=$region, dma=$dma, city=$city, language=$language, platform=$platform, " +
+                "version=$version, os=$os, deviceManufacturer=$deviceManufacturer, " +
+                "deviceBrand=$deviceBrand, deviceModel=$deviceModel, carrier=$carrier, " +
+                "library=$library, userProperties=$userProperties, groups=$groups, " +
+                "groupProperties=$groupProperties)"
     }
 
     companion object {
@@ -166,6 +194,7 @@ class ExperimentUser internal constructor(
         fun deviceManufacturer(deviceManufacturer: String?) = apply {
             this.deviceManufacturer = deviceManufacturer
         }
+
         fun deviceBrand(deviceBrand: String?) = apply { this.deviceBrand = deviceBrand }
         fun deviceModel(deviceModel: String?) = apply { this.deviceModel = deviceModel }
         fun carrier(carrier: String?) = apply { this.carrier = carrier }
@@ -173,17 +202,21 @@ class ExperimentUser internal constructor(
         fun userProperties(userProperties: Map<String, Any?>?) = apply {
             this.userProperties = userProperties?.toMutableMap()
         }
+
         fun userProperty(key: String, value: Any?) = apply {
             userProperties = (userProperties ?: mutableMapOf()).apply {
                 this[key] = value
             }
         }
+
         fun groups(groups: Map<String, Set<String>>?) = apply {
             this.groups = groups?.toMutableMap()
         }
+
         fun group(groupType: String, groupName: String) = apply {
             this.groups = (this.groups ?: mutableMapOf()).apply { put(groupType, setOf(groupName)) }
         }
+
         fun groupProperties(groupProperties: Map<String, Map<String, Map<String, Any?>>>?) = apply {
             this.groupProperties = groupProperties?.mapValues { groupTypes ->
                 groupTypes.value.toMutableMap().mapValues { groupNames ->
@@ -191,6 +224,7 @@ class ExperimentUser internal constructor(
                 }.toMutableMap()
             }?.toMutableMap()
         }
+
         fun groupProperty(groupType: String, groupName: String, key: String, value: Any?) = apply {
             this.groupProperties = (this.groupProperties ?: mutableMapOf()).apply {
                 getOrPut(groupType) { mutableMapOf(groupName to mutableMapOf()) }
