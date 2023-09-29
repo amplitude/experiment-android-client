@@ -53,7 +53,6 @@ internal class DefaultExperimentClient internal constructor(
 ) : ExperimentClient {
 
     private var user: ExperimentUser? = null
-    private val flagApi = SdkFlagApi(this.apiKey, this.config.serverUrl, httpClient)
     private val engine = EvaluationEngineImpl()
 
     private val variants: LoadStoreCache<Variant> = getVariantStorage(
