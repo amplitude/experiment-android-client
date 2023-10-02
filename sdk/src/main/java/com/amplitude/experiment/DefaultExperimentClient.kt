@@ -82,14 +82,14 @@ internal class DefaultExperimentClient internal constructor(
     )
 
     private val serverUrl: HttpUrl =
-        if (config.serverUrl == ExperimentConfig.Defaults.SERVER_URL && config.serverZone.lowercase() == "eu") {
+        if (config.serverUrl == ExperimentConfig.Defaults.SERVER_URL && config.flagsServerUrl == ExperimentConfig.Defaults.FLAGS_SERVER_URL && config.serverZone.lowercase() == "eu") {
             euServerUrl.toHttpUrl()
         } else {
             config.serverUrl.toHttpUrl()
         }
 
     private val flagsServerUrl: HttpUrl =
-        if (config.flagsServerUrl == ExperimentConfig.Defaults.FLAGS_SERVER_URL && config.serverZone.lowercase() == "eu") {
+        if (config.serverUrl == ExperimentConfig.Defaults.SERVER_URL && config.flagsServerUrl == ExperimentConfig.Defaults.FLAGS_SERVER_URL && config.serverZone.lowercase() == "eu") {
             euFlagsServerUrl.toHttpUrl()
         } else {
             config.flagsServerUrl.toHttpUrl()
