@@ -96,6 +96,10 @@ internal class DefaultExperimentClient internal constructor(
 
     private var isRunning = false
 
+    internal fun allFlags(): Map<String, EvaluationFlag> {
+        return this.flags.getAll();
+    }
+
     /**
      * Start the SDK by getting flag configurations from the server and fetching
      * variants for the user. The promise returned by this function resolves when
@@ -230,7 +234,11 @@ internal class DefaultExperimentClient internal constructor(
     }
 
     override fun all(): Map<String, Variant> {
-        return secondaryVariants() + sourceVariants()
+        var evaluatedVariants = this.evaluate(emptySet())
+        evaluatedVariants = evaluatedVariants.filter { entry ->
+            this.flags.get(entry.key).isLocalEvaluationMode()
+        }
+        return secondaryVariants() + sourceVariants() + evaluatedVariants
     }
 
     override fun clear() {
@@ -430,7 +438,7 @@ internal class DefaultExperimentClient internal constructor(
             Logger.w("Error during topological sort of flags", e)
             return emptyMap()
         }
-        val context = EvaluationContext().apply { put("user", user.toEvaluationContext()) }
+        val context = user.toEvaluationContext()
         val evaluationVariants = this.engine.evaluate(context, flags)
         return evaluationVariants.mapValues { translateFromEvaluationVariant(it.value) }
     }
@@ -640,7 +648,7 @@ internal class DefaultExperimentClient internal constructor(
             source = VariantSource.FALLBACK_CONFIG,
             hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
         )
-        if (fallbackVariant.isNullOrEmpty()) {
+        if (!fallbackVariant.isNullOrEmpty()) {
             return fallbackVariantAndSource
         }
         return defaultVariantAndSource

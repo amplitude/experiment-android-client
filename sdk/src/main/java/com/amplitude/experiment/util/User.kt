@@ -40,9 +40,32 @@ internal fun ExperimentUser.toJson(): String {
     return json.toString()
 }
 
+internal fun ExperimentUser.toMap(): Map<String, Any?> {
+    val map = mutableMapOf<String, Any?>()
+    map["user_id"] = this.userId
+    map["device_id"] = this.deviceId
+    map["country"] = this.country
+    map["region"] = this.region
+    map["dma"] = this.dma
+    map["city"] = this.city
+    map["language"] = this.language
+    map["platform"] = this.platform
+    map["version"] = this.version
+    map["os"] = this.os
+    map["device_manufacturer"] = this.deviceManufacturer
+    map["device_brand"] = this.deviceBrand
+    map["device_model"] = this.deviceModel
+    map["carrier"] = this.carrier
+    map["library"] = this.library
+    map["user_properties"] = this.userProperties
+    map["groups"] = this.groups
+    map["group_properties"] = this.groupProperties
+    return map
+}
+
 internal fun ExperimentUser?.merge(other: ExperimentUser?): ExperimentUser {
     val user = this ?: ExperimentUser()
-    val mergedUserProperties = this?.userProperties.merge(other?.userProperties) { t, o -> o + t}
+    val mergedUserProperties = this?.userProperties.merge(other?.userProperties) { t, o -> o + t }
     val mergedGroups = this?.groups.merge(other?.groups) { t, o -> o + t }
     val mergedGroupProperties: Map<String, Map<String, Map<String, Any?>>>? =
         this?.groupProperties.mergeMapValues(other?.groupProperties) { thisGroupName, otherGroupName ->

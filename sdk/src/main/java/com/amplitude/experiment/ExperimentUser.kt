@@ -1,6 +1,7 @@
 package com.amplitude.experiment
 
 import com.amplitude.experiment.evaluation.EvaluationContext
+import com.amplitude.experiment.util.toMap
 
 /**
  * The user to fetch experiment/flag variants for. This is an immutable object
@@ -88,10 +89,10 @@ class ExperimentUser internal constructor(
             }
             context["groups"] = groups
         }
-        val builder = copyToBuilder()
-        builder.groups(null)
-        builder.groupProperties(null)
-        context["user"] = builder.build()
+        val userMap = this.toMap().toMutableMap()
+        userMap.remove("groups")
+        userMap.remove("group_properties")
+        context["user"] = userMap
         return context
     }
 

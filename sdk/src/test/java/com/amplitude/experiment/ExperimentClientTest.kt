@@ -31,8 +31,9 @@ class ExperimentClientTest {
     private val testUser = ExperimentUser(userId = "test_user")
 
     private val serverVariant = Variant(key = "on", value = "on", payload = "payload")
-    private val fallbackVariant = Variant(key = "fallback", value = "fallback", payload = "payload")
+    private val fallbackVariant = Variant(key = "fallback", value = "fallback")
     private val initialVariant = Variant(key = "initial", value = "initial")
+    private val inlineVariant = Variant(key = "inline", value = "inline")
 
     private val initialVariants = mapOf(
         INITIAL_KEY to initialVariant,
@@ -425,7 +426,7 @@ class ExperimentClientTest {
 
     // TODO access flags for test
     @Test
-    fun `test start loads flags into local storage`() {
+    fun `LocalEvaluation - test start loads flags into local storage`() {
         val client = DefaultExperimentClient(
             API_KEY,
             ExperimentConfig(fetchOnStart = true),
@@ -434,10 +435,12 @@ class ExperimentClientTest {
             Experiment.executorService,
         )
         client.start(ExperimentUser(deviceId = "test_device"))
+        Assert.assertEquals("sdk-ci-test-local", client.allFlags().get("sdk-ci-test-local")?.key)
+        client.stop()
     }
 
     @Test
-    fun `test variant after start returns expected locally evaluated variant`() {
+    fun `LocalEvaluation - test variant after start returns expected locally evaluated variant`() {
         val client = DefaultExperimentClient(
             SERVER_API_KEY,
             ExperimentConfig(fetchOnStart = true),
@@ -451,13 +454,13 @@ class ExperimentClientTest {
         Assert.assertEquals("on", variant.value)
         client.setUser(ExperimentUser())
         variant = client.variant("sdk-ci-test-local")
-        Assert.assertEquals("on", variant.key)
+        Assert.assertEquals("off", variant.key)
         Assert.assertEquals(null, variant.value)
         client.stop()
     }
 
     @Test
-    fun `remote evaluation variant preferred over local evaluation variant`() {
+    fun `LocalEvaluation - remote evaluation variant preferred over local evaluation variant`() {
         val client = DefaultExperimentClient(
             SERVER_API_KEY,
             ExperimentConfig(fetchOnStart = false),
@@ -480,7 +483,7 @@ class ExperimentClientTest {
 
 
     @Test
-    fun `LocalEvaluation - test variant accessed from local storage primary`() {
+    fun `LocalStorage - test variant accessed from local storage primary`() {
         val user = ExperimentUser(userId = "test_user")
         val exposureTrackingProvider = TestExposureTrackingProvider()
         val client = DefaultExperimentClient(
@@ -499,13 +502,12 @@ class ExperimentClientTest {
         Assert.assertEquals("on", variant.key)
         Assert.assertEquals("on", variant.value)
         Assert.assertEquals("payload", variant.payload)
-        // TODO spy mock calls
+        // TODO spy
     }
 
-    // TODO finish inline test
     @Test
-    fun `LocalEvaluation - test variant accessed from inline fallback before initial variants secondary`() {
-        val user = ExperimentUser(userId = "test_user")
+    fun `LocalStorage - test variant accessed from inline fallback before initial variants secondary`() {
+        val user = ExperimentUser()
         val exposureTrackingProvider = TestExposureTrackingProvider()
         val client = DefaultExperimentClient(
             API_KEY,
@@ -521,12 +523,14 @@ class ExperimentClientTest {
             Experiment.executorService,
         )
         client.start(user)
-        val variant = client.variant("sdk-ci-test")
+        val variant = client.variant("sdk-ci-test", inlineVariant)
+        Assert.assertEquals(inlineVariant, variant)
+        // TODO spy
     }
 
     @Test
-    fun `LocalEvaluation - test variant accessed from initial variants when no explicit fallback provided`() {
-        val user = ExperimentUser(userId = "test_user")
+    fun `LocalStorage - test variant accessed from initial variants when no explicit fallback provided`() {
+        val user = ExperimentUser()
         val exposureTrackingProvider = TestExposureTrackingProvider()
         val client = DefaultExperimentClient(
             API_KEY,
@@ -544,12 +548,12 @@ class ExperimentClientTest {
         client.start(user)
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals(Variant(key = "initial", value = "initial"), variant)
-        // TODO spy mock calls
+        // TODO spy
     }
 
     @Test
     fun `LocalStorage - test variant accessed from configured fallback when no initial variants or explicit fallback provided`() {
-        val user = ExperimentUser(userId = "test_user")
+        val user = ExperimentUser()
         val exposureTrackingProvider = TestExposureTrackingProvider()
         val client = DefaultExperimentClient(
             API_KEY,
@@ -567,12 +571,12 @@ class ExperimentClientTest {
         client.start(user)
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals(Variant(key = "fallback", value = "fallback"), variant)
-        // TODO spy mock calls
+        // TODO spy
     }
 
     @Test
     fun `LocalStorage - test default variant returned when no other fallback is provided`() {
-        val user = ExperimentUser(userId = "test_user")
+        val user = ExperimentUser()
         val exposureTrackingProvider = TestExposureTrackingProvider()
         val client = DefaultExperimentClient(
             API_KEY,
@@ -581,7 +585,6 @@ class ExperimentClientTest {
                 fetchOnStart = true,
                 source = Source.LOCAL_STORAGE,
                 initialVariants = mapOf("sdk-ci-test-not-selected" to initialVariant),
-                fallbackVariant = fallbackVariant
             ),
             OkHttpClient(),
             mockStorage,
@@ -592,7 +595,7 @@ class ExperimentClientTest {
         Assert.assertEquals(variant.key, "off")
         Assert.assertEquals(variant.value, null)
         Assert.assertEquals(variant.metadata?.get("default"), true)
-        // TODO spy mock calls
+        // TODO spy
     }
 
     @Test
@@ -615,7 +618,7 @@ class ExperimentClientTest {
         client.start(user)
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals(Variant(key = "initial", value = "initial"), variant)
-        // TODO spy mock calls
+        // TODO spy
     }
 
     @Test
@@ -636,13 +639,16 @@ class ExperimentClientTest {
             Experiment.executorService,
         )
         client.start(user)
-        // TODO finish test with inline
-        val variant = client.variant("sdk-ci-test")
+        val variant = client.variant("sdk-ci-test", inlineVariant)
+        Assert.assertEquals("on", variant.key)
+        Assert.assertEquals("on", variant.value)
+        Assert.assertEquals("payload", variant.payload)
+        // TODO spy
     }
 
     @Test
     fun `InitialVariants - test variant accessed from inline fallback`() {
-        val user = ExperimentUser(userId = "test_user")
+        val user = ExperimentUser()
         val exposureTrackingProvider = TestExposureTrackingProvider()
         val client = DefaultExperimentClient(
             API_KEY,
@@ -658,13 +664,14 @@ class ExperimentClientTest {
             Experiment.executorService,
         )
         client.start(user)
-        // TODO finish test with inline
-        val variant = client.variant("sdk-ci-test")
+        val variant = client.variant("sdk-ci-test", inlineVariant)
+        Assert.assertEquals(inlineVariant, variant)
+        // TODO spy
     }
 
     @Test
     fun `InitialVariants - test variant accessed from configured fallback when no initial variants or explicit fallback provided`() {
-        val user = ExperimentUser(userId = "test_user")
+        val user = ExperimentUser()
         val exposureTrackingProvider = TestExposureTrackingProvider()
         val client = DefaultExperimentClient(
             API_KEY,
@@ -680,13 +687,14 @@ class ExperimentClientTest {
             Experiment.executorService,
         )
         client.start(user)
-        // TODO finish test with inline
         val variant = client.variant("sdk-ci-test")
+        Assert.assertEquals(fallbackVariant, variant)
+        // TODO spy
     }
 
     @Test
     fun `InitialVariants - default variant returned when no other fallback is provided`() {
-        val user = ExperimentUser(userId = "test_user")
+        val user = ExperimentUser()
         val exposureTrackingProvider = TestExposureTrackingProvider()
         val client = DefaultExperimentClient(
             API_KEY,
@@ -695,7 +703,6 @@ class ExperimentClientTest {
                 fetchOnStart = true,
                 source = Source.INITIAL_VARIANTS,
                 initialVariants = mapOf("sdk-ci-test-not-selected" to initialVariant),
-                fallbackVariant = fallbackVariant
             ),
             OkHttpClient(),
             mockStorage,
@@ -704,12 +711,12 @@ class ExperimentClientTest {
         client.start(user)
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals(Variant(key = "off", metadata = mapOf("default" to true)), variant)
-        // TODO spy mock calls
+        // TODO spy
     }
 
     @Test
     fun `LocalEvaluationFlags - test returns locally evaluated variant over remote and all other fallbacks`() {
-        val user = ExperimentUser(userId = "test_user")
+        val user = ExperimentUser(deviceId = "0123456789")
         val exposureTrackingProvider = TestExposureTrackingProvider()
         val client = DefaultExperimentClient(
             API_KEY,
@@ -717,7 +724,7 @@ class ExperimentClientTest {
                 exposureTrackingProvider = exposureTrackingProvider,
                 fetchOnStart = true,
                 source = Source.LOCAL_STORAGE,
-                initialVariants = mapOf("sdk-ci-test" to initialVariant),
+                initialVariants = mapOf("sdk-ci-test-local" to initialVariant),
                 fallbackVariant = fallbackVariant
             ),
             OkHttpClient(),
@@ -725,12 +732,11 @@ class ExperimentClientTest {
             Experiment.executorService,
         )
         client.start(user)
-        // TODO do inline
-        val variant = client.variant("sdk-ci-test")
+        val variant = client.variant("sdk-ci-test-local", inlineVariant)
         Assert.assertEquals("on", variant.key)
         Assert.assertEquals("on", variant.value)
         Assert.assertEquals("local", variant.metadata?.get("evaluationMode"))
-        // TODO spy mock calls
+        // TODO spy
     }
 
     @Test
@@ -751,12 +757,10 @@ class ExperimentClientTest {
             Experiment.executorService,
         )
         client.start(user)
-        // TODO do inline
-        val variant = client.variant("sdk-ci-test-local")
+        val variant = client.variant("sdk-ci-test-local", inlineVariant)
         Assert.assertEquals("inline", variant.key)
         Assert.assertEquals("inline", variant.value)
-        Assert.assertEquals("local", variant.metadata?.get("evaluationMode"))
-        // TODO spy mock calls
+        // TODO spy
     }
 
     @Test
@@ -780,7 +784,6 @@ class ExperimentClientTest {
         val variant = client.variant("sdk-ci-test-local")
         Assert.assertEquals("initial", variant.key)
         Assert.assertEquals("initial", variant.value)
-        Assert.assertEquals("local", variant.metadata?.get("evaluationMode"))
         // TODO spy mock calls
     }
 
@@ -802,11 +805,10 @@ class ExperimentClientTest {
             Experiment.executorService,
         )
         client.start(user)
-        val variant = client.variant("sdk-ci-test-local-not-selected")
-        Assert.assertEquals("initial", variant.key)
-        Assert.assertEquals("initial", variant.value)
-        Assert.assertEquals("local", variant.metadata?.get("evaluationMode"))
-        // TODO spy mock calls
+        val variant = client.variant("sdk-ci-test-local")
+        Assert.assertEquals("fallback", variant.key)
+        Assert.assertEquals("fallback", variant.value)
+        // TODO spy
     }
 
     @Test
@@ -828,7 +830,7 @@ class ExperimentClientTest {
         val variant = client.variant("sdk-ci-test-local")
         Assert.assertEquals("off", variant.key)
         Assert.assertEquals(null, variant.value)
-        // TODO spy mock calls
+        // TODO spy
     }
 
     @Test
@@ -907,7 +909,7 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        // TODO access flags.getAll()
+        // TODO mock client.allFlags()
         client.start(null)
         // TODO spy
     }
@@ -921,7 +923,7 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        // TODO access flags.getAll()
+        // TODO mock client.allFlags()
         client.start(null)
         // TODO spy
     }
@@ -935,7 +937,6 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        // TODO access flags.getAll()
         client.start(null)
         // TODO spy
     }
