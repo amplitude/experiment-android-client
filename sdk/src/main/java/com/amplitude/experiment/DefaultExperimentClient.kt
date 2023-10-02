@@ -1,7 +1,5 @@
 package com.amplitude.experiment
 
-import com.amplitude.experiment.BuildConfig.VERSION_NAME
-import com.amplitude.experiment.evaluation.*
 import com.amplitude.experiment.evaluation.EvaluationEngineImpl
 import com.amplitude.experiment.evaluation.EvaluationFlag
 import com.amplitude.experiment.evaluation.EvaluationVariant
@@ -234,8 +232,7 @@ internal class DefaultExperimentClient internal constructor(
     }
 
     override fun all(): Map<String, Variant> {
-        var evaluatedVariants = this.evaluate(emptySet())
-        evaluatedVariants = evaluatedVariants.filter { entry ->
+        var evaluatedVariants = this.evaluate(emptySet()).filter { entry ->
             this.flags.get(entry.key).isLocalEvaluationMode()
         }
         return secondaryVariants() + sourceVariants() + evaluatedVariants
