@@ -2,16 +2,20 @@ package com.amplitude.experiment
 
 import com.amplitude.experiment.analytics.ExperimentAnalyticsEvent
 import com.amplitude.experiment.analytics.ExperimentAnalyticsProvider
-import com.amplitude.experiment.storage.Storage
 import com.amplitude.experiment.util.Logger
+import com.amplitude.experiment.util.MockStorage
 import com.amplitude.experiment.util.SystemLogger
+import com.amplitude.experiment.util.TestExposureTrackingProvider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.setMain
 import okhttp3.OkHttpClient
 import org.junit.Assert
+import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.ExecutionException
-import org.mockito.Mockito
 
 private const val API_KEY = "client-DvWljIjiiuqLbyjqdvBaLFfEBrAvGuA3"
+private const val SERVER_API_KEY = "server-qz35UwzJ5akieoAdIgzM4m9MIiOLXLoz"
 
 private const val KEY = "sdk-ci-test"
 private const val INITIAL_KEY = "initial-key"
@@ -20,14 +24,15 @@ class ExperimentClientTest {
 
     init {
         Logger.implementation = SystemLogger(true)
+        Dispatchers.setMain(Dispatchers.Unconfined)
     }
 
-    private val mockStorage = Mockito.mock(Storage::class.java)
+    private var mockStorage = MockStorage()
     private val testUser = ExperimentUser(userId = "test_user")
 
     private val serverVariant = Variant(key = "on", value = "on", payload = "payload")
-    private val fallbackVariant = Variant(key = "fallback", payload = "payload")
-    private val initialVariant = Variant(key = "initial")
+    private val fallbackVariant = Variant(key = "fallback", value = "fallback", payload = "payload")
+    private val initialVariant = Variant(key = "initial", value = "initial")
 
     private val initialVariants = mapOf(
         INITIAL_KEY to initialVariant,
@@ -80,6 +85,11 @@ class ExperimentClientTest {
         mockStorage,
         Experiment.executorService,
     )
+
+    @Before
+    fun init() {
+        mockStorage = MockStorage()
+    }
 
     @Test
     fun `fetch success`() {
@@ -182,7 +192,7 @@ class ExperimentClientTest {
 
     @Test
     fun `test fetch sets user and setUser overwrites`() {
-        client.fetch(testUser)
+        client.fetch(testUser).get()
         Assert.assertEquals(testUser, client.getUser())
         val newUser = testUser.copyToBuilder().userId("different_user").build()
         client.setUser(newUser)
@@ -411,4 +421,523 @@ class ExperimentClientTest {
         client.variant("flagKey")
         Assert.assertTrue(didTrack)
     }
+
+
+    // TODO access flags for test
+    @Test
+    fun `test start loads flags into local storage`() {
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(fetchOnStart = true),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        client.start(ExperimentUser(deviceId = "test_device"))
+    }
+
+    @Test
+    fun `test variant after start returns expected locally evaluated variant`() {
+        val client = DefaultExperimentClient(
+            SERVER_API_KEY,
+            ExperimentConfig(fetchOnStart = true),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        client.start(ExperimentUser(deviceId = "test_device"))
+        var variant = client.variant("sdk-ci-test-local")
+        Assert.assertEquals("on", variant.key)
+        Assert.assertEquals("on", variant.value)
+        client.setUser(ExperimentUser())
+        variant = client.variant("sdk-ci-test-local")
+        Assert.assertEquals("on", variant.key)
+        Assert.assertEquals(null, variant.value)
+        client.stop()
+    }
+
+    @Test
+    fun `remote evaluation variant preferred over local evaluation variant`() {
+        val client = DefaultExperimentClient(
+            SERVER_API_KEY,
+            ExperimentConfig(fetchOnStart = false),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        val user = ExperimentUser(userId = "test_user", deviceId = "test_device")
+        client.start(user)
+        var variant = client.variant("sdk-ci-test")
+        Assert.assertEquals("off", variant.key)
+        Assert.assertEquals(null, variant.value)
+        client.fetch(user).get()
+        variant = client.variant("sdk-ci-test")
+        Assert.assertEquals("on", variant.key)
+        Assert.assertEquals("on", variant.value)
+        Assert.assertEquals("payload", variant.payload)
+        client.stop()
+    }
+
+
+    @Test
+    fun `LocalEvaluation - test variant accessed from local storage primary`() {
+        val user = ExperimentUser(userId = "test_user")
+        val exposureTrackingProvider = TestExposureTrackingProvider()
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                exposureTrackingProvider = exposureTrackingProvider,
+                fetchOnStart = true,
+                source = Source.LOCAL_STORAGE
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        client.start(user)
+        val variant = client.variant("sdk-ci-test")
+        Assert.assertEquals("on", variant.key)
+        Assert.assertEquals("on", variant.value)
+        Assert.assertEquals("payload", variant.payload)
+        // TODO spy mock calls
+    }
+
+    // TODO finish inline test
+    @Test
+    fun `LocalEvaluation - test variant accessed from inline fallback before initial variants secondary`() {
+        val user = ExperimentUser(userId = "test_user")
+        val exposureTrackingProvider = TestExposureTrackingProvider()
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                exposureTrackingProvider = exposureTrackingProvider,
+                fetchOnStart = true,
+                source = Source.LOCAL_STORAGE,
+                initialVariants = mapOf("sdk-ci-test" to initialVariant),
+                fallbackVariant = fallbackVariant
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        client.start(user)
+        val variant = client.variant("sdk-ci-test")
+    }
+
+    @Test
+    fun `LocalEvaluation - test variant accessed from initial variants when no explicit fallback provided`() {
+        val user = ExperimentUser(userId = "test_user")
+        val exposureTrackingProvider = TestExposureTrackingProvider()
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                exposureTrackingProvider = exposureTrackingProvider,
+                fetchOnStart = true,
+                source = Source.LOCAL_STORAGE,
+                initialVariants = mapOf("sdk-ci-test" to initialVariant),
+                fallbackVariant = fallbackVariant
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        client.start(user)
+        val variant = client.variant("sdk-ci-test")
+        Assert.assertEquals(Variant(key = "initial", value = "initial"), variant)
+        // TODO spy mock calls
+    }
+
+    @Test
+    fun `LocalStorage - test variant accessed from configured fallback when no initial variants or explicit fallback provided`() {
+        val user = ExperimentUser(userId = "test_user")
+        val exposureTrackingProvider = TestExposureTrackingProvider()
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                exposureTrackingProvider = exposureTrackingProvider,
+                fetchOnStart = true,
+                source = Source.LOCAL_STORAGE,
+                initialVariants = mapOf("sdk-ci-test-not-selected" to initialVariant),
+                fallbackVariant = fallbackVariant
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        client.start(user)
+        val variant = client.variant("sdk-ci-test")
+        Assert.assertEquals(Variant(key = "fallback", value = "fallback"), variant)
+        // TODO spy mock calls
+    }
+
+    @Test
+    fun `LocalStorage - test default variant returned when no other fallback is provided`() {
+        val user = ExperimentUser(userId = "test_user")
+        val exposureTrackingProvider = TestExposureTrackingProvider()
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                exposureTrackingProvider = exposureTrackingProvider,
+                fetchOnStart = true,
+                source = Source.LOCAL_STORAGE,
+                initialVariants = mapOf("sdk-ci-test-not-selected" to initialVariant),
+                fallbackVariant = fallbackVariant
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        client.start(user)
+        val variant = client.variant("sdk-ci-test")
+        Assert.assertEquals(variant.key, "off")
+        Assert.assertEquals(variant.value, null)
+        Assert.assertEquals(variant.metadata?.get("default"), true)
+        // TODO spy mock calls
+    }
+
+    @Test
+    fun `InitialVariants - test variant accessed from initial variants primary`() {
+        val user = ExperimentUser(userId = "test_user")
+        val exposureTrackingProvider = TestExposureTrackingProvider()
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                exposureTrackingProvider = exposureTrackingProvider,
+                fetchOnStart = true,
+                source = Source.INITIAL_VARIANTS,
+                initialVariants = mapOf("sdk-ci-test" to initialVariant),
+                fallbackVariant = fallbackVariant
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        client.start(user)
+        val variant = client.variant("sdk-ci-test")
+        Assert.assertEquals(Variant(key = "initial", value = "initial"), variant)
+        // TODO spy mock calls
+    }
+
+    @Test
+    fun `InitialVariants - test variant accessed from local storage secondary`() {
+        val user = ExperimentUser(userId = "test_user")
+        val exposureTrackingProvider = TestExposureTrackingProvider()
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                exposureTrackingProvider = exposureTrackingProvider,
+                fetchOnStart = true,
+                source = Source.INITIAL_VARIANTS,
+                initialVariants = mapOf("sdk-ci-test-not-selected" to initialVariant),
+                fallbackVariant = fallbackVariant
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        client.start(user)
+        // TODO finish test with inline
+        val variant = client.variant("sdk-ci-test")
+    }
+
+    @Test
+    fun `InitialVariants - test variant accessed from inline fallback`() {
+        val user = ExperimentUser(userId = "test_user")
+        val exposureTrackingProvider = TestExposureTrackingProvider()
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                exposureTrackingProvider = exposureTrackingProvider,
+                fetchOnStart = true,
+                source = Source.INITIAL_VARIANTS,
+                initialVariants = mapOf("sdk-ci-test-not-selected" to initialVariant),
+                fallbackVariant = fallbackVariant
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        client.start(user)
+        // TODO finish test with inline
+        val variant = client.variant("sdk-ci-test")
+    }
+
+    @Test
+    fun `InitialVariants - test variant accessed from configured fallback when no initial variants or explicit fallback provided`() {
+        val user = ExperimentUser(userId = "test_user")
+        val exposureTrackingProvider = TestExposureTrackingProvider()
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                exposureTrackingProvider = exposureTrackingProvider,
+                fetchOnStart = true,
+                source = Source.INITIAL_VARIANTS,
+                initialVariants = mapOf("sdk-ci-test-not-selected" to initialVariant),
+                fallbackVariant = fallbackVariant
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        client.start(user)
+        // TODO finish test with inline
+        val variant = client.variant("sdk-ci-test")
+    }
+
+    @Test
+    fun `InitialVariants - default variant returned when no other fallback is provided`() {
+        val user = ExperimentUser(userId = "test_user")
+        val exposureTrackingProvider = TestExposureTrackingProvider()
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                exposureTrackingProvider = exposureTrackingProvider,
+                fetchOnStart = true,
+                source = Source.INITIAL_VARIANTS,
+                initialVariants = mapOf("sdk-ci-test-not-selected" to initialVariant),
+                fallbackVariant = fallbackVariant
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        client.start(user)
+        val variant = client.variant("sdk-ci-test")
+        Assert.assertEquals(Variant(key = "off", metadata = mapOf("default" to true)), variant)
+        // TODO spy mock calls
+    }
+
+    @Test
+    fun `LocalEvaluationFlags - test returns locally evaluated variant over remote and all other fallbacks`() {
+        val user = ExperimentUser(userId = "test_user")
+        val exposureTrackingProvider = TestExposureTrackingProvider()
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                exposureTrackingProvider = exposureTrackingProvider,
+                fetchOnStart = true,
+                source = Source.LOCAL_STORAGE,
+                initialVariants = mapOf("sdk-ci-test" to initialVariant),
+                fallbackVariant = fallbackVariant
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        client.start(user)
+        // TODO do inline
+        val variant = client.variant("sdk-ci-test")
+        Assert.assertEquals("on", variant.key)
+        Assert.assertEquals("on", variant.value)
+        Assert.assertEquals("local", variant.metadata?.get("evaluationMode"))
+        // TODO spy mock calls
+    }
+
+    @Test
+    fun `LocalEvaluationFlags - test locally evaluated default variant with inline fallback`() {
+        val user = ExperimentUser()
+        val exposureTrackingProvider = TestExposureTrackingProvider()
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                exposureTrackingProvider = exposureTrackingProvider,
+                fetchOnStart = true,
+                source = Source.LOCAL_STORAGE,
+                initialVariants = mapOf("sdk-ci-test-local" to initialVariant),
+                fallbackVariant = fallbackVariant
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        client.start(user)
+        // TODO do inline
+        val variant = client.variant("sdk-ci-test-local")
+        Assert.assertEquals("inline", variant.key)
+        Assert.assertEquals("inline", variant.value)
+        Assert.assertEquals("local", variant.metadata?.get("evaluationMode"))
+        // TODO spy mock calls
+    }
+
+    @Test
+    fun `LocalEvaluationFlags - test locally evaluated default variant with initial variants`() {
+        val user = ExperimentUser()
+        val exposureTrackingProvider = TestExposureTrackingProvider()
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                exposureTrackingProvider = exposureTrackingProvider,
+                fetchOnStart = true,
+                source = Source.LOCAL_STORAGE,
+                initialVariants = mapOf("sdk-ci-test-local" to initialVariant),
+                fallbackVariant = fallbackVariant
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        client.start(user)
+        val variant = client.variant("sdk-ci-test-local")
+        Assert.assertEquals("initial", variant.key)
+        Assert.assertEquals("initial", variant.value)
+        Assert.assertEquals("local", variant.metadata?.get("evaluationMode"))
+        // TODO spy mock calls
+    }
+
+    @Test
+    fun `LocalEvaluationFlags - test locally evaluated default variant with configured fallback`() {
+        val user = ExperimentUser()
+        val exposureTrackingProvider = TestExposureTrackingProvider()
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                exposureTrackingProvider = exposureTrackingProvider,
+                fetchOnStart = true,
+                source = Source.LOCAL_STORAGE,
+                initialVariants = mapOf("sdk-ci-test-local-not-selected" to initialVariant),
+                fallbackVariant = fallbackVariant
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        client.start(user)
+        val variant = client.variant("sdk-ci-test-local-not-selected")
+        Assert.assertEquals("initial", variant.key)
+        Assert.assertEquals("initial", variant.value)
+        Assert.assertEquals("local", variant.metadata?.get("evaluationMode"))
+        // TODO spy mock calls
+    }
+
+    @Test
+    fun `LocalEvaluationFlags - test default variant returned when no other fallback is provided`() {
+        val user = ExperimentUser()
+        val exposureTrackingProvider = TestExposureTrackingProvider()
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                exposureTrackingProvider = exposureTrackingProvider,
+                fetchOnStart = true,
+                source = Source.LOCAL_STORAGE,
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        client.start(user)
+        val variant = client.variant("sdk-ci-test-local")
+        Assert.assertEquals("off", variant.key)
+        Assert.assertEquals(null, variant.value)
+        // TODO spy mock calls
+    }
+
+    @Test
+    fun `LocalEvaluationFlags - test all returns local evaluation variant over remote or initialVariants with local storage source`() {
+        val user = ExperimentUser(userId = "test_user", deviceId = "0123456789")
+        val exposureTrackingProvider = TestExposureTrackingProvider()
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                exposureTrackingProvider = exposureTrackingProvider,
+                fetchOnStart = true,
+                source = Source.LOCAL_STORAGE,
+                initialVariants = mapOf("sdk-ci-test" to initialVariant, "sdk-ci-test-local" to initialVariant)
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        client.start(user)
+        val allVariants = client.all()
+        val localVariant = allVariants["sdk-ci-test-local"]
+        Assert.assertEquals("on", localVariant?.key)
+        Assert.assertEquals("on", localVariant?.value)
+        Assert.assertEquals("local", localVariant?.metadata?.get("evaluationMode"))
+        val remoteVariant = allVariants["sdk-ci-test"]
+        Assert.assertEquals("on", remoteVariant?.key)
+        Assert.assertEquals("on", remoteVariant?.value)
+    }
+
+    @Test
+    fun `LocalEvaluationFlags - test all returns local evaluation variant over remote or initialVariants with initial variants source`() {
+        val user = ExperimentUser(userId = "test_user", deviceId = "0123456789")
+        val exposureTrackingProvider = TestExposureTrackingProvider()
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                exposureTrackingProvider = exposureTrackingProvider,
+                fetchOnStart = true,
+                source = Source.INITIAL_VARIANTS,
+                initialVariants = mapOf("sdk-ci-test" to initialVariant, "sdk-ci-test-local" to initialVariant)
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        client.start(user)
+        val allVariants = client.all()
+        val localVariant = allVariants["sdk-ci-test-local"]
+        Assert.assertEquals("on", localVariant?.key)
+        Assert.assertEquals("on", localVariant?.value)
+        Assert.assertEquals("local", localVariant?.metadata?.get("evaluationMode"))
+        val remoteVariant = allVariants["sdk-ci-test"]
+        Assert.assertEquals("initial", remoteVariant?.key)
+        Assert.assertEquals("initial", remoteVariant?.value)
+    }
+
+    @Test
+    fun `start - test with local and remote evaluation, calls fetch`() {
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        client.start(null)
+        // TODO spy
+    }
+
+    @Test
+    fun `start - test with local evaluation only, does not call fetch`() {
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        // TODO access flags.getAll()
+        client.start(null)
+        // TODO spy
+    }
+
+    @Test
+    fun `start - test with local evaluation only, fetchOnStart enabled, calls fetch`() {
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(fetchOnStart = true),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        // TODO access flags.getAll()
+        client.start(null)
+        // TODO spy
+    }
+
+    @Test
+    fun `start - test with local and remote evaluation, fetchOnStart disabled, does not call fetch`() {
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(fetchOnStart = false),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        // TODO access flags.getAll()
+        client.start(null)
+        // TODO spy
+    }
 }
+

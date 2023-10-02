@@ -78,7 +78,9 @@ internal class DefaultExperimentClient internal constructor(
         max = 10000,
         scalar = 1.5f,
     )
+    private val flagPollerIntervalMillis: Long = 60000
 
+    private val poller: Poller = Poller(::doFlags, flagPollerIntervalMillis)
     private val serverUrl: HttpUrl = config.serverUrl.toHttpUrl()
 
     @Deprecated("moved to experiment config")
@@ -91,6 +93,58 @@ internal class DefaultExperimentClient internal constructor(
         config.exposureTrackingProvider?.let {
             UserSessionExposureTracker(it)
         }
+
+    private var isRunning = false
+
+    /**
+     * Start the SDK by getting flag configurations from the server and fetching
+     * variants for the user. The promise returned by this function resolves when
+     * local flag configurations have been updated, and the fetch()
+     * result has been received (if the request was made).
+     *
+     * This function determines whether to fetch() based on the result of
+     * the flag configurations cached locally or received in the initial flag
+     * configuration response.
+     *
+     * To explicitly force this request to fetch or not, set the
+     * fetchOnStart configuration option when initializing the SDK.
+     *
+     * Finally, this function will start polling for flag configurations at a
+     * fixed interval. To disable polling, set the pollOnStart
+     * configuration option to `false` on initialization.
+     *
+     * @param user The user to set in the SDK.
+     * @see fetch
+     * @see variant
+     */
+    fun start(user: ExperimentUser?) {
+        if (isRunning) {
+            return
+        } else {
+            isRunning = true
+        }
+        this.user = user
+        doFlags()
+        val remoteFlags = config.fetchOnStart
+            ?: flags.getAll().values.any { it.isRemoteEvaluationMode() }
+        if (remoteFlags) {
+            fetch(user).get()
+        }
+        if (config.pollOnStart) {
+            poller.start()
+        }
+    }
+
+    /**
+     * Stop the local flag configuration poller.
+     */
+    fun stop() {
+        if (!isRunning) {
+            return
+        }
+        poller.stop()
+        isRunning = false
+    }
 
     override fun fetch(user: ExperimentUser?): Future<ExperimentClient> {
         return fetch(user, null)
