@@ -130,7 +130,7 @@ internal class DefaultExperimentClient internal constructor(
         this.user = user
         doFlags()
         val remoteFlags = config.fetchOnStart
-            ?: flags.getAll().values.any { it.isRemoteEvaluationMode() }
+            ?: allFlags().values.any { it.isRemoteEvaluationMode() }
         if (remoteFlags) {
             fetch(user).get()
         }

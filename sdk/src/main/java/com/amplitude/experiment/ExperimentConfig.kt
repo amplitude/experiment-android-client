@@ -108,7 +108,7 @@ class ExperimentConfig internal constructor(
         const val POLL_ON_START = true
 
         /**
-         * false
+         * null
          */
         val FETCH_ON_START: Boolean? = null
 
