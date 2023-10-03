@@ -95,7 +95,7 @@ internal class DefaultExperimentClient internal constructor(
     private var isRunning = false
 
     internal fun allFlags(): Map<String, EvaluationFlag> {
-        return this.flags.getAll();
+        return this.flags.getAll()
     }
 
     /**
@@ -189,7 +189,7 @@ internal class DefaultExperimentClient internal constructor(
 
         val experimentKey = variantAndSource.variant.expKey
         val metadata = variantAndSource.variant.metadata
-        var variant = if (!fallback && !variantAndSource.variant.isDefaultVariant()) {
+        val variant = if (!fallback && !variantAndSource.variant.isDefaultVariant()) {
             variantAndSource.variant.key ?: variantAndSource.variant.value
         } else {
             null
@@ -232,7 +232,7 @@ internal class DefaultExperimentClient internal constructor(
     }
 
     override fun all(): Map<String, Variant> {
-        var evaluatedVariants = this.evaluate(emptySet()).filter { entry ->
+        val evaluatedVariants = this.evaluate(emptySet()).filter { entry ->
             this.flags.get(entry.key).isLocalEvaluationMode()
         }
         return secondaryVariants() + sourceVariants() + evaluatedVariants

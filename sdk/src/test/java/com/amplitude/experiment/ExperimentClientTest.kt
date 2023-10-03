@@ -294,7 +294,7 @@ class ExperimentClientTest {
                     event.variant,
                     fallbackVariant
                 )
-                Assert.assertEquals(event.properties.get("source"), "fallback-config")
+                Assert.assertEquals(event.properties["source"], "fallback-config")
                 didExposureGetUnset = true
             }
         }
@@ -326,9 +326,9 @@ class ExperimentClientTest {
                 )
                 Assert.assertEquals(
                     event.variant,
-                    initialVariants.get(INITIAL_KEY)
+                    initialVariants[INITIAL_KEY]
                 )
-                Assert.assertEquals(event.properties.get("source"), "secondary-initial")
+                Assert.assertEquals(event.properties["source"], "secondary-initial")
                 didExposureGetUnset = true
             }
 
