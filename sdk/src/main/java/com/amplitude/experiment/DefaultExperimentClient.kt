@@ -78,7 +78,9 @@ internal class DefaultExperimentClient internal constructor(
     )
     private val flagPollerIntervalMillis: Long = 60000
 
-    private val poller: Poller = Poller(::doFlags, flagPollerIntervalMillis)
+    private val poller: Poller = Poller(this.executorService, ::doFlags, flagPollerIntervalMillis)
+
+
     private val serverUrl: HttpUrl = config.serverUrl.toHttpUrl()
 
     @Deprecated("moved to experiment config")
@@ -92,6 +94,7 @@ internal class DefaultExperimentClient internal constructor(
             UserSessionExposureTracker(it)
         }
 
+    private val isRunningLock = Any()
     private var isRunning = false
 
     internal fun allFlags(): Map<String, EvaluationFlag> {
@@ -120,10 +123,15 @@ internal class DefaultExperimentClient internal constructor(
      * @see variant
      */
     fun start(user: ExperimentUser?) {
-        if (isRunning) {
-            return
-        } else {
-            isRunning = true
+        synchronized(isRunningLock) {
+            if (isRunning) {
+                return
+            } else {
+                isRunning = true
+            }
+            if (config.pollOnStart) {
+                this.poller.start()
+            }
         }
         this.user = user
         doFlags()
@@ -132,20 +140,19 @@ internal class DefaultExperimentClient internal constructor(
         if (remoteFlags) {
             fetch(user).get()
         }
-        if (config.pollOnStart) {
-            poller.start()
-        }
     }
 
     /**
      * Stop the local flag configuration poller.
      */
     fun stop() {
-        if (!isRunning) {
-            return
+        synchronized(isRunningLock) {
+            if (!isRunning) {
+                return
+            }
+            poller.stop()
+            isRunning = false
         }
-        poller.stop()
-        isRunning = false
     }
 
     override fun fetch(user: ExperimentUser?): Future<ExperimentClient> {

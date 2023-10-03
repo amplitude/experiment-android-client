@@ -4,26 +4,26 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 
-class Poller(
-    private val action: () -> Unit,
+internal class Poller(
+    private val executorService: ScheduledExecutorService,
+    private val action: ()->Unit,
     private val ms: Long
 ) {
-    private var job: Job? = null
-    private val scope = MainScope()
+    private var future : ScheduledFuture<*>? = null
 
-    internal fun start(): Unit {
-        job = scope.launch {
-            while (true) {
-                action()
-                delay(ms)
-            }
-        }
+    internal fun start() {
+        future = this.executorService.scheduleAtFixedRate(
+            action, ms, ms, TimeUnit.MILLISECONDS
+        )
     }
 
     internal fun stop() {
-        job?.cancel()
-        job = null
+        future?.cancel(true)
+        future = null
     }
 
 }
