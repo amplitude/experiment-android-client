@@ -98,7 +98,7 @@ class ExperimentConfig internal constructor(
         const val FLAGS_SERVER_URL = "https://flag.lab.amplitude.com/"
 
         /**
-         * "US"
+         * ServerZone.US
          */
         val SERVER_ZONE = ServerZone.US
 
