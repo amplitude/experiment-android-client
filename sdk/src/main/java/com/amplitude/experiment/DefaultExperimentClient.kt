@@ -1,6 +1,5 @@
 package com.amplitude.experiment
 
-import com.amplitude.experiment.BuildConfig.VERSION_NAME
 import com.amplitude.experiment.evaluation.*
 import com.amplitude.experiment.evaluation.EvaluationEngineImpl
 import com.amplitude.experiment.evaluation.EvaluationFlag
@@ -81,15 +80,15 @@ internal class DefaultExperimentClient internal constructor(
         scalar = 1.5f,
     )
 
-    private val serverUrl: HttpUrl =
-        if (config.serverUrl == ExperimentConfig.Defaults.SERVER_URL && config.flagsServerUrl == ExperimentConfig.Defaults.FLAGS_SERVER_URL && config.serverZone.lowercase() == "eu") {
+    internal val serverUrl: HttpUrl =
+        if (config.serverUrl == ExperimentConfig.Defaults.SERVER_URL && config.flagsServerUrl == ExperimentConfig.Defaults.FLAGS_SERVER_URL && config.serverZone == ServerZone.EU) {
             euServerUrl.toHttpUrl()
         } else {
             config.serverUrl.toHttpUrl()
         }
 
-    private val flagsServerUrl: HttpUrl =
-        if (config.serverUrl == ExperimentConfig.Defaults.SERVER_URL && config.flagsServerUrl == ExperimentConfig.Defaults.FLAGS_SERVER_URL && config.serverZone.lowercase() == "eu") {
+    internal val flagsServerUrl: HttpUrl =
+        if (config.serverUrl == ExperimentConfig.Defaults.SERVER_URL && config.flagsServerUrl == ExperimentConfig.Defaults.FLAGS_SERVER_URL && config.serverZone == ServerZone.EU) {
             euFlagsServerUrl.toHttpUrl()
         } else {
             config.flagsServerUrl.toHttpUrl()

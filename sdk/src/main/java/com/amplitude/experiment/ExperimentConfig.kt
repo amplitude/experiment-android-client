@@ -7,6 +7,11 @@ enum class Source {
     INITIAL_VARIANTS,
 }
 
+enum class ServerZone {
+    US,
+    EU,
+}
+
 /**
  * Configuration options. This is an immutable object that can be created using
  * a [ExperimentConfig.Builder]. Example usage:
@@ -29,7 +34,7 @@ class ExperimentConfig internal constructor(
     @JvmField
     val flagsServerUrl: String = Defaults.FLAGS_SERVER_URL,
     @JvmField
-    val serverZone: String = Defaults.SERVER_ZONE,
+    val serverZone: ServerZone = Defaults.SERVER_ZONE,
     @JvmField
     val fetchTimeoutMillis: Long = Defaults.FETCH_TIMEOUT_MILLIS,
     @JvmField
@@ -95,7 +100,7 @@ class ExperimentConfig internal constructor(
         /**
          * "US"
          */
-        const val SERVER_ZONE = "US"
+        val SERVER_ZONE = ServerZone.US
 
         /**
          * 10000
@@ -187,7 +192,7 @@ class ExperimentConfig internal constructor(
             this.flagsServerUrl = flagsServerUrl
         }
 
-        fun serverZone(serverZone: String) = apply {
+        fun serverZone(serverZone: ServerZone) = apply {
             this.serverZone = serverZone
         }
 
