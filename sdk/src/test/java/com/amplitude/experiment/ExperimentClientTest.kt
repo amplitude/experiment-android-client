@@ -558,7 +558,7 @@ class ExperimentClientTest {
         )
         client.start(user)
         val variant = client.variant("sdk-ci-test")
-        Assert.assertEquals(Variant(key = "initial", value = "initial"), variant)
+        Assert.assertEquals(initialVariant, variant)
         verify(exactly = 1) {
             exposureTrackingProvider.track(match {
                 it.flagKey == "sdk-ci-test" && it.variant == null
@@ -643,7 +643,7 @@ class ExperimentClientTest {
         )
         client.start(user)
         val variant = client.variant("sdk-ci-test")
-        Assert.assertEquals(Variant(key = "initial", value = "initial"), variant)
+        Assert.assertEquals(initialVariant, variant)
         verify(exactly = 1) {
             exposureTrackingProvider.track(match {
                 it.flagKey == "sdk-ci-test" && it.variant == "initial"
@@ -814,8 +814,7 @@ class ExperimentClientTest {
         )
         client.start(user)
         val variant = client.variant("sdk-ci-test-local", inlineVariant)
-        Assert.assertEquals("inline", variant.key)
-        Assert.assertEquals("inline", variant.value)
+        Assert.assertEquals(inlineVariant, variant)
         verify(exactly = 1) {
             exposureTrackingProvider.track(match {
                 it.flagKey == "sdk-ci-test-local" && it.variant == null
@@ -843,8 +842,7 @@ class ExperimentClientTest {
         )
         client.start(user)
         val variant = client.variant("sdk-ci-test-local")
-        Assert.assertEquals("initial", variant.key)
-        Assert.assertEquals("initial", variant.value)
+        Assert.assertEquals(initialVariant, variant)
         verify(exactly = 1) {
             exposureTrackingProvider.track(match {
                 it.flagKey == "sdk-ci-test-local" && it.variant == null
@@ -872,8 +870,7 @@ class ExperimentClientTest {
         )
         client.start(user)
         val variant = client.variant("sdk-ci-test-local")
-        Assert.assertEquals("fallback", variant.key)
-        Assert.assertEquals("fallback", variant.value)
+        Assert.assertEquals(fallbackVariant, variant)
         verify(exactly = 1) {
             exposureTrackingProvider.track(match {
                 it.flagKey == "sdk-ci-test-local" && it.variant == null
@@ -977,7 +974,7 @@ class ExperimentClientTest {
     }
 
     @Test
-    fun `with local evaluation only, does not call fetch`() {
+    fun `start - with local evaluation only, does not call fetch`() {
         val client = DefaultExperimentClient(
             API_KEY,
             ExperimentConfig(),
