@@ -422,7 +422,7 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        Assert.assertEquals("https://api.lab.amplitude.com/".toHttpUrl()    , client.serverUrl)
+        Assert.assertEquals("https://api.lab.amplitude.com/".toHttpUrl(), client.serverUrl)
         Assert.assertEquals("https://flag.lab.amplitude.com/".toHttpUrl(), client.flagsServerUrl)
     }
 
@@ -443,7 +443,11 @@ class ExperimentClientTest {
     fun `ServerZone - test us server zone config with explicit config uses explicit config`() {
         val client = DefaultExperimentClient(
             API_KEY,
-            ExperimentConfig(serverZone = ServerZone.US, serverUrl = "https://experiment.company.com", flagsServerUrl = "https://flags.company.com"),
+            ExperimentConfig(
+                serverZone = ServerZone.US,
+                serverUrl = "https://experiment.company.com",
+                flagsServerUrl = "https://flags.company.com"
+            ),
             OkHttpClient(),
             mockStorage,
             Experiment.executorService,
@@ -469,7 +473,11 @@ class ExperimentClientTest {
     fun `ServerZone - test eu server zone with explicit config uses explicit config`() {
         val client = DefaultExperimentClient(
             API_KEY,
-            ExperimentConfig(serverZone = ServerZone.EU, serverUrl = "https://experiment.company.com", flagsServerUrl = "https://flags.company.com"),
+            ExperimentConfig(
+                serverZone = ServerZone.EU,
+                serverUrl = "https://experiment.company.com",
+                flagsServerUrl = "https://flags.company.com"
+            ),
             OkHttpClient(),
             mockStorage,
             Experiment.executorService,
