@@ -7,8 +7,6 @@ import com.amplitude.experiment.util.MockStorage
 import com.amplitude.experiment.util.SystemLogger
 import com.amplitude.experiment.util.TestExposureTrackingProvider
 import io.mockk.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.test.setMain
 import okhttp3.OkHttpClient
 import org.junit.Assert
 import org.junit.Before
@@ -25,7 +23,6 @@ class ExperimentClientTest {
 
     init {
         Logger.implementation = SystemLogger(true)
-        Dispatchers.setMain(Dispatchers.Unconfined)
     }
 
     private var mockStorage = MockStorage()
