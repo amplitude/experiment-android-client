@@ -16,31 +16,31 @@ internal class LoadStoreCache<V>(
 ) {
     private val cache: MutableMap<String, V> = mutableMapOf()
 
-    fun get(key: String): V? = synchronized(cache) {
+    fun get(key: String): V? = synchronized(this) {
         return cache[key]
     }
 
-    fun getAll(): Map<String, V> = synchronized(cache) {
+    fun getAll(): Map<String, V> = synchronized(this) {
         return HashMap(cache)
     }
 
-    fun put(key: String, value: V) = synchronized(cache) {
+    fun put(key: String, value: V) = synchronized(this) {
         cache[key] = value
     }
 
-    fun putAll(values: Map<String, V>) = synchronized(cache) {
+    fun putAll(values: Map<String, V>) = synchronized(this) {
         cache.putAll(values)
     }
 
-    fun remove(key: String) = synchronized(cache) {
+    fun remove(key: String) = synchronized(this) {
         cache.remove(key)
     }
 
-    fun clear() = synchronized(cache) {
+    fun clear() = synchronized(this) {
         cache.clear()
     }
 
-    fun load() = synchronized(cache) {
+    fun load() = synchronized(this) {
         val rawValues = storage.get(namespace)
         val values = rawValues.mapNotNull { entry ->
             try {
@@ -58,7 +58,7 @@ internal class LoadStoreCache<V>(
         putAll(values)
     }
 
-    fun store(values: MutableMap<String, V> = cache) = synchronized(cache) {
+    fun store(values: MutableMap<String, V> = cache) = synchronized(this) {
         val stringValues = values.mapNotNull { entry ->
             try {
                 val value = encoder(entry.value)
