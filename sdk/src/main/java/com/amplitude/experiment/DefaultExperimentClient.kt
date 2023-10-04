@@ -98,7 +98,7 @@ internal class DefaultExperimentClient internal constructor(
     private var isRunning = false
 
     internal fun allFlags(): Map<String, EvaluationFlag> {
-        return this.flags.getAll()
+        return synchronized(flags) { this.flags.getAll() }
     }
 
     /**
@@ -231,7 +231,7 @@ internal class DefaultExperimentClient internal constructor(
             Source.INITIAL_VARIANTS -> initialVariantsVariantAndSource(key, fallback)
 
         }
-        val flag = this.flags.get(key)
+        val flag = synchronized(flags) { this.flags.get(key) }
         if (flag != null && (flag.isLocalEvaluationMode() || variantAndSource.variant.isNullOrEmpty())) {
             variantAndSource = this.localEvaluationVariantAndSource(key, flag, fallback)
         }
@@ -239,15 +239,19 @@ internal class DefaultExperimentClient internal constructor(
     }
 
     override fun all(): Map<String, Variant> {
-        val evaluatedVariants = this.evaluate(emptySet()).filter { entry ->
-            this.flags.get(entry.key).isLocalEvaluationMode()
+        val evaluatedVariants = synchronized(flags) {
+            this.evaluate(emptySet()).filter { entry ->
+                this.flags.get(entry.key).isLocalEvaluationMode()
+            }
         }
         return secondaryVariants() + sourceVariants() + evaluatedVariants
     }
 
     override fun clear() {
-        this.variants.clear()
-        this.variants.store()
+        synchronized(variants) {
+            this.variants.clear()
+            this.variants.store()
+        }
     }
 
     override fun getUser(): ExperimentUser? {
@@ -344,9 +348,11 @@ internal class DefaultExperimentClient internal constructor(
                 timeoutMillis = config.fetchTimeoutMillis
             )
         )
-        this.flags.clear()
-        this.flags.putAll(flags.get())
-        this.flags.store()
+        synchronized(this.flags) {
+            this.flags.clear()
+            this.flags.putAll(flags.get())
+            this.flags.store()
+        }
     }
 
 
@@ -380,24 +386,25 @@ internal class DefaultExperimentClient internal constructor(
 
     private fun storeVariants(variants: Map<String, Variant>, options: FetchOptions?) = synchronized(variants) {
         val failedFlagKeys = options?.flagKeys?.toMutableList() ?: mutableListOf()
-        if (options?.flagKeys == null) {
-            this.variants.clear()
+        synchronized(this.variants) {
+            if (options?.flagKeys == null) {
+                this.variants.clear()
+            }
+            for (entry in variants.entries) {
+                this.variants.put(entry.key, entry.value)
+                failedFlagKeys.remove(entry.key)
+            }
+            for (key in failedFlagKeys) {
+                this.variants.remove(key)
+            }
+            this.variants.store()
+            Logger.d("Stored variants: $variants")
         }
-        for (entry in variants.entries) {
-            this.variants.put(entry.key, entry.value)
-            failedFlagKeys.remove(entry.key)
-        }
-        for (key in failedFlagKeys) {
-            this.variants.remove(key)
-        }
-
-        this.variants.store()
-        Logger.d("Stored variants: $variants")
     }
 
     private fun sourceVariants(): Map<String, Variant> {
         return when (config.source) {
-            Source.LOCAL_STORAGE -> this.variants.getAll()
+            Source.LOCAL_STORAGE -> synchronized(variants) { this.variants.getAll() }
             Source.INITIAL_VARIANTS -> config.initialVariants
         }
     }
@@ -405,7 +412,7 @@ internal class DefaultExperimentClient internal constructor(
     private fun secondaryVariants(): Map<String, Variant> {
         return when (config.source) {
             Source.LOCAL_STORAGE -> config.initialVariants
-            Source.INITIAL_VARIANTS -> this.variants.getAll()
+            Source.INITIAL_VARIANTS -> synchronized(variants) { this.variants.getAll() }
         }
     }
 
@@ -437,7 +444,7 @@ internal class DefaultExperimentClient internal constructor(
     private fun evaluate(flagKeys: Set<String>): Map<String, Variant> {
         val user = getUserMergedWithProvider()
         val flags = try {
-            topologicalSort(this.flags.getAll(), flagKeys)
+            topologicalSort(synchronized(flags) { this.flags.getAll() }, flagKeys)
         } catch (e: Exception) {
             Logger.w("Error during topological sort of flags", e)
             return emptyMap()
@@ -552,7 +559,7 @@ internal class DefaultExperimentClient internal constructor(
     ): VariantAndSource {
         var defaultVariantAndSource = VariantAndSource()
         // Local storage
-        val localStorageVariant = variants.getAll()[key]
+        val localStorageVariant = synchronized(variants) { variants.getAll()[key] }
         val isLocalStorageDefault = localStorageVariant?.metadata?.get("default") as? Boolean
         if (localStorageVariant != null && isLocalStorageDefault != true) {
             return VariantAndSource(
@@ -622,7 +629,7 @@ internal class DefaultExperimentClient internal constructor(
             )
         }
         // Local storage
-        val localStorageVariant = variants.getAll()[key]
+        val localStorageVariant = synchronized(variants) { variants.getAll()[key] }
         val isLocalStorageDefault = localStorageVariant?.metadata?.get("default") as? Boolean
         if (localStorageVariant != null && isLocalStorageDefault != true) {
             return VariantAndSource(
