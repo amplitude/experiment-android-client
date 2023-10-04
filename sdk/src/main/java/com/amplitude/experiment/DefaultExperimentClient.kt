@@ -103,9 +103,7 @@ internal class DefaultExperimentClient internal constructor(
 
     /**
      * Start the SDK by getting flag configurations from the server and fetching
-     * variants for the user. The promise returned by this function resolves when
-     * local flag configurations have been updated, and the fetch()
-     * result has been received (if the request was made).
+     * variants for the user.
      *
      * This function determines whether to fetch() based on the result of
      * the flag configurations cached locally or received in the initial flag
