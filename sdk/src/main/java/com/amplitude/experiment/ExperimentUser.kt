@@ -1,8 +1,5 @@
 package com.amplitude.experiment
 
-import com.amplitude.experiment.evaluation.EvaluationContext
-import com.amplitude.experiment.util.toMap
-
 /**
  * The user to fetch experiment/flag variants for. This is an immutable object
  * that can be created using an [ExperimentUser.Builder]. Example usage:
@@ -68,32 +65,6 @@ class ExperimentUser internal constructor(
             .userProperties(this.userProperties)
             .groups(this.groups)
             .groupProperties(this.groupProperties)
-    }
-
-    internal fun toEvaluationContext(): EvaluationContext {
-        val context = EvaluationContext()
-        val groups = mutableMapOf<String, Map<String, Any?>>()
-        if (this.groups != null) {
-            for (entry in this.groups) {
-                val groupType = entry.key
-                val groupNames = entry.value
-                if (groupNames.isNotEmpty()) {
-                    val groupName = groupNames.first()
-                    val groupNameMap = mutableMapOf<String, Any>().apply { put("group_name", groupName) }
-                    val groupProperties = this.groupProperties?.get(groupType)?.get(groupName)
-                    if (groupProperties != null) {
-                        groupNameMap["group_properties"] = groupProperties
-                    }
-                    groups[groupType] = groupNameMap
-                }
-            }
-            context["groups"] = groups
-        }
-        val userMap = this.toMap().toMutableMap()
-        userMap.remove("groups")
-        userMap.remove("group_properties")
-        context["user"] = userMap
-        return context
     }
 
     override fun equals(other: Any?): Boolean {

@@ -1,6 +1,7 @@
 package com.amplitude.experiment
 
 import com.amplitude.experiment.ExperimentUser.Companion.builder
+import com.amplitude.experiment.util.*
 import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.SystemLogger
 import com.amplitude.experiment.util.merge
@@ -19,7 +20,7 @@ class ExperimentUserTest {
     @Test
     fun `user to json`() {
         val user = builder()
-            .userId("userId")
+            .userId("user_id")
             .deviceId("deviceId")
             .country("country")
             .city("city")
@@ -41,7 +42,7 @@ class ExperimentUserTest {
 
         // Ordering matters here, based on toJson() extension function
         val expected = JSONObject()
-        expected.put("user_id", "userId")
+        expected.put("user_id", "user_id")
         expected.put("device_id", "deviceId")
         expected.put("country", "country")
         expected.put("city", "city")
@@ -90,22 +91,26 @@ class ExperimentUserTest {
             .deviceModel("deviceModel")
             .carrier("carrier")
             .userProperty("userPropertyKey", "value")
-            .groups(mapOf(
-                "gt2" to setOf("gn2"),
-                "gt3" to setOf("gn3"),
-                "gt4" to setOf("gn4"),
-            ))
-            .groupProperties(mapOf(
-                "gt1" to mapOf(
-                    "gn1" to mapOf(
-                        "gp1" to "v2",
-                        "gp3" to "v1"
+            .groups(
+                mapOf(
+                    "gt2" to setOf("gn2"),
+                    "gt3" to setOf("gn3"),
+                    "gt4" to setOf("gn4"),
+                )
+            )
+            .groupProperties(
+                mapOf(
+                    "gt1" to mapOf(
+                        "gn1" to mapOf(
+                            "gp1" to "v2",
+                            "gp3" to "v1"
+                        ),
+                        "gn3" to mapOf(
+                            "gp1" to "v1",
+                        ),
                     ),
-                    "gn3" to mapOf(
-                        "gp1" to "v1",
-                    ),
-                ),
-            ))
+                )
+            )
             .build()
 
         val user2 = builder()
@@ -113,27 +118,31 @@ class ExperimentUserTest {
             .version("newVersion")
             .userProperty("userPropertyKey2", "value2")
             .userProperty("userPropertyKey", "value2")
-            .groups(mapOf(
-                "gt1" to setOf("gn1"),
-                "gt2" to setOf("difference"),
-                "gt4" to setOf("gn4"),
-            ))
-            .groupProperties(mapOf(
-                "gt1" to mapOf(
-                    "gn1" to mapOf(
-                        "gp1" to "v1",
-                        "gp2" to "v1"
+            .groups(
+                mapOf(
+                    "gt1" to setOf("gn1"),
+                    "gt2" to setOf("difference"),
+                    "gt4" to setOf("gn4"),
+                )
+            )
+            .groupProperties(
+                mapOf(
+                    "gt1" to mapOf(
+                        "gn1" to mapOf(
+                            "gp1" to "v1",
+                            "gp2" to "v1"
+                        ),
+                        "gn2" to mapOf(
+                            "gp1" to "v1",
+                        ),
                     ),
-                    "gn2" to mapOf(
-                        "gp1" to "v1",
+                    "gt2" to mapOf(
+                        "gn1" to mapOf(
+                            "gp1" to "v1",
+                        ),
                     ),
-                ),
-                "gt2" to mapOf(
-                    "gn1" to mapOf(
-                        "gp1" to "v1",
-                    ),
-                ),
-            ))
+                )
+            )
             .build()
 
         val user = user2.merge(user1)
@@ -157,32 +166,36 @@ class ExperimentUserTest {
             .carrier("carrier")
             .userProperty("userPropertyKey", "value2")
             .userProperty("userPropertyKey2", "value2")
-            .groups(mapOf(
-                "gt1" to setOf("gn1"),
-                "gt2" to setOf("difference"),
-                "gt3" to setOf("gn3"),
-                "gt4" to setOf("gn4"),
-            ))
-            .groupProperties(mapOf(
-                "gt1" to mapOf(
-                    "gn1" to mapOf(
-                        "gp1" to "v1",
-                        "gp2" to "v1",
-                        "gp3" to "v1"
+            .groups(
+                mapOf(
+                    "gt1" to setOf("gn1"),
+                    "gt2" to setOf("difference"),
+                    "gt3" to setOf("gn3"),
+                    "gt4" to setOf("gn4"),
+                )
+            )
+            .groupProperties(
+                mapOf(
+                    "gt1" to mapOf(
+                        "gn1" to mapOf(
+                            "gp1" to "v1",
+                            "gp2" to "v1",
+                            "gp3" to "v1"
+                        ),
+                        "gn2" to mapOf(
+                            "gp1" to "v1",
+                        ),
+                        "gn3" to mapOf(
+                            "gp1" to "v1",
+                        ),
                     ),
-                    "gn2" to mapOf(
-                        "gp1" to "v1",
+                    "gt2" to mapOf(
+                        "gn1" to mapOf(
+                            "gp1" to "v1",
+                        ),
                     ),
-                    "gn3" to mapOf(
-                        "gp1" to "v1",
-                    ),
-                ),
-                "gt2" to mapOf(
-                    "gn1" to mapOf(
-                        "gp1" to "v1",
-                    ),
-                ),
-            ))
+                )
+            )
 
             .build()
 
@@ -205,24 +218,160 @@ class ExperimentUserTest {
 
         val expected = builder().apply {
             groups(mapOf("gt1" to setOf("gn1"), "gt2" to setOf("gn2")))
-            groupProperties(mapOf(
-                "gt1" to mapOf(
-                    "gn1" to mapOf(
-                        "k" to "v",
-                        "k2" to "v2",
+            groupProperties(
+                mapOf(
+                    "gt1" to mapOf(
+                        "gn1" to mapOf(
+                            "k" to "v",
+                            "k2" to "v2",
+                        ),
+                        "gn2" to mapOf(
+                            "k" to "v"
+                        )
                     ),
-                    "gn2" to mapOf(
-                        "k" to "v"
-                    )
-                ),
-                "gt2" to mapOf(
-                    "gn1" to mapOf(
-                        "k" to "v"
+                    "gt2" to mapOf(
+                        "gn1" to mapOf(
+                            "k" to "v"
+                        )
                     )
                 )
-            ))
+            )
         }.build()
 
         Assert.assertEquals(expected, user)
+    }
+
+    @Test
+    fun `toEvaluationContext - test undefined groups`() {
+        val user: ExperimentUser = ExperimentUser.Builder().build()
+        val context = user.toEvaluationContext()
+        Assert.assertEquals(mapOf("user" to emptyMap<String, Any>()), context.toMap())
+    }
+
+    @Test
+    fun `toEvaluationContext - test empty groups`() {
+        val user: ExperimentUser = ExperimentUser.Builder().groups(emptyMap()).build()
+        val context = user.toEvaluationContext()
+        Assert.assertEquals(mapOf("user" to emptyMap<String, Any>()), context.toMap())
+    }
+
+    @Test
+    fun `toEvaluationContext - test groups and group_properties removed from user`() {
+        val user: ExperimentUser =
+            ExperimentUser.Builder().userId("user_id").groups(emptyMap()).groupProperties(emptyMap()).build()
+        val context = user.toEvaluationContext()
+        Assert.assertEquals(mapOf("user" to mapOf("user_id" to "user_id")), context.toMap())
+    }
+
+    @Test
+    fun `toEvaluationContext - test user groups, undefined group properties, moved under context groups`() {
+        val user: ExperimentUser = ExperimentUser.Builder()
+            .userId("user_id")
+            .group("gt1", "gn1")
+            .build()
+        val context = user.toEvaluationContext()
+        Assert.assertEquals(
+            mapOf(
+                "user" to mapOf("user_id" to "user_id"),
+                "groups" to mapOf("gt1" to mapOf("group_name" to "gn1"))
+            ),
+            context.toMap()
+        )
+    }
+
+    @Test
+    fun `toEvaluationContext - test user groups, empty group properties, moved under context groups`() {
+        val user: ExperimentUser = ExperimentUser.Builder()
+            .userId("user_id")
+            .group("gt1", "gn1")
+            .groupProperties(emptyMap())
+            .build()
+        val context = user.toEvaluationContext()
+        Assert.assertEquals(
+            mapOf(
+                "user" to mapOf("user_id" to "user_id"),
+                "groups" to mapOf("gt1" to mapOf("group_name" to "gn1"))
+            ),
+            context.toMap()
+        )
+    }
+
+    @Test
+    fun `toEvaluationContext - test user groups, group properties empty group type object, moved under context groups`() {
+        val user: ExperimentUser = ExperimentUser.Builder()
+            .userId("user_id")
+            .group("gt1", "gn1")
+            .groupProperties(mapOf("gt1" to emptyMap()))
+            .build()
+        val context = user.toEvaluationContext()
+        Assert.assertEquals(
+            mapOf(
+                "user" to mapOf("user_id" to "user_id"),
+                "groups" to mapOf("gt1" to mapOf("group_name" to "gn1"))
+            ),
+            context.toMap()
+        )
+    }
+
+    @Test
+    fun `toEvaluationContext - test user groups, group properties empty group name object, moved under context groups`() {
+        val user: ExperimentUser = ExperimentUser.Builder()
+            .userId("user_id")
+            .group("gt1", "gn1")
+            .groupProperties(mapOf("gt1" to mapOf("gn1" to emptyMap())))
+            .build()
+        val context = user.toEvaluationContext()
+        Assert.assertEquals(
+            mapOf(
+                "user" to mapOf("user_id" to "user_id"),
+                "groups" to mapOf("gt1" to mapOf("group_name" to "gn1"))
+            ),
+            context.toMap()
+        )
+    }
+
+    @Test
+    fun `toEvaluationContext - test user groups, with group properties, moved under context groups`() {
+        val user: ExperimentUser = ExperimentUser.Builder()
+            .userId("user_id")
+            .group("gt1", "gn1")
+            .groupProperty("gt1", "gn1", "gp1", "gp1")
+            .build()
+        val context = user.toEvaluationContext()
+        Assert.assertEquals(
+            mapOf(
+                "user" to mapOf("user_id" to "user_id"),
+                "groups" to mapOf(
+                    "gt1" to mapOf(
+                        "group_name" to "gn1",
+                        "group_properties" to mapOf("gp1" to "gp1")
+                    )
+                )
+            ),
+            context.toMap()
+        )
+    }
+
+    @Test
+    fun `toEvaluationContext - test user groups and group properties, with multiple group names, takes first`() {
+        val user: ExperimentUser = ExperimentUser.Builder()
+            .userId("user_id")
+            .groups(mapOf("gt1" to setOf("gn1", "gn2")))
+            .groupProperty("gt1", "gn1", "gp1", "gp1")
+            .groupProperty("gt1", "gn2", "gp2", "gp2")
+            .build()
+        val context = user.toEvaluationContext()
+        Assert.assertEquals(
+            mapOf(
+                "user" to mapOf("user_id" to "user_id"),
+                "groups" to mapOf(
+                    "gt1" to mapOf(
+                        "group_name" to "gn1",
+                        "group_properties" to mapOf("gp1" to "gp1")
+                    )
+                )
+            ),
+            context.toMap()
+        )
     }
 }

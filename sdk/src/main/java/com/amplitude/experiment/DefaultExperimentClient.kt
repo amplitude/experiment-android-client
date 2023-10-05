@@ -2,7 +2,6 @@ package com.amplitude.experiment
 
 import com.amplitude.experiment.evaluation.EvaluationEngineImpl
 import com.amplitude.experiment.evaluation.EvaluationFlag
-import com.amplitude.experiment.evaluation.EvaluationVariant
 import com.amplitude.experiment.evaluation.topologicalSort
 import com.amplitude.experiment.storage.LoadStoreCache
 import com.amplitude.experiment.storage.Storage
@@ -97,13 +96,11 @@ internal class DefaultExperimentClient internal constructor(
     private val isRunningLock = Any()
     private var isRunning = false
 
-    internal fun allFlags(): Map<String, EvaluationFlag> {
-        return synchronized(flags) { this.flags.getAll() }
-    }
-
     /**
      * Start the SDK by getting flag configurations from the server and fetching
-     * variants for the user.
+     * variants for the user. The future returned by this function resolves when
+     * local flag configurations have been updated, and the fetch()
+     * result has been received (if the request was made).
      *
      * This function determines whether to fetch() based on the result of
      * the flag configurations cached locally or received in the initial flag
@@ -120,10 +117,10 @@ internal class DefaultExperimentClient internal constructor(
      * @see fetch
      * @see variant
      */
-    fun start(user: ExperimentUser?) {
+    fun start(user: ExperimentUser?): Future<ExperimentClient>? {
         synchronized(isRunningLock) {
             if (isRunning) {
-                return
+                return null
             } else {
                 isRunning = true
             }
@@ -132,12 +129,23 @@ internal class DefaultExperimentClient internal constructor(
             }
         }
         this.user = user
-        doFlags()
-        val remoteFlags = config.fetchOnStart
-            ?: allFlags().values.any { it.isRemoteEvaluationMode() }
-        if (remoteFlags) {
-            fetch(user).get()
-        }
+        return this.executorService.submit(Callable {
+            val flagsFuture = doFlags()
+            var remoteFlags = config.fetchOnStart
+                ?: allFlags().values.any { it.isRemoteEvaluationMode() }
+            if (remoteFlags) {
+                flagsFuture.get()
+                fetchInternal(getUserMergedWithProviderOrWait(10000), config.fetchTimeoutMillis, config.retryFetchOnFailure, null)
+            } else {
+                flagsFuture.get()
+                remoteFlags = config.fetchOnStart
+                    ?: allFlags().values.any { it.isRemoteEvaluationMode() }
+                if (remoteFlags) {
+                    fetchInternal(getUserMergedWithProviderOrWait(10000), config.fetchTimeoutMillis, config.retryFetchOnFailure, null)
+                }
+            }
+            this
+        })
     }
 
     /**
@@ -181,6 +189,45 @@ internal class DefaultExperimentClient internal constructor(
     override fun exposure(key: String) {
         val variantAndSource = resolveVariantAndSource(key)
         exposureInternal(key, variantAndSource)
+    }
+
+    override fun all(): Map<String, Variant> {
+        val evaluationResults = this.evaluate(emptySet())
+        val evaluatedVariants = synchronized(flags) {
+            evaluationResults.filter { entry ->
+                this.flags.get(entry.key).isLocalEvaluationMode()
+            }
+        }
+        return secondaryVariants() + sourceVariants() + evaluatedVariants
+    }
+
+    override fun clear() {
+        synchronized(variants) {
+            this.variants.clear()
+            this.variants.store()
+        }
+    }
+
+    override fun getUser(): ExperimentUser? {
+        return user
+    }
+
+    override fun setUser(user: ExperimentUser) {
+        this.user = user
+    }
+
+    override fun getUserProvider(): ExperimentUserProvider? {
+        return this.userProvider
+    }
+
+    override fun setUserProvider(provider: ExperimentUserProvider?): ExperimentClient {
+        this.userProvider = provider
+        return this
+    }
+
+
+    internal fun allFlags(): Map<String, EvaluationFlag> {
+        return synchronized(flags) { this.flags.getAll() }
     }
 
     private fun exposureInternal(key: String, variantAndSource: VariantAndSource) {
@@ -236,41 +283,8 @@ internal class DefaultExperimentClient internal constructor(
         return variantAndSource
     }
 
-    override fun all(): Map<String, Variant> {
-        val evaluatedVariants = synchronized(flags) {
-            this.evaluate(emptySet()).filter { entry ->
-                this.flags.get(entry.key).isLocalEvaluationMode()
-            }
-        }
-        return secondaryVariants() + sourceVariants() + evaluatedVariants
-    }
-
-    override fun clear() {
-        synchronized(variants) {
-            this.variants.clear()
-            this.variants.store()
-        }
-    }
-
-    override fun getUser(): ExperimentUser? {
-        return user
-    }
-
-    override fun setUser(user: ExperimentUser) {
-        this.user = user
-    }
-
-    override fun getUserProvider(): ExperimentUserProvider? {
-        return this.userProvider
-    }
-
-    override fun setUserProvider(provider: ExperimentUserProvider?): ExperimentClient {
-        this.userProvider = provider
-        return this
-    }
-
     @Throws
-    private fun fetchInternal(user: ExperimentUser, timeoutMillis: Long, retry: Boolean, options: FetchOptions?) {
+    internal fun fetchInternal(user: ExperimentUser, timeoutMillis: Long, retry: Boolean, options: FetchOptions?) {
         if (retry) {
             stopRetries()
         }
@@ -323,7 +337,7 @@ internal class DefaultExperimentClient internal constructor(
         call.enqueue(object : Callback {
             override fun onResponse(call: Call, response: Response) {
                 try {
-                    Logger.d("Received fetch response: $response")
+                    Logger.d("Received fetch variants response: $response")
                     val variants = parseResponse(response)
                     future.complete(variants)
                 } catch (e: IOException) {
@@ -338,18 +352,19 @@ internal class DefaultExperimentClient internal constructor(
         return future
     }
 
-    private fun doFlags() {
-        val flags = flagApi.getFlags(
+    private fun doFlags(): Future<Map<String, EvaluationFlag>> {
+        return flagApi.getFlags(
             GetFlagsOptions(
                 libraryName = "experiment-js-client",
                 libraryVersion = BuildConfig.VERSION_NAME,
                 timeoutMillis = config.fetchTimeoutMillis
             )
-        )
-        synchronized(this.flags) {
-            this.flags.clear()
-            this.flags.putAll(flags.get())
-            this.flags.store()
+        ) { flags ->
+            synchronized(this.flags) {
+                this.flags.clear()
+                this.flags.putAll(flags)
+                this.flags.store()
+            }
         }
     }
 
@@ -449,32 +464,7 @@ internal class DefaultExperimentClient internal constructor(
         }
         val context = user.toEvaluationContext()
         val evaluationVariants = this.engine.evaluate(context, flags)
-        return evaluationVariants.mapValues { translateFromEvaluationVariant(it.value) }
-    }
-
-    private fun translateFromEvaluationVariant(
-        evaluationVariant: EvaluationVariant
-    ): Variant {
-
-        val experimentKey = evaluationVariant.metadata?.get("experimentKey")?.toString()
-        val value = when {
-            evaluationVariant.value != null -> evaluationVariant.value.toString()
-            else -> null
-        }
-        val expKey = when {
-            experimentKey != null -> experimentKey
-            else -> null
-        }
-        val payload = when {
-            evaluationVariant.payload != null -> evaluationVariant.payload
-            else -> null
-        }
-        val metadata = when {
-            evaluationVariant.metadata != null -> evaluationVariant.metadata
-            else -> null
-        }
-
-        return Variant(value, payload, expKey, evaluationVariant.key, metadata)
+        return evaluationVariants.mapValues { it.value.convertToVariant() }
     }
 
     /**

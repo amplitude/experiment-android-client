@@ -19,7 +19,7 @@ internal data class GetFlagsOptions(
 )
 
 internal interface FlagApi {
-    fun getFlags(options: GetFlagsOptions? = null): Future<Map<String, EvaluationFlag>>
+    fun getFlags(options: GetFlagsOptions? = null, callback: ((Map<String, EvaluationFlag>) -> Unit)? = null): Future<Map<String, EvaluationFlag>>
 }
 
 internal class SdkFlagApi(
@@ -27,7 +27,10 @@ internal class SdkFlagApi(
     private val serverUrl: String,
     private val httpClient: OkHttpClient
 ) : FlagApi {
-    override fun getFlags(options: GetFlagsOptions?): Future<Map<String, EvaluationFlag>> {
+    override fun getFlags(
+        options: GetFlagsOptions?,
+        callback: ((Map<String, EvaluationFlag>) -> Unit)?
+    ): Future<Map<String, EvaluationFlag>> {
         val url = serverUrl.toHttpUrl().newBuilder()
             .addPathSegments("sdk/v2/flags")
             .build()
@@ -47,11 +50,11 @@ internal class SdkFlagApi(
         if (options != null) {
             call.timeout().timeout(options.timeoutMillis, TimeUnit.MILLISECONDS)
         }
-        val future = AsyncFuture<Map<String, EvaluationFlag>>(call)
+        val future = AsyncFuture(call, callback)
         call.enqueue(object : Callback {
             override fun onResponse(call: Call, response: Response) {
                 try {
-                    Logger.d("Received fetch response: $response")
+                    Logger.d("Received fetch flags response: $response")
                     val body = response.body?.string() ?: ""
                     val flags = json.decodeFromString<List<EvaluationFlag>>(body)
                         .associateBy { it.key }

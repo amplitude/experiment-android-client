@@ -18,7 +18,7 @@ object Experiment {
                 isDaemon = true
             }
         }
-    internal val executorService = ScheduledThreadPoolExecutor(0, daemonThreadFactory)
+    internal val executorService = ScheduledThreadPoolExecutor(2, daemonThreadFactory)
 
     private val httpClient = OkHttpClient()
     private val instances = mutableMapOf<String, ExperimentClient>()
