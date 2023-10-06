@@ -1,6 +1,5 @@
 package com.amplitude.experiment
 
-import com.amplitude.experiment.BuildConfig.VERSION_NAME
 import com.amplitude.experiment.evaluation.*
 import com.amplitude.experiment.evaluation.EvaluationEngineImpl
 import com.amplitude.experiment.evaluation.EvaluationFlag
@@ -41,6 +40,9 @@ import java.util.concurrent.TimeoutException
 import kotlin.jvm.Throws
 import org.json.JSONArray
 
+internal const val euServerUrl = "https://api.lab.eu.amplitude.com/";
+internal const val euFlagsServerUrl = "https://flag.lab.eu.amplitude.com/";
+
 internal class DefaultExperimentClient internal constructor(
     private val apiKey: String,
     private val config: ExperimentConfig,
@@ -50,7 +52,6 @@ internal class DefaultExperimentClient internal constructor(
 ) : ExperimentClient {
 
     private var user: ExperimentUser? = null
-    private val flagApi = SdkFlagApi(this.apiKey, this.config.serverUrl, httpClient)
     private val engine = EvaluationEngineImpl()
 
     private val variants: LoadStoreCache<Variant> = getVariantStorage(
@@ -79,7 +80,21 @@ internal class DefaultExperimentClient internal constructor(
         scalar = 1.5f,
     )
 
-    private val serverUrl: HttpUrl = config.serverUrl.toHttpUrl()
+    internal val serverUrl: HttpUrl =
+        if (config.serverUrl == ExperimentConfig.Defaults.SERVER_URL && config.flagsServerUrl == ExperimentConfig.Defaults.FLAGS_SERVER_URL && config.serverZone == ServerZone.EU) {
+            euServerUrl.toHttpUrl()
+        } else {
+            config.serverUrl.toHttpUrl()
+        }
+
+    internal val flagsServerUrl: HttpUrl =
+        if (config.serverUrl == ExperimentConfig.Defaults.SERVER_URL && config.flagsServerUrl == ExperimentConfig.Defaults.FLAGS_SERVER_URL && config.serverZone == ServerZone.EU) {
+            euFlagsServerUrl.toHttpUrl()
+        } else {
+            config.flagsServerUrl.toHttpUrl()
+        }
+
+    private val flagApi = SdkFlagApi(this.apiKey, flagsServerUrl, httpClient)
 
     @Deprecated("moved to experiment config")
     private var userProvider: ExperimentUserProvider? = config.userProvider
