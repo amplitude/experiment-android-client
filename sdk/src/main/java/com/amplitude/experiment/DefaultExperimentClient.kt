@@ -112,10 +112,12 @@ internal class DefaultExperimentClient internal constructor(
     private val isRunningLock = Any()
     private var isRunning = false
 
-    override fun start(user: ExperimentUser?): Future<ExperimentClient>? {
+    override fun start(user: ExperimentUser?): Future<ExperimentClient> {
         synchronized(isRunningLock) {
             if (isRunning) {
-                return null
+                val future = AsyncFuture<ExperimentClient>()
+                future.complete(this)
+                return future
             } else {
                 isRunning = true
             }
@@ -130,13 +132,23 @@ internal class DefaultExperimentClient internal constructor(
                 ?: allFlags().values.any { it.isRemoteEvaluationMode() }
             if (remoteFlags) {
                 flagsFuture.get()
-                fetchInternal(getUserMergedWithProviderOrWait(10000), config.fetchTimeoutMillis, config.retryFetchOnFailure, null)
+                fetchInternal(
+                    getUserMergedWithProviderOrWait(10000),
+                    config.fetchTimeoutMillis,
+                    config.retryFetchOnFailure,
+                    null
+                )
             } else {
                 flagsFuture.get()
                 remoteFlags = config.fetchOnStart
                     ?: allFlags().values.any { it.isRemoteEvaluationMode() }
                 if (remoteFlags) {
-                    fetchInternal(getUserMergedWithProviderOrWait(10000), config.fetchTimeoutMillis, config.retryFetchOnFailure, null)
+                    fetchInternal(
+                        getUserMergedWithProviderOrWait(10000),
+                        config.fetchTimeoutMillis,
+                        config.retryFetchOnFailure,
+                        null
+                    )
                 }
             }
             this

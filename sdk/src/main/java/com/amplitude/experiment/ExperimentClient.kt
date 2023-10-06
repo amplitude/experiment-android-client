@@ -30,7 +30,7 @@ interface ExperimentClient {
      * @see fetch
      * @see variant
      */
-    fun start(user: ExperimentUser?): Future<ExperimentClient>?
+    fun start(user: ExperimentUser?): Future<ExperimentClient>
 
     /**
      * Stop the local flag configuration poller.
@@ -141,7 +141,7 @@ interface ExperimentClient {
     fun getUser(): ExperimentUser?
 
     /**
-     * Set the user within the client. This user will be used to to fetch
+     * Set the user within the client. This user will be used to fetch
      * variants if the user passed into [fetch] is null or missing.
      */
     fun setUser(user: ExperimentUser)

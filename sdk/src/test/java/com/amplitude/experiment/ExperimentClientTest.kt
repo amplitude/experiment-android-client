@@ -505,7 +505,7 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        client.start(ExperimentUser(deviceId = "test_device"))?.get()
+        client.start(ExperimentUser(deviceId = "test_device")).get()
         Assert.assertEquals("sdk-ci-test-local", client.allFlags()["sdk-ci-test-local"]?.key)
         client.stop()
     }
@@ -519,7 +519,7 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        client.start(ExperimentUser(deviceId = "test_device"))?.get()
+        client.start(ExperimentUser(deviceId = "test_device")).get()
         var variant = client.variant("sdk-ci-test-local")
         Assert.assertEquals("on", variant.key)
         Assert.assertEquals("on", variant.value)
@@ -540,7 +540,7 @@ class ExperimentClientTest {
             Experiment.executorService,
         )
         val user = ExperimentUser(userId = "test_user", deviceId = "test_device")
-        client.start(user)?.get()
+        client.start(user).get()
         var variant = client.variant("sdk-ci-test")
         Assert.assertEquals("off", variant.key)
         Assert.assertEquals(null, variant.value)
@@ -569,7 +569,7 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        client.start(user)?.get()
+        client.start(user).get()
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals("on", variant.key)
         Assert.assertEquals("on", variant.value)
@@ -599,7 +599,7 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        client.start(user)?.get()
+        client.start(user).get()
         val variant = client.variant("sdk-ci-test", inlineVariant)
         Assert.assertEquals(inlineVariant, variant)
         verify(exactly = 1) {
@@ -627,7 +627,7 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        client.start(user)?.get()
+        client.start(user).get()
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals(initialVariant, variant)
         verify(exactly = 1) {
@@ -655,7 +655,7 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        client.start(user)?.get()
+        client.start(user).get()
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals(Variant(key = "fallback", value = "fallback"), variant)
         verify(exactly = 1) {
@@ -682,7 +682,7 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        client.start(user)?.get()
+        client.start(user).get()
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals(variant.key, "off")
         Assert.assertEquals(variant.value, null)
@@ -712,7 +712,7 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        client.start(user)?.get()
+        client.start(user).get()
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals(initialVariant, variant)
         verify(exactly = 1) {
@@ -740,7 +740,7 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        client.start(user)?.get()
+        client.start(user).get()
         val variant = client.variant("sdk-ci-test", inlineVariant)
         Assert.assertEquals("on", variant.key)
         Assert.assertEquals("on", variant.value)
@@ -770,7 +770,7 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        client.start(user)?.get()
+        client.start(user).get()
         val variant = client.variant("sdk-ci-test", inlineVariant)
         Assert.assertEquals(inlineVariant, variant)
         verify(exactly = 1) {
@@ -798,7 +798,7 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        client.start(user)?.get()
+        client.start(user).get()
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals(fallbackVariant, variant)
         verify(exactly = 1) {
@@ -825,7 +825,7 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        client.start(user)?.get()
+        client.start(user).get()
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals(Variant(key = "off", metadata = mapOf("default" to true)), variant)
         verify(exactly = 1) {
@@ -853,7 +853,7 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        client.start(user)?.get()
+        client.start(user).get()
         val variant = client.variant("sdk-ci-test-local", inlineVariant)
         Assert.assertEquals("on", variant.key)
         Assert.assertEquals("on", variant.value)
@@ -883,7 +883,7 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        client.start(user)?.get()
+        client.start(user).get()
         val variant = client.variant("sdk-ci-test-local", inlineVariant)
         Assert.assertEquals(inlineVariant, variant)
         verify(exactly = 1) {
@@ -911,7 +911,7 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        client.start(user)?.get()
+        client.start(user).get()
         val variant = client.variant("sdk-ci-test-local")
         Assert.assertEquals(initialVariant, variant)
         verify(exactly = 1) {
@@ -939,7 +939,7 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        client.start(user)?.get()
+        client.start(user).get()
         val variant = client.variant("sdk-ci-test-local")
         Assert.assertEquals(fallbackVariant, variant)
         verify(exactly = 1) {
@@ -965,7 +965,7 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        client.start(user)?.get()
+        client.start(user).get()
         val variant = client.variant("sdk-ci-test-local")
         Assert.assertEquals("off", variant.key)
         Assert.assertEquals(null, variant.value)
@@ -992,7 +992,7 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        client.start(user)?.get()
+        client.start(user).get()
         val allVariants = client.all()
         val localVariant = allVariants["sdk-ci-test-local"]
         Assert.assertEquals("on", localVariant?.key)
@@ -1019,7 +1019,7 @@ class ExperimentClientTest {
             mockStorage,
             Experiment.executorService,
         )
-        client.start(user)?.get()
+        client.start(user).get()
         val allVariants = client.all()
         val localVariant = allVariants["sdk-ci-test-local"]
         Assert.assertEquals("on", localVariant?.key)
@@ -1040,7 +1040,7 @@ class ExperimentClientTest {
             Experiment.executorService,
         )
         val spyClient = spyk(client)
-        spyClient.start(null)?.get()
+        spyClient.start(null).get()
         verify(exactly = 1) { spyClient.fetchInternal(any(),any(),any(),any()) }
     }
 
@@ -1055,7 +1055,7 @@ class ExperimentClientTest {
         )
         val spyClient = spyk(client)
         every { spyClient.allFlags() } returns emptyMap()
-        spyClient.start(null)?.get()
+        spyClient.start(null).get()
         verify(exactly = 0) { spyClient.fetchInternal(any(),any(),any(),any()) }
     }
 
@@ -1070,7 +1070,7 @@ class ExperimentClientTest {
         )
         val spyClient = spyk(client)
         every { spyClient.allFlags() } returns emptyMap()
-        spyClient.start(null)?.get()
+        spyClient.start(null).get()
         verify(exactly = 1) { spyClient.fetchInternal(any(),any(),any(),any()) }
     }
 
@@ -1084,7 +1084,7 @@ class ExperimentClientTest {
             Experiment.executorService,
         )
         val spyClient = spyk(client)
-        spyClient.start(null)?.get()
+        spyClient.start(null).get()
         verify(exactly = 0) { spyClient.fetchInternal(any(),any(),any(),any()) }
     }
 }
