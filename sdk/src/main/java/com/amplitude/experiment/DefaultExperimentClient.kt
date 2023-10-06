@@ -1,6 +1,5 @@
 package com.amplitude.experiment
 
-import com.amplitude.experiment.evaluation.*
 import com.amplitude.experiment.evaluation.EvaluationEngineImpl
 import com.amplitude.experiment.evaluation.EvaluationFlag
 import com.amplitude.experiment.evaluation.topologicalSort
@@ -39,8 +38,8 @@ import java.util.concurrent.TimeoutException
 import kotlin.jvm.Throws
 import org.json.JSONArray
 
-internal const val euServerUrl = "https://api.lab.eu.amplitude.com/";
-internal const val euFlagsServerUrl = "https://flag.lab.eu.amplitude.com/";
+internal const val euServerUrl = "https://api.lab.eu.amplitude.com/"
+internal const val euFlagsServerUrl = "https://flag.lab.eu.amplitude.com/"
 
 internal class DefaultExperimentClient internal constructor(
     private val apiKey: String,
