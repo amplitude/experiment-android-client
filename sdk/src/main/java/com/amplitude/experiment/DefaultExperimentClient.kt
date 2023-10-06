@@ -1,9 +1,7 @@
 package com.amplitude.experiment
 
-import com.amplitude.experiment.evaluation.*
 import com.amplitude.experiment.evaluation.EvaluationEngineImpl
 import com.amplitude.experiment.evaluation.EvaluationFlag
-import com.amplitude.experiment.evaluation.EvaluationVariant
 import com.amplitude.experiment.evaluation.topologicalSort
 import com.amplitude.experiment.storage.LoadStoreCache
 import com.amplitude.experiment.storage.Storage
@@ -40,8 +38,8 @@ import java.util.concurrent.TimeoutException
 import kotlin.jvm.Throws
 import org.json.JSONArray
 
-internal const val euServerUrl = "https://api.lab.eu.amplitude.com/";
-internal const val euFlagsServerUrl = "https://flag.lab.eu.amplitude.com/";
+internal const val euServerUrl = "https://api.lab.eu.amplitude.com/"
+internal const val euFlagsServerUrl = "https://flag.lab.eu.amplitude.com/"
 
 internal class DefaultExperimentClient internal constructor(
     private val apiKey: String,
@@ -79,6 +77,10 @@ internal class DefaultExperimentClient internal constructor(
         max = 10000,
         scalar = 1.5f,
     )
+    private val flagPollerIntervalMillis: Long = 60000
+
+    private val poller: Poller = Poller(this.executorService, ::doFlags, flagPollerIntervalMillis)
+
 
     internal val serverUrl: HttpUrl =
         if (config.serverUrl == ExperimentConfig.Defaults.SERVER_URL && config.flagsServerUrl == ExperimentConfig.Defaults.FLAGS_SERVER_URL && config.serverZone == ServerZone.EU) {
@@ -106,6 +108,65 @@ internal class DefaultExperimentClient internal constructor(
         config.exposureTrackingProvider?.let {
             UserSessionExposureTracker(it)
         }
+
+    private val isRunningLock = Any()
+    private var isRunning = false
+
+    override fun start(user: ExperimentUser?): Future<ExperimentClient> {
+        synchronized(isRunningLock) {
+            if (isRunning) {
+                val future = AsyncFuture<ExperimentClient>()
+                future.complete(this)
+                return future
+            } else {
+                isRunning = true
+            }
+            if (config.pollOnStart) {
+                this.poller.start()
+            }
+        }
+        this.user = user
+        return this.executorService.submit(Callable {
+            val flagsFuture = doFlags()
+            var remoteFlags = config.fetchOnStart
+                ?: allFlags().values.any { it.isRemoteEvaluationMode() }
+            if (remoteFlags) {
+                flagsFuture.get()
+                fetchInternal(
+                    getUserMergedWithProviderOrWait(10000),
+                    config.fetchTimeoutMillis,
+                    config.retryFetchOnFailure,
+                    null
+                )
+            } else {
+                flagsFuture.get()
+                remoteFlags = config.fetchOnStart
+                    ?: allFlags().values.any { it.isRemoteEvaluationMode() }
+                if (remoteFlags) {
+                    fetchInternal(
+                        getUserMergedWithProviderOrWait(10000),
+                        config.fetchTimeoutMillis,
+                        config.retryFetchOnFailure,
+                        null
+                    )
+                }
+            }
+            this
+        })
+    }
+
+    /**
+     * Stop the local flag configuration poller.
+     */
+    override fun stop() {
+        synchronized(isRunningLock) {
+            if (!isRunning) {
+                return
+            }
+            poller.stop()
+            isRunning = false
+        }
+    }
 
     override fun fetch(user: ExperimentUser?): Future<ExperimentClient> {
         return fetch(user, null)
@@ -137,6 +198,45 @@ internal class DefaultExperimentClient internal constructor(
         exposureInternal(key, variantAndSource)
     }
 
+    override fun all(): Map<String, Variant> {
+        val evaluationResults = this.evaluate(emptySet())
+        val evaluatedVariants = synchronized(flags) {
+            evaluationResults.filter { entry ->
+                this.flags.get(entry.key).isLocalEvaluationMode()
+            }
+        }
+        return secondaryVariants() + sourceVariants() + evaluatedVariants
+    }
+
+    override fun clear() {
+        synchronized(variants) {
+            this.variants.clear()
+            this.variants.store()
+        }
+    }
+
+    override fun getUser(): ExperimentUser? {
+        return user
+    }
+
+    override fun setUser(user: ExperimentUser) {
+        this.user = user
+    }
+
+    override fun getUserProvider(): ExperimentUserProvider? {
+        return this.userProvider
+    }
+
+    override fun setUserProvider(provider: ExperimentUserProvider?): ExperimentClient {
+        this.userProvider = provider
+        return this
+    }
+
+
+    internal fun allFlags(): Map<String, EvaluationFlag> {
+        return synchronized(flags) { this.flags.getAll() }
+    }
+
     private fun exposureInternal(key: String, variantAndSource: VariantAndSource) {
         legacyExposureInternal(key, variantAndSource.variant, variantAndSource.source)
 
@@ -148,7 +248,7 @@ internal class DefaultExperimentClient internal constructor(
 
         val experimentKey = variantAndSource.variant.expKey
         val metadata = variantAndSource.variant.metadata
-        var variant = if (!fallback && !variantAndSource.variant.isDefaultVariant()) {
+        val variant = if (!fallback && !variantAndSource.variant.isDefaultVariant()) {
             variantAndSource.variant.key ?: variantAndSource.variant.value
         } else {
             null
@@ -183,41 +283,15 @@ internal class DefaultExperimentClient internal constructor(
             Source.INITIAL_VARIANTS -> initialVariantsVariantAndSource(key, fallback)
 
         }
-        val flag = this.flags.get(key)
+        val flag = synchronized(flags) { this.flags.get(key) }
         if (flag != null && (flag.isLocalEvaluationMode() || variantAndSource.variant.isNullOrEmpty())) {
             variantAndSource = this.localEvaluationVariantAndSource(key, flag, fallback)
         }
         return variantAndSource
     }
 
-    override fun all(): Map<String, Variant> {
-        return secondaryVariants() + sourceVariants()
-    }
-
-    override fun clear() {
-        this.variants.clear()
-        this.variants.store()
-    }
-
-    override fun getUser(): ExperimentUser? {
-        return user
-    }
-
-    override fun setUser(user: ExperimentUser) {
-        this.user = user
-    }
-
-    override fun getUserProvider(): ExperimentUserProvider? {
-        return this.userProvider
-    }
-
-    override fun setUserProvider(provider: ExperimentUserProvider?): ExperimentClient {
-        this.userProvider = provider
-        return this
-    }
-
     @Throws
-    private fun fetchInternal(user: ExperimentUser, timeoutMillis: Long, retry: Boolean, options: FetchOptions?) {
+    internal fun fetchInternal(user: ExperimentUser, timeoutMillis: Long, retry: Boolean, options: FetchOptions?) {
         if (retry) {
             stopRetries()
         }
@@ -270,7 +344,7 @@ internal class DefaultExperimentClient internal constructor(
         call.enqueue(object : Callback {
             override fun onResponse(call: Call, response: Response) {
                 try {
-                    Logger.d("Received fetch response: $response")
+                    Logger.d("Received fetch variants response: $response")
                     val variants = parseResponse(response)
                     future.complete(variants)
                 } catch (e: IOException) {
@@ -285,17 +359,20 @@ internal class DefaultExperimentClient internal constructor(
         return future
     }
 
-    private fun doFlags() {
-        val flags = flagApi.getFlags(
+    private fun doFlags(): Future<Map<String, EvaluationFlag>> {
+        return flagApi.getFlags(
             GetFlagsOptions(
                 libraryName = "experiment-js-client",
                 libraryVersion = BuildConfig.VERSION_NAME,
                 timeoutMillis = config.fetchTimeoutMillis
             )
-        )
-        this.flags.clear()
-        this.flags.putAll(flags.get())
-        this.flags.store()
+        ) { flags ->
+            synchronized(this.flags) {
+                this.flags.clear()
+                this.flags.putAll(flags)
+                this.flags.store()
+            }
+        }
     }
 
 
@@ -329,24 +406,25 @@ internal class DefaultExperimentClient internal constructor(
 
     private fun storeVariants(variants: Map<String, Variant>, options: FetchOptions?) = synchronized(variants) {
         val failedFlagKeys = options?.flagKeys?.toMutableList() ?: mutableListOf()
-        if (options?.flagKeys == null) {
-            this.variants.clear()
+        synchronized(this.variants) {
+            if (options?.flagKeys == null) {
+                this.variants.clear()
+            }
+            for (entry in variants.entries) {
+                this.variants.put(entry.key, entry.value)
+                failedFlagKeys.remove(entry.key)
+            }
+            for (key in failedFlagKeys) {
+                this.variants.remove(key)
+            }
+            this.variants.store()
+            Logger.d("Stored variants: $variants")
         }
-        for (entry in variants.entries) {
-            this.variants.put(entry.key, entry.value)
-            failedFlagKeys.remove(entry.key)
-        }
-        for (key in failedFlagKeys) {
-            this.variants.remove(key)
-        }
-
-        this.variants.store()
-        Logger.d("Stored variants: $variants")
     }
 
     private fun sourceVariants(): Map<String, Variant> {
         return when (config.source) {
-            Source.LOCAL_STORAGE -> this.variants.getAll()
+            Source.LOCAL_STORAGE -> synchronized(variants) { this.variants.getAll() }
             Source.INITIAL_VARIANTS -> config.initialVariants
         }
     }
@@ -354,7 +432,7 @@ internal class DefaultExperimentClient internal constructor(
     private fun secondaryVariants(): Map<String, Variant> {
         return when (config.source) {
             Source.LOCAL_STORAGE -> config.initialVariants
-            Source.INITIAL_VARIANTS -> this.variants.getAll()
+            Source.INITIAL_VARIANTS -> synchronized(variants) { this.variants.getAll() }
         }
     }
 
@@ -386,39 +464,14 @@ internal class DefaultExperimentClient internal constructor(
     private fun evaluate(flagKeys: Set<String>): Map<String, Variant> {
         val user = getUserMergedWithProvider()
         val flags = try {
-            topologicalSort(this.flags.getAll(), flagKeys)
+            topologicalSort(synchronized(flags) { this.flags.getAll() }, flagKeys)
         } catch (e: Exception) {
             Logger.w("Error during topological sort of flags", e)
             return emptyMap()
         }
-        val context = EvaluationContext().apply { put("user", user.toEvaluationContext()) }
+        val context = user.toEvaluationContext()
         val evaluationVariants = this.engine.evaluate(context, flags)
-        return evaluationVariants.mapValues { translateFromEvaluationVariant(it.value) }
-    }
-
-    private fun translateFromEvaluationVariant(
-        evaluationVariant: EvaluationVariant
-    ): Variant {
-
-        val experimentKey = evaluationVariant.metadata?.get("experimentKey")?.toString()
-        val value = when {
-            evaluationVariant.value != null -> evaluationVariant.value.toString()
-            else -> null
-        }
-        val expKey = when {
-            experimentKey != null -> experimentKey
-            else -> null
-        }
-        val payload = when {
-            evaluationVariant.payload != null -> evaluationVariant.payload
-            else -> null
-        }
-        val metadata = when {
-            evaluationVariant.metadata != null -> evaluationVariant.metadata
-            else -> null
-        }
-
-        return Variant(value, payload, expKey, evaluationVariant.key, metadata)
+        return evaluationVariants.mapValues { it.value.convertToVariant() }
     }
 
     /**
@@ -501,7 +554,7 @@ internal class DefaultExperimentClient internal constructor(
     ): VariantAndSource {
         var defaultVariantAndSource = VariantAndSource()
         // Local storage
-        val localStorageVariant = variants.getAll()[key]
+        val localStorageVariant = synchronized(variants) { variants.getAll()[key] }
         val isLocalStorageDefault = localStorageVariant?.metadata?.get("default") as? Boolean
         if (localStorageVariant != null && isLocalStorageDefault != true) {
             return VariantAndSource(
@@ -571,7 +624,7 @@ internal class DefaultExperimentClient internal constructor(
             )
         }
         // Local storage
-        val localStorageVariant = variants.getAll()[key]
+        val localStorageVariant = synchronized(variants) { variants.getAll()[key] }
         val isLocalStorageDefault = localStorageVariant?.metadata?.get("default") as? Boolean
         if (localStorageVariant != null && isLocalStorageDefault != true) {
             return VariantAndSource(
@@ -601,7 +654,7 @@ internal class DefaultExperimentClient internal constructor(
             source = VariantSource.FALLBACK_CONFIG,
             hasDefaultVariant = defaultVariantAndSource.hasDefaultVariant
         )
-        if (fallbackVariant.isNullOrEmpty()) {
+        if (!fallbackVariant.isNullOrEmpty()) {
             return fallbackVariantAndSource
         }
         return defaultVariantAndSource

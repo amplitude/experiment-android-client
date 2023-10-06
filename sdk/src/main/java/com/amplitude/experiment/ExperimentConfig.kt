@@ -42,6 +42,10 @@ class ExperimentConfig internal constructor(
     @JvmField
     val automaticExposureTracking: Boolean = Defaults.AUTOMATIC_EXPOSURE_TRACKING,
     @JvmField
+    val pollOnStart: Boolean = Defaults.POLL_ON_START,
+    @JvmField
+    val fetchOnStart: Boolean? = Defaults.FETCH_ON_START,
+    @JvmField
     val automaticFetchOnAmplitudeIdentityChange: Boolean = Defaults.AUTOMATIC_FETCH_ON_AMPLITUDE_IDENTITY_CHANGE,
     @JvmField
     val userProvider: ExperimentUserProvider? = Defaults.USER_PROVIDER,
@@ -118,6 +122,16 @@ class ExperimentConfig internal constructor(
         const val AUTOMATIC_EXPOSURE_TRACKING = true
 
         /**
+         * true
+         */
+        const val POLL_ON_START = true
+
+        /**
+         * null
+         */
+        val FETCH_ON_START: Boolean? = null
+
+        /**
          * false
          */
         const val AUTOMATIC_FETCH_ON_AMPLITUDE_IDENTITY_CHANGE = false
@@ -159,6 +173,8 @@ class ExperimentConfig internal constructor(
         private var fetchTimeoutMillis = Defaults.FETCH_TIMEOUT_MILLIS
         private var retryFetchOnFailure = Defaults.RETRY_FETCH_ON_FAILURE
         private var automaticExposureTracking = Defaults.AUTOMATIC_EXPOSURE_TRACKING
+        private var pollOnStart = Defaults.POLL_ON_START
+        private var fetchOnStart = Defaults.FETCH_ON_START
         private var automaticFetchOnAmplitudeIdentityChange = Defaults.AUTOMATIC_FETCH_ON_AMPLITUDE_IDENTITY_CHANGE
         private var userProvider = Defaults.USER_PROVIDER
         private var analyticsProvider = Defaults.ANALYTICS_PROVIDER
@@ -208,6 +224,14 @@ class ExperimentConfig internal constructor(
             this.automaticExposureTracking = automaticExposureTracking
         }
 
+        fun pollOnStart(pollOnStart: Boolean) = apply {
+            this.pollOnStart = pollOnStart
+        }
+
+        fun fetchOnStart(fetchOnStart: Boolean?) = apply {
+            this.fetchOnStart = fetchOnStart
+        }
+
         fun automaticFetchOnAmplitudeIdentityChange(automaticFetchOnAmplitudeIdentityChange: Boolean) = apply {
             this.automaticFetchOnAmplitudeIdentityChange = automaticFetchOnAmplitudeIdentityChange
         }
@@ -238,6 +262,8 @@ class ExperimentConfig internal constructor(
                 fetchTimeoutMillis = fetchTimeoutMillis,
                 retryFetchOnFailure = retryFetchOnFailure,
                 automaticExposureTracking = automaticExposureTracking,
+                pollOnStart = pollOnStart,
+                fetchOnStart = fetchOnStart,
                 automaticFetchOnAmplitudeIdentityChange = automaticFetchOnAmplitudeIdentityChange,
                 userProvider = userProvider,
                 analyticsProvider = analyticsProvider,
@@ -259,6 +285,8 @@ class ExperimentConfig internal constructor(
             .fetchTimeoutMillis(fetchTimeoutMillis)
             .retryFetchOnFailure(retryFetchOnFailure)
             .automaticExposureTracking(automaticExposureTracking)
+            .pollOnStart(pollOnStart)
+            .fetchOnStart(fetchOnStart)
             .automaticFetchOnAmplitudeIdentityChange((automaticFetchOnAmplitudeIdentityChange))
             .userProvider(userProvider)
             .analyticsProvider(analyticsProvider)

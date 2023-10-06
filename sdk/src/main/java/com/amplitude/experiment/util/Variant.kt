@@ -1,6 +1,7 @@
 package com.amplitude.experiment.util
 
 import com.amplitude.experiment.Variant
+import com.amplitude.experiment.evaluation.EvaluationVariant
 import org.json.JSONException
 import org.json.JSONObject
 
@@ -87,4 +88,25 @@ internal fun JSONObject?.toVariant(): Variant? {
         Logger.w("Error parsing Variant from json string $this")
         null
     }
+}
+
+internal fun EvaluationVariant.convertToVariant() : Variant {
+    val experimentKey = this.metadata?.get("experimentKey")?.toString()
+    val value = when {
+        this.value != null -> this.value.toString()
+        else -> null
+    }
+    val expKey = when {
+        experimentKey != null -> experimentKey
+        else -> null
+    }
+    val payload = when {
+        this.payload != null -> this.payload
+        else -> null
+    }
+    val metadata = when {
+        this.metadata != null -> this.metadata
+        else -> null
+    }
+    return Variant(value, payload, expKey, this.key, metadata)
 }
