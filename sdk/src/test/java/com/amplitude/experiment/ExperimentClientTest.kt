@@ -5,6 +5,7 @@ import com.amplitude.experiment.analytics.ExperimentAnalyticsProvider
 import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.MockStorage
 import com.amplitude.experiment.util.SystemLogger
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import com.amplitude.experiment.util.TestExposureTrackingProvider
 import io.mockk.*
 import okhttp3.OkHttpClient
@@ -88,7 +89,6 @@ class ExperimentClientTest {
     @Before
     fun init() {
         mockStorage = MockStorage()
-        MockKAnnotations.init(this)
     }
 
     @Test
@@ -422,6 +422,80 @@ class ExperimentClientTest {
         Assert.assertTrue(didTrack)
     }
 
+
+    @Test
+    fun `ServerZone - test no config uses defaults`() {
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        Assert.assertEquals("https://api.lab.amplitude.com/".toHttpUrl(), client.serverUrl)
+        Assert.assertEquals("https://flag.lab.amplitude.com/".toHttpUrl(), client.flagsServerUrl)
+    }
+
+    @Test
+    fun `ServerZone - test us server zone config uses defaults`() {
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(serverZone = ServerZone.US),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        Assert.assertEquals("https://api.lab.amplitude.com/".toHttpUrl(), client.serverUrl)
+        Assert.assertEquals("https://flag.lab.amplitude.com/".toHttpUrl(), client.flagsServerUrl)
+    }
+
+    @Test
+    fun `ServerZone - test us server zone config with explicit config uses explicit config`() {
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                serverZone = ServerZone.US,
+                serverUrl = "https://experiment.company.com",
+                flagsServerUrl = "https://flags.company.com"
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        Assert.assertEquals("https://experiment.company.com".toHttpUrl(), client.serverUrl)
+        Assert.assertEquals("https://flags.company.com".toHttpUrl(), client.flagsServerUrl)
+    }
+
+    @Test
+    fun `ServerZone - test eu server zone uses eu defaults`() {
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(serverZone = ServerZone.EU),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        Assert.assertEquals("https://api.lab.eu.amplitude.com/".toHttpUrl(), client.serverUrl)
+        Assert.assertEquals("https://flag.lab.eu.amplitude.com/".toHttpUrl(), client.flagsServerUrl)
+    }
+
+    @Test
+    fun `ServerZone - test eu server zone with explicit config uses explicit config`() {
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                serverZone = ServerZone.EU,
+                serverUrl = "https://experiment.company.com",
+                flagsServerUrl = "https://flags.company.com"
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        Assert.assertEquals("https://experiment.company.com".toHttpUrl(), client.serverUrl)
+        Assert.assertEquals("https://flags.company.com".toHttpUrl(), client.flagsServerUrl)
+    }
+    
     @Test
     fun `LocalEvaluation - test start loads flags into local storage`() {
         val client = DefaultExperimentClient(
@@ -1014,4 +1088,3 @@ class ExperimentClientTest {
         verify(exactly = 0) { spyClient.fetchInternal(any(),any(),any(),any()) }
     }
 }
-
