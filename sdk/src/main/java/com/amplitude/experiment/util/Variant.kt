@@ -19,7 +19,7 @@ internal fun Variant.toJson(): String {
             jsonObject.put("expKey", expKey)
         }
         if (metadata != null) {
-            jsonObject.put("metadata", metadata)
+            jsonObject.put("metadata", JSONObject(metadata))
         }
     } catch (e: JSONException) {
         Logger.w("Error converting Variant to json string", e)
@@ -85,7 +85,8 @@ internal fun JSONObject?.toVariant(): Variant? {
 
         Variant(value, payload, expKey, key, metadata)
     } catch (e: JSONException) {
-        Logger.w("Error parsing Variant from json string $this")
+        e.printStackTrace()
+        Logger.w("Error parsing Variant from json string $this, $e")
         null
     }
 }
