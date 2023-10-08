@@ -5,7 +5,7 @@ import org.json.JSONObject
 import org.junit.Assert
 import org.junit.Test
 
-class TransformVariantFromStorageTest {
+class StorageTest {
 
     @Test
     fun `v1 variant transformation`() {

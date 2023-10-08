@@ -5,8 +5,12 @@ import com.amplitude.experiment.evaluation.json
 import com.amplitude.experiment.util.AsyncFuture
 import com.amplitude.experiment.util.Logger
 import kotlinx.serialization.decodeFromString
-import okhttp3.*
-import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.HttpUrl
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 import java.io.IOException
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit

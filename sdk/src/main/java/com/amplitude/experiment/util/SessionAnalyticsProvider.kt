@@ -5,7 +5,7 @@ import com.amplitude.experiment.analytics.ExperimentAnalyticsProvider
 
 internal class SessionAnalyticsProvider(
     private val analyticsProvider: ExperimentAnalyticsProvider,
-): ExperimentAnalyticsProvider {
+) : ExperimentAnalyticsProvider {
 
     private val lock = Any()
     private val setProperties = mutableMapOf<String, String>()

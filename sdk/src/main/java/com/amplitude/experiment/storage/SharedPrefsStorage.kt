@@ -1,7 +1,6 @@
 package com.amplitude.experiment.storage
 
 import android.content.Context
-import android.content.SharedPreferences
 
 /**
  * Simple SharedPrefs backed storage for caching assigned variant values locally.
@@ -37,7 +36,6 @@ internal class SharedPrefsStorage(
         }
         editor.commit()
     }
-
 
     override fun delete(key: String): Unit = synchronized(this) {
         appContext.getSharedPreferences(key, Context.MODE_PRIVATE).edit().remove(key).commit()

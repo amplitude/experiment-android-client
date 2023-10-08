@@ -29,7 +29,7 @@ class ExposureEvent(
      * The source of the determination of the variant.
      */
     val source: VariantSource
-): ExperimentAnalyticsEvent {
+) : ExperimentAnalyticsEvent {
     override val name: String = "[Experiment] Exposure"
     override val properties: Map<String, String?> = mapOf(
         "key" to key,

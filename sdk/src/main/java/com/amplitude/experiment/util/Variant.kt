@@ -19,7 +19,7 @@ internal fun Variant.toJson(): String {
             jsonObject.put("expKey", expKey)
         }
         if (metadata != null) {
-            jsonObject.put("metadata", JSONObject(metadata))
+            jsonObject.put("metadata", metadata.toJSONObject())
         }
     } catch (e: JSONException) {
         Logger.w("Error converting Variant to json string", e)
@@ -91,7 +91,7 @@ internal fun JSONObject?.toVariant(): Variant? {
     }
 }
 
-internal fun EvaluationVariant.convertToVariant() : Variant {
+internal fun EvaluationVariant.convertToVariant(): Variant {
     val experimentKey = this.metadata?.get("experimentKey")?.toString()
     val value = when {
         this.value != null -> this.value.toString()

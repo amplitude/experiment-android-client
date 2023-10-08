@@ -1,10 +1,10 @@
 package com.amplitude.experiment
 
 import com.amplitude.experiment.ExperimentUser.Companion.builder
-import com.amplitude.experiment.util.*
 import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.SystemLogger
 import com.amplitude.experiment.util.merge
+import com.amplitude.experiment.util.toEvaluationContext
 import com.amplitude.experiment.util.toJson
 import org.json.JSONArray
 import org.json.JSONObject
@@ -60,16 +60,28 @@ class ExperimentUserTest {
         val expectedUserProperties = JSONObject()
         expectedUserProperties.put("userPropertyKey", "value")
         expected.put("user_properties", expectedUserProperties)
-        expected.put("groups", JSONObject().apply {
-            put("groupType", JSONArray().apply { put("groupName") })
-        })
-        expected.put("group_properties", JSONObject().apply {
-            put("groupType", JSONObject().apply {
-                put("groupName", JSONObject().apply {
-                    put("k", "v")
-                })
-            })
-        })
+        expected.put(
+            "groups",
+            JSONObject().apply {
+                put("groupType", JSONArray().apply { put("groupName") })
+            }
+        )
+        expected.put(
+            "group_properties",
+            JSONObject().apply {
+                put(
+                    "groupType",
+                    JSONObject().apply {
+                        put(
+                            "groupName",
+                            JSONObject().apply {
+                                put("k", "v")
+                            }
+                        )
+                    }
+                )
+            }
+        )
         Assert.assertEquals(expected.toString(), user.toJson())
     }
 

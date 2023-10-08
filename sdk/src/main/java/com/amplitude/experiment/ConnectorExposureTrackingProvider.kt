@@ -1,11 +1,11 @@
 package com.amplitude.experiment
 
-import com.amplitude.analytics.connector.EventBridge
 import com.amplitude.analytics.connector.AnalyticsEvent
+import com.amplitude.analytics.connector.EventBridge
 
 internal class ConnectorExposureTrackingProvider(
     private val eventBridge: EventBridge
-): ExposureTrackingProvider {
+) : ExposureTrackingProvider {
 
     override fun track(exposure: Exposure) {
         eventBridge.logEvent(

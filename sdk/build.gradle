@@ -3,6 +3,7 @@ plugins {
     id 'kotlin-android'
     id 'org.jetbrains.dokka'
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.6.0'
+    id 'org.jlleitschuh.gradle.ktlint'
 }
 ext {
     PUBLISH_NAME = 'Experiment Android SDK'
@@ -21,7 +22,7 @@ android {
         minSdkVersion 14
         targetSdkVersion 30
         versionName PUBLISH_VERSION
-
+        buildConfigField "String", "VERSION_NAME", "\"$PUBLISH_VERSION\""
         consumerProguardFiles "consumer-rules.pro"
     }
 

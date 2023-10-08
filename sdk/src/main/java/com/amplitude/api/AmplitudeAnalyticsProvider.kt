@@ -8,11 +8,13 @@ import org.json.JSONObject
  * Provides a tracking implementation for standard experiment events generated
  * by the client (e.g. exposure) using an [AmplitudeClient] instance.
  */
-@Deprecated("Update your version of the amplitude analytics SDK to 2.36.0+ and for seamless " +
-    "integration with the amplitude analytics SDK")
+@Deprecated(
+    "Update your version of the amplitude analytics SDK to 2.36.0+ and for seamless " +
+        "integration with the amplitude analytics SDK"
+)
 class AmplitudeAnalyticsProvider(
     private val amplitudeClient: AmplitudeClient,
-): ExperimentAnalyticsProvider {
+) : ExperimentAnalyticsProvider {
 
     override fun track(event: ExperimentAnalyticsEvent) {
         amplitudeClient.logEvent(event.name, JSONObject(event.properties))
@@ -23,6 +25,6 @@ class AmplitudeAnalyticsProvider(
     }
 
     override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
-        amplitudeClient.identify(Identify().unset(event.userProperty));
+        amplitudeClient.identify(Identify().unset(event.userProperty))
     }
 }

@@ -119,11 +119,11 @@ class ExperimentUser internal constructor(
 
     override fun toString(): String {
         return "ExperimentUser(userId=$userId, deviceId=$deviceId, country=$country, " +
-                "region=$region, dma=$dma, city=$city, language=$language, platform=$platform, " +
-                "version=$version, os=$os, deviceManufacturer=$deviceManufacturer, " +
-                "deviceBrand=$deviceBrand, deviceModel=$deviceModel, carrier=$carrier, " +
-                "library=$library, userProperties=$userProperties, groups=$groups, " +
-                "groupProperties=$groupProperties)"
+            "region=$region, dma=$dma, city=$city, language=$language, platform=$platform, " +
+            "version=$version, os=$os, deviceManufacturer=$deviceManufacturer, " +
+            "deviceBrand=$deviceBrand, deviceModel=$deviceModel, carrier=$carrier, " +
+            "library=$library, userProperties=$userProperties, groups=$groups, " +
+            "groupProperties=$groupProperties)"
     }
 
     companion object {

@@ -3,8 +3,8 @@ package com.amplitude.experiment.storage
 import com.amplitude.experiment.Variant
 import com.amplitude.experiment.evaluation.EvaluationFlag
 import com.amplitude.experiment.evaluation.json
-import com.amplitude.experiment.util.toVariant
 import com.amplitude.experiment.util.toJson
+import com.amplitude.experiment.util.toVariant
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 
@@ -16,31 +16,31 @@ internal class LoadStoreCache<V>(
 ) {
     private val cache: MutableMap<String, V> = mutableMapOf()
 
-    fun get(key: String): V?  {
+    fun get(key: String): V? {
         return cache[key]
     }
 
-    fun getAll(): Map<String, V>  {
+    fun getAll(): Map<String, V> {
         return HashMap(cache)
     }
 
-    fun put(key: String, value: V)  {
+    fun put(key: String, value: V) {
         cache[key] = value
     }
 
-    fun putAll(values: Map<String, V>)  {
+    fun putAll(values: Map<String, V>) {
         cache.putAll(values)
     }
 
-    fun remove(key: String)  {
+    fun remove(key: String) {
         cache.remove(key)
     }
 
-    fun clear()  {
+    fun clear() {
         cache.clear()
     }
 
-    fun load()  {
+    fun load() {
         val rawValues = storage.get(namespace)
         val values = rawValues.mapNotNull { entry ->
             try {
@@ -58,7 +58,7 @@ internal class LoadStoreCache<V>(
         putAll(values)
     }
 
-    fun store(values: MutableMap<String, V> = cache)  {
+    fun store(values: MutableMap<String, V> = cache) {
         val stringValues = values.mapNotNull { entry ->
             try {
                 val value = encoder(entry.value)

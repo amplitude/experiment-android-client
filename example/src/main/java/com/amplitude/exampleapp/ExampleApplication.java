@@ -29,6 +29,7 @@ public class ExampleApplication extends Application {
         experimentClient = Experiment.initialize(this, apiKey, config);
 
         ExperimentUser experimentUser = ExperimentUser.builder()
+            .userId("user_id")
             .userProperty("group", "Group 1")
             .build();
         try {

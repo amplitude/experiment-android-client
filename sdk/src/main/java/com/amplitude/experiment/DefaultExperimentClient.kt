@@ -5,18 +5,21 @@ import com.amplitude.experiment.evaluation.EvaluationFlag
 import com.amplitude.experiment.evaluation.topologicalSort
 import com.amplitude.experiment.storage.LoadStoreCache
 import com.amplitude.experiment.storage.Storage
-import com.amplitude.experiment.analytics.ExposureEvent as OldExposureEvent
-import com.amplitude.experiment.storage.getVariantStorage
 import com.amplitude.experiment.storage.getFlagStorage
-import com.amplitude.experiment.util.*
+import com.amplitude.experiment.storage.getVariantStorage
 import com.amplitude.experiment.util.AsyncFuture
 import com.amplitude.experiment.util.Backoff
 import com.amplitude.experiment.util.BackoffConfig
 import com.amplitude.experiment.util.Logger
+import com.amplitude.experiment.util.Poller
 import com.amplitude.experiment.util.SessionAnalyticsProvider
 import com.amplitude.experiment.util.UserSessionExposureTracker
 import com.amplitude.experiment.util.backoff
+import com.amplitude.experiment.util.convertToVariant
+import com.amplitude.experiment.util.isLocalEvaluationMode
+import com.amplitude.experiment.util.isRemoteEvaluationMode
 import com.amplitude.experiment.util.merge
+import com.amplitude.experiment.util.toEvaluationContext
 import com.amplitude.experiment.util.toJson
 import com.amplitude.experiment.util.toVariant
 import okhttp3.Call
@@ -27,6 +30,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okio.ByteString.Companion.toByteString
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
 import java.lang.IllegalStateException
@@ -36,10 +40,11 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import kotlin.jvm.Throws
-import org.json.JSONArray
+import com.amplitude.experiment.analytics.ExposureEvent as OldExposureEvent
 
-internal const val euServerUrl = "https://api.lab.eu.amplitude.com/"
-internal const val euFlagsServerUrl = "https://flag.lab.eu.amplitude.com/"
+private const val EU_SERVER_URL = "https://api.lab.eu.amplitude.com/"
+private const val EU_FLAGS_SERVER_URL = "https://flag.lab.eu.amplitude.com/"
+private const val FLAG_POLLER_INTERVAL_MILLIS: Long = 60000
 
 internal class DefaultExperimentClient internal constructor(
     private val apiKey: String,
@@ -77,21 +82,19 @@ internal class DefaultExperimentClient internal constructor(
         max = 10000,
         scalar = 1.5f,
     )
-    private val flagPollerIntervalMillis: Long = 60000
 
-    private val poller: Poller = Poller(this.executorService, ::doFlags, flagPollerIntervalMillis)
-
+    private val poller: Poller = Poller(this.executorService, ::doFlags, FLAG_POLLER_INTERVAL_MILLIS)
 
     internal val serverUrl: HttpUrl =
         if (config.serverUrl == ExperimentConfig.Defaults.SERVER_URL && config.flagsServerUrl == ExperimentConfig.Defaults.FLAGS_SERVER_URL && config.serverZone == ServerZone.EU) {
-            euServerUrl.toHttpUrl()
+            EU_SERVER_URL.toHttpUrl()
         } else {
             config.serverUrl.toHttpUrl()
         }
 
     internal val flagsServerUrl: HttpUrl =
         if (config.serverUrl == ExperimentConfig.Defaults.SERVER_URL && config.flagsServerUrl == ExperimentConfig.Defaults.FLAGS_SERVER_URL && config.serverZone == ServerZone.EU) {
-            euFlagsServerUrl.toHttpUrl()
+            EU_FLAGS_SERVER_URL.toHttpUrl()
         } else {
             config.flagsServerUrl.toHttpUrl()
         }
@@ -126,33 +129,35 @@ internal class DefaultExperimentClient internal constructor(
             }
         }
         this.user = user
-        return this.executorService.submit(Callable {
-            val flagsFuture = doFlags()
-            var remoteFlags = config.fetchOnStart
-                ?: allFlags().values.any { it.isRemoteEvaluationMode() }
-            if (remoteFlags) {
-                flagsFuture.get()
-                fetchInternal(
-                    getUserMergedWithProviderOrWait(10000),
-                    config.fetchTimeoutMillis,
-                    config.retryFetchOnFailure,
-                    null
-                )
-            } else {
-                flagsFuture.get()
-                remoteFlags = config.fetchOnStart
+        return this.executorService.submit(
+            Callable {
+                val flagsFuture = doFlags()
+                var remoteFlags = config.fetchOnStart
                     ?: allFlags().values.any { it.isRemoteEvaluationMode() }
                 if (remoteFlags) {
+                    flagsFuture.get()
                     fetchInternal(
                         getUserMergedWithProviderOrWait(10000),
                         config.fetchTimeoutMillis,
                         config.retryFetchOnFailure,
                         null
                     )
+                } else {
+                    flagsFuture.get()
+                    remoteFlags = config.fetchOnStart
+                        ?: allFlags().values.any { it.isRemoteEvaluationMode() }
+                    if (remoteFlags) {
+                        fetchInternal(
+                            getUserMergedWithProviderOrWait(10000),
+                            config.fetchTimeoutMillis,
+                            config.retryFetchOnFailure,
+                            null
+                        )
+                    }
                 }
+                this
             }
-            this
-        })
+        )
     }
 
     /**
@@ -174,11 +179,13 @@ internal class DefaultExperimentClient internal constructor(
 
     override fun fetch(user: ExperimentUser?, options: FetchOptions?): Future<ExperimentClient> {
         this.user = user ?: this.user
-        return executorService.submit(Callable {
-            val fetchUser = getUserMergedWithProviderOrWait(10000)
-            fetchInternal(fetchUser, config.fetchTimeoutMillis, config.retryFetchOnFailure, options)
-            this
-        })
+        return executorService.submit(
+            Callable {
+                val fetchUser = getUserMergedWithProviderOrWait(10000)
+                fetchInternal(fetchUser, config.fetchTimeoutMillis, config.retryFetchOnFailure, options)
+                this
+            }
+        )
     }
 
     override fun variant(key: String): Variant {
@@ -199,7 +206,7 @@ internal class DefaultExperimentClient internal constructor(
     }
 
     override fun all(): Map<String, Variant> {
-        val evaluationResults = this.evaluate(emptySet())
+        val evaluationResults = this.evaluate()
         val evaluatedVariants = synchronized(flags) {
             evaluationResults.filter { entry ->
                 this.flags.get(entry.key).isLocalEvaluationMode()
@@ -232,7 +239,6 @@ internal class DefaultExperimentClient internal constructor(
         return this
     }
 
-
     internal fun allFlags(): Map<String, EvaluationFlag> {
         return synchronized(flags) { this.flags.getAll() }
     }
@@ -259,7 +265,6 @@ internal class DefaultExperimentClient internal constructor(
         userSessionExposureTracker?.track(exposure)
     }
 
-
     private fun legacyExposureInternal(key: String, variant: Variant, source: VariantSource) {
         val exposedUser = getUserMergedWithProvider()
         val event = OldExposureEvent(exposedUser, key, variant, source)
@@ -281,7 +286,6 @@ internal class DefaultExperimentClient internal constructor(
         variantAndSource = when (config.source) {
             Source.LOCAL_STORAGE -> localStorageVariantAndSource(key, fallback)
             Source.INITIAL_VARIANTS -> initialVariantsVariantAndSource(key, fallback)
-
         }
         val flag = synchronized(flags) { this.flags.get(key) }
         if (flag != null && (flag.isLocalEvaluationMode() || variantAndSource.variant.isNullOrEmpty())) {
@@ -375,7 +379,6 @@ internal class DefaultExperimentClient internal constructor(
         }
     }
 
-
     private fun startRetries(user: ExperimentUser, options: FetchOptions?) = synchronized(backoffLock) {
         backoff?.cancel()
         backoff = executorService.backoff(backoffConfig) {
@@ -461,7 +464,7 @@ internal class DefaultExperimentClient internal constructor(
             .build().merge(providedUser)
     }
 
-    private fun evaluate(flagKeys: Set<String>): Map<String, Variant> {
+    private fun evaluate(flagKeys: Set<String> = emptySet()): Map<String, Variant> {
         val user = getUserMergedWithProvider()
         val flags = try {
             topologicalSort(synchronized(flags) { this.flags.getAll() }, flagKeys)
@@ -659,8 +662,6 @@ internal class DefaultExperimentClient internal constructor(
         }
         return defaultVariantAndSource
     }
-
-
 }
 
 data class VariantAndSource(
@@ -684,7 +685,7 @@ enum class VariantSource(val type: String) {
 
     fun isFallback(): Boolean {
         return this == FALLBACK_INLINE ||
-                this == FALLBACK_CONFIG ||
-                this == SECONDARY_INITIAL_VARIANTS
+            this == FALLBACK_CONFIG ||
+            this == SECONDARY_INITIAL_VARIANTS
     }
 }

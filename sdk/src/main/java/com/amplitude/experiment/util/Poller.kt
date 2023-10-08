@@ -6,10 +6,10 @@ import java.util.concurrent.TimeUnit
 
 internal class Poller(
     private val executorService: ScheduledExecutorService,
-    private val action: ()->Unit,
+    private val action: () -> Unit,
     private val ms: Long
 ) {
-    private var future : ScheduledFuture<*>? = null
+    private var future: ScheduledFuture<*>? = null
 
     internal fun start() {
         future = this.executorService.scheduleAtFixedRate(
@@ -21,5 +21,4 @@ internal class Poller(
         future?.cancel(true)
         future = null
     }
-
 }

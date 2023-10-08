@@ -5,9 +5,14 @@ import com.amplitude.experiment.analytics.ExperimentAnalyticsProvider
 import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.MockStorage
 import com.amplitude.experiment.util.SystemLogger
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import com.amplitude.experiment.util.TestExposureTrackingProvider
-import io.mockk.*
+import io.mockk.Runs
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.spyk
+import io.mockk.verify
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import org.junit.Assert
 import org.junit.Before
@@ -422,7 +427,6 @@ class ExperimentClientTest {
         Assert.assertTrue(didTrack)
     }
 
-
     @Test
     fun `ServerZone - test no config uses defaults`() {
         val client = DefaultExperimentClient(
@@ -495,7 +499,7 @@ class ExperimentClientTest {
         Assert.assertEquals("https://experiment.company.com".toHttpUrl(), client.serverUrl)
         Assert.assertEquals("https://flags.company.com".toHttpUrl(), client.flagsServerUrl)
     }
-    
+
     @Test
     fun `LocalEvaluation - test start loads flags into local storage`() {
         val client = DefaultExperimentClient(
@@ -552,7 +556,6 @@ class ExperimentClientTest {
         client.stop()
     }
 
-
     @Test
     fun `LocalStorage - test variant accessed from local storage primary`() {
         val user = ExperimentUser(userId = "test_user")
@@ -575,9 +578,11 @@ class ExperimentClientTest {
         Assert.assertEquals("on", variant.value)
         Assert.assertEquals("payload", variant.payload)
         verify(exactly = 1) {
-            exposureTrackingProvider.track(match {
-                it.flagKey == "sdk-ci-test" && it.variant == "on"
-            })
+            exposureTrackingProvider.track(
+                match {
+                    it.flagKey == "sdk-ci-test" && it.variant == "on"
+                }
+            )
         }
     }
 
@@ -603,9 +608,11 @@ class ExperimentClientTest {
         val variant = client.variant("sdk-ci-test", inlineVariant)
         Assert.assertEquals(inlineVariant, variant)
         verify(exactly = 1) {
-            exposureTrackingProvider.track(match {
-                it.flagKey == "sdk-ci-test" && it.variant == null
-            })
+            exposureTrackingProvider.track(
+                match {
+                    it.flagKey == "sdk-ci-test" && it.variant == null
+                }
+            )
         }
     }
 
@@ -631,9 +638,11 @@ class ExperimentClientTest {
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals(initialVariant, variant)
         verify(exactly = 1) {
-            exposureTrackingProvider.track(match {
-                it.flagKey == "sdk-ci-test" && it.variant == null
-            })
+            exposureTrackingProvider.track(
+                match {
+                    it.flagKey == "sdk-ci-test" && it.variant == null
+                }
+            )
         }
     }
 
@@ -659,9 +668,11 @@ class ExperimentClientTest {
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals(Variant(key = "fallback", value = "fallback"), variant)
         verify(exactly = 1) {
-            exposureTrackingProvider.track(match {
-                it.flagKey == "sdk-ci-test" && it.variant == null
-            })
+            exposureTrackingProvider.track(
+                match {
+                    it.flagKey == "sdk-ci-test" && it.variant == null
+                }
+            )
         }
     }
 
@@ -688,9 +699,11 @@ class ExperimentClientTest {
         Assert.assertEquals(variant.value, null)
         Assert.assertEquals(variant.metadata?.get("default"), true)
         verify(exactly = 1) {
-            exposureTrackingProvider.track(match {
-                it.flagKey == "sdk-ci-test" && it.variant == null
-            })
+            exposureTrackingProvider.track(
+                match {
+                    it.flagKey == "sdk-ci-test" && it.variant == null
+                }
+            )
         }
     }
 
@@ -716,9 +729,11 @@ class ExperimentClientTest {
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals(initialVariant, variant)
         verify(exactly = 1) {
-            exposureTrackingProvider.track(match {
-                it.flagKey == "sdk-ci-test" && it.variant == "initial"
-            })
+            exposureTrackingProvider.track(
+                match {
+                    it.flagKey == "sdk-ci-test" && it.variant == "initial"
+                }
+            )
         }
     }
 
@@ -746,9 +761,11 @@ class ExperimentClientTest {
         Assert.assertEquals("on", variant.value)
         Assert.assertEquals("payload", variant.payload)
         verify(exactly = 1) {
-            exposureTrackingProvider.track(match {
-                it.flagKey == "sdk-ci-test" && it.variant == "on"
-            })
+            exposureTrackingProvider.track(
+                match {
+                    it.flagKey == "sdk-ci-test" && it.variant == "on"
+                }
+            )
         }
     }
 
@@ -774,9 +791,11 @@ class ExperimentClientTest {
         val variant = client.variant("sdk-ci-test", inlineVariant)
         Assert.assertEquals(inlineVariant, variant)
         verify(exactly = 1) {
-            exposureTrackingProvider.track(match {
-                it.flagKey == "sdk-ci-test" && it.variant == null
-            })
+            exposureTrackingProvider.track(
+                match {
+                    it.flagKey == "sdk-ci-test" && it.variant == null
+                }
+            )
         }
     }
 
@@ -802,9 +821,11 @@ class ExperimentClientTest {
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals(fallbackVariant, variant)
         verify(exactly = 1) {
-            exposureTrackingProvider.track(match {
-                it.flagKey == "sdk-ci-test" && it.variant == null
-            })
+            exposureTrackingProvider.track(
+                match {
+                    it.flagKey == "sdk-ci-test" && it.variant == null
+                }
+            )
         }
     }
 
@@ -829,9 +850,11 @@ class ExperimentClientTest {
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals(Variant(key = "off", metadata = mapOf("default" to true)), variant)
         verify(exactly = 1) {
-            exposureTrackingProvider.track(match {
-                it.flagKey == "sdk-ci-test" && it.variant == null
-            })
+            exposureTrackingProvider.track(
+                match {
+                    it.flagKey == "sdk-ci-test" && it.variant == null
+                }
+            )
         }
     }
 
@@ -859,9 +882,11 @@ class ExperimentClientTest {
         Assert.assertEquals("on", variant.value)
         Assert.assertEquals("local", variant.metadata?.get("evaluationMode"))
         verify(exactly = 1) {
-            exposureTrackingProvider.track(match {
-                it.flagKey == "sdk-ci-test-local" && it.variant == "on"
-            })
+            exposureTrackingProvider.track(
+                match {
+                    it.flagKey == "sdk-ci-test-local" && it.variant == "on"
+                }
+            )
         }
     }
 
@@ -887,9 +912,11 @@ class ExperimentClientTest {
         val variant = client.variant("sdk-ci-test-local", inlineVariant)
         Assert.assertEquals(inlineVariant, variant)
         verify(exactly = 1) {
-            exposureTrackingProvider.track(match {
-                it.flagKey == "sdk-ci-test-local" && it.variant == null
-            })
+            exposureTrackingProvider.track(
+                match {
+                    it.flagKey == "sdk-ci-test-local" && it.variant == null
+                }
+            )
         }
     }
 
@@ -915,9 +942,11 @@ class ExperimentClientTest {
         val variant = client.variant("sdk-ci-test-local")
         Assert.assertEquals(initialVariant, variant)
         verify(exactly = 1) {
-            exposureTrackingProvider.track(match {
-                it.flagKey == "sdk-ci-test-local" && it.variant == null
-            })
+            exposureTrackingProvider.track(
+                match {
+                    it.flagKey == "sdk-ci-test-local" && it.variant == null
+                }
+            )
         }
     }
 
@@ -943,9 +972,11 @@ class ExperimentClientTest {
         val variant = client.variant("sdk-ci-test-local")
         Assert.assertEquals(fallbackVariant, variant)
         verify(exactly = 1) {
-            exposureTrackingProvider.track(match {
-                it.flagKey == "sdk-ci-test-local" && it.variant == null
-            })
+            exposureTrackingProvider.track(
+                match {
+                    it.flagKey == "sdk-ci-test-local" && it.variant == null
+                }
+            )
         }
     }
 
@@ -970,9 +1001,11 @@ class ExperimentClientTest {
         Assert.assertEquals("off", variant.key)
         Assert.assertEquals(null, variant.value)
         verify(exactly = 1) {
-            exposureTrackingProvider.track(match {
-                it.flagKey == "sdk-ci-test-local" && it.variant == null
-            })
+            exposureTrackingProvider.track(
+                match {
+                    it.flagKey == "sdk-ci-test-local" && it.variant == null
+                }
+            )
         }
     }
 
@@ -1041,7 +1074,7 @@ class ExperimentClientTest {
         )
         val spyClient = spyk(client)
         spyClient.start(null).get()
-        verify(exactly = 1) { spyClient.fetchInternal(any(),any(),any(),any()) }
+        verify(exactly = 1) { spyClient.fetchInternal(any(), any(), any(), any()) }
     }
 
     @Test
@@ -1056,7 +1089,7 @@ class ExperimentClientTest {
         val spyClient = spyk(client)
         every { spyClient.allFlags() } returns emptyMap()
         spyClient.start(null).get()
-        verify(exactly = 0) { spyClient.fetchInternal(any(),any(),any(),any()) }
+        verify(exactly = 0) { spyClient.fetchInternal(any(), any(), any(), any()) }
     }
 
     @Test
@@ -1071,7 +1104,7 @@ class ExperimentClientTest {
         val spyClient = spyk(client)
         every { spyClient.allFlags() } returns emptyMap()
         spyClient.start(null).get()
-        verify(exactly = 1) { spyClient.fetchInternal(any(),any(),any(),any()) }
+        verify(exactly = 1) { spyClient.fetchInternal(any(), any(), any(), any()) }
     }
 
     @Test
@@ -1085,6 +1118,6 @@ class ExperimentClientTest {
         )
         val spyClient = spyk(client)
         spyClient.start(null).get()
-        verify(exactly = 0) { spyClient.fetchInternal(any(),any(),any(),any()) }
+        verify(exactly = 0) { spyClient.fetchInternal(any(), any(), any(), any()) }
     }
 }
