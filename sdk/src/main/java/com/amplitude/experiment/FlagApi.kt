@@ -37,6 +37,7 @@ internal class SdkFlagApi(
     ): Future<Map<String, EvaluationFlag>> {
         val url = serverUrl.newBuilder()
             .addPathSegments("sdk/v2/flags")
+            .addQueryParameter("v", "0")
             .build()
 
         val builder = Request.Builder()
