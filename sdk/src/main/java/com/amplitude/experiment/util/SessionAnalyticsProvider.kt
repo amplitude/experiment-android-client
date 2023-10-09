@@ -5,14 +5,14 @@ import com.amplitude.experiment.analytics.ExperimentAnalyticsProvider
 
 internal class SessionAnalyticsProvider(
     private val analyticsProvider: ExperimentAnalyticsProvider,
-): ExperimentAnalyticsProvider {
+) : ExperimentAnalyticsProvider {
 
     private val lock = Any()
     private val setProperties = mutableMapOf<String, String>()
     private val unsetProperties = mutableSetOf<String>()
 
     override fun track(event: ExperimentAnalyticsEvent) {
-        val variant = event.variant.value ?: return
+        val variant = event.variant.key ?: return
         synchronized(lock) {
             if (setProperties[event.key] == variant) {
                 return
@@ -25,7 +25,7 @@ internal class SessionAnalyticsProvider(
     }
 
     override fun setUserProperty(event: ExperimentAnalyticsEvent) {
-        val variant = event.variant.value ?: return
+        val variant = event.variant.key ?: return
         synchronized(lock) {
             if (setProperties[event.key] == variant) {
                 return@setUserProperty

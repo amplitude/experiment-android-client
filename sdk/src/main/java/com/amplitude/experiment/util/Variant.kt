@@ -1,18 +1,25 @@
 package com.amplitude.experiment.util
 
 import com.amplitude.experiment.Variant
+import com.amplitude.experiment.evaluation.EvaluationVariant
 import org.json.JSONException
 import org.json.JSONObject
 
 internal fun Variant.toJson(): String {
     val jsonObject = JSONObject()
     try {
-        jsonObject.put("value", value)
+        jsonObject.put("key", key)
+        if (value != null) {
+            jsonObject.put("value", value)
+        }
         if (payload != null) {
             jsonObject.put("payload", payload)
         }
         if (expKey != null) {
             jsonObject.put("expKey", expKey)
+        }
+        if (metadata != null) {
+            jsonObject.put("metadata", metadata.toJSONObject())
         }
     } catch (e: JSONException) {
         Logger.w("Error converting Variant to json string", e)
@@ -22,7 +29,7 @@ internal fun Variant.toJson(): String {
 
 internal fun String?.toVariant(): Variant? {
     return if (this == null) {
-        return null
+        null
     } else {
         JSONObject(this).toVariant()
     }
@@ -30,24 +37,77 @@ internal fun String?.toVariant(): Variant? {
 
 internal fun JSONObject?.toVariant(): Variant? {
     return if (this == null) {
-        return null
+        null
     } else try {
-        val value = when {
-            has("value") -> getString("value")
+        var key = when {
             has("key") -> getString("key")
-            else -> return null
-        }
-        val payload = when {
-            has("payload") -> get("payload")
             else -> null
         }
-        val expKey = when {
+        val value = when {
+            has("value") -> getString("value")
+            else -> null
+        }
+
+        if (key == null && value == null) {
+            return null
+        }
+        if (key == null && value != null) {
+            key = value
+        }
+
+        val payload = when {
+            has("payload") -> {
+                val payload = get("payload")
+                if (payload is JSONObject) {
+                    payload.toMap()
+                } else {
+                    payload
+                }
+            }
+
+            else -> null
+        }
+
+        var expKey = when {
             has("expKey") -> getString("expKey")
             else -> null
         }
-        Variant(value, payload, expKey)
+        var metadata = when {
+            has("metadata") -> getJSONObject("metadata").toMap()
+            else -> null
+        }?.toMutableMap()
+        if (metadata != null && metadata["experimentKey"] != null) {
+            expKey = metadata["experimentKey"] as? String
+        } else if (expKey != null) {
+            metadata = metadata ?: HashMap()
+            metadata["experimentKey"] = expKey
+        }
+
+        Variant(value, payload, expKey, key, metadata)
     } catch (e: JSONException) {
-        Logger.w("Error parsing Variant from json string $this")
-        return null
+        e.printStackTrace()
+        Logger.w("Error parsing Variant from json string $this, $e")
+        null
     }
+}
+
+internal fun EvaluationVariant.convertToVariant(): Variant {
+    val experimentKey = this.metadata?.get("experimentKey")?.toString()
+    val value = when {
+        this.value != null -> this.value.toString()
+        else -> null
+    }
+    val expKey = when {
+        experimentKey != null -> experimentKey
+        else -> null
+    }
+    val payload = when {
+        this.payload != null -> this.payload
+        else -> null
+    }
+    val metadata = when {
+        this.metadata != null -> this.metadata
+        else -> null
+    }
+    return Variant(value, payload, expKey, this.key, metadata)
 }

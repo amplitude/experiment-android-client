@@ -49,20 +49,23 @@ internal class Backoff constructor(
         delay: Long,
         function: () -> Unit
     ): Unit = synchronized(lock) {
-        future = executorService.schedule({
-            if (cancelled) {
-                return@schedule
-            }
-            try {
-                function.invoke()
-            } catch (e: Exception) {
-                // Retry the request function
-                val nextAttempt = attempt + 1
-                if (nextAttempt < config.attempts) {
-                    val nextDelay = min(delay * config.scalar, config.max.toFloat()).toLong()
-                    backoff(nextAttempt, nextDelay, function)
+        future = executorService.schedule(
+            {
+                if (cancelled) {
+                    return@schedule
                 }
-            }
-        }, delay, TimeUnit.MILLISECONDS)
+                try {
+                    function.invoke()
+                } catch (e: Exception) {
+                    // Retry the request function
+                    val nextAttempt = attempt + 1
+                    if (nextAttempt < config.attempts) {
+                        val nextDelay = min(delay * config.scalar, config.max.toFloat()).toLong()
+                        backoff(nextAttempt, nextDelay, function)
+                    }
+                }
+            },
+            delay, TimeUnit.MILLISECONDS
+        )
     }
 }

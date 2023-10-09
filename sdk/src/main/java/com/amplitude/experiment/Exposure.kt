@@ -34,4 +34,5 @@ data class Exposure internal constructor(
     val flagKey: String,
     val variant: String?,
     val experimentKey: String?,
+    val metadata: Map<String, Any?>? = null
 )

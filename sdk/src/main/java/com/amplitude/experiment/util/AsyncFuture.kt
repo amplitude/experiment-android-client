@@ -7,7 +7,10 @@ import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
-internal class AsyncFuture<T>(private val call: Call? = null): Future<T> {
+internal class AsyncFuture<T>(
+    private val call: Call? = null,
+    private val callback: ((T) -> Unit)? = null
+) : Future<T> {
 
     @Volatile private var value: T? = null
     @Volatile private var completed = false
@@ -67,6 +70,7 @@ internal class AsyncFuture<T>(private val call: Call? = null): Future<T> {
             this.value = value
             synchronized(lock) {
                 completed = true
+                callback?.invoke(value)
                 lock.notifyAll()
             }
         }

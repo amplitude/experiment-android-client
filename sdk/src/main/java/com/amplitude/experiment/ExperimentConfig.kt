@@ -7,6 +7,11 @@ enum class Source {
     INITIAL_VARIANTS,
 }
 
+enum class ServerZone {
+    US,
+    EU,
+}
+
 /**
  * Configuration options. This is an immutable object that can be created using
  * a [ExperimentConfig.Builder]. Example usage:
@@ -27,11 +32,19 @@ class ExperimentConfig internal constructor(
     @JvmField
     val serverUrl: String = Defaults.SERVER_URL,
     @JvmField
+    val flagsServerUrl: String = Defaults.FLAGS_SERVER_URL,
+    @JvmField
+    val serverZone: ServerZone = Defaults.SERVER_ZONE,
+    @JvmField
     val fetchTimeoutMillis: Long = Defaults.FETCH_TIMEOUT_MILLIS,
     @JvmField
     val retryFetchOnFailure: Boolean = Defaults.RETRY_FETCH_ON_FAILURE,
     @JvmField
     val automaticExposureTracking: Boolean = Defaults.AUTOMATIC_EXPOSURE_TRACKING,
+    @JvmField
+    val pollOnStart: Boolean = Defaults.POLL_ON_START,
+    @JvmField
+    val fetchOnStart: Boolean? = Defaults.FETCH_ON_START,
     @JvmField
     val automaticFetchOnAmplitudeIdentityChange: Boolean = Defaults.AUTOMATIC_FETCH_ON_AMPLITUDE_IDENTITY_CHANGE,
     @JvmField
@@ -84,6 +97,16 @@ class ExperimentConfig internal constructor(
         const val SERVER_URL = "https://api.lab.amplitude.com/"
 
         /**
+         * "https://flag.lab.amplitude.com/"
+         */
+        const val FLAGS_SERVER_URL = "https://flag.lab.amplitude.com/"
+
+        /**
+         * ServerZone.US
+         */
+        val SERVER_ZONE = ServerZone.US
+
+        /**
          * 10000
          */
         const val FETCH_TIMEOUT_MILLIS = 10000L
@@ -97,6 +120,16 @@ class ExperimentConfig internal constructor(
          * true
          */
         const val AUTOMATIC_EXPOSURE_TRACKING = true
+
+        /**
+         * true
+         */
+        const val POLL_ON_START = true
+
+        /**
+         * null
+         */
+        val FETCH_ON_START: Boolean? = null
 
         /**
          * false
@@ -135,9 +168,13 @@ class ExperimentConfig internal constructor(
         private var initialVariants = Defaults.INITIAL_VARIANTS
         private var source = Defaults.SOURCE
         private var serverUrl = Defaults.SERVER_URL
+        private var flagsServerUrl = Defaults.FLAGS_SERVER_URL
+        private var serverZone = Defaults.SERVER_ZONE
         private var fetchTimeoutMillis = Defaults.FETCH_TIMEOUT_MILLIS
         private var retryFetchOnFailure = Defaults.RETRY_FETCH_ON_FAILURE
         private var automaticExposureTracking = Defaults.AUTOMATIC_EXPOSURE_TRACKING
+        private var pollOnStart = Defaults.POLL_ON_START
+        private var fetchOnStart = Defaults.FETCH_ON_START
         private var automaticFetchOnAmplitudeIdentityChange = Defaults.AUTOMATIC_FETCH_ON_AMPLITUDE_IDENTITY_CHANGE
         private var userProvider = Defaults.USER_PROVIDER
         private var analyticsProvider = Defaults.ANALYTICS_PROVIDER
@@ -167,6 +204,14 @@ class ExperimentConfig internal constructor(
             this.serverUrl = serverUrl
         }
 
+        fun flagsServerUrl(flagsServerUrl: String) = apply {
+            this.flagsServerUrl = flagsServerUrl
+        }
+
+        fun serverZone(serverZone: ServerZone) = apply {
+            this.serverZone = serverZone
+        }
+
         fun fetchTimeoutMillis(fetchTimeoutMillis: Long) = apply {
             this.fetchTimeoutMillis = fetchTimeoutMillis
         }
@@ -177,6 +222,14 @@ class ExperimentConfig internal constructor(
 
         fun automaticExposureTracking(automaticExposureTracking: Boolean) = apply {
             this.automaticExposureTracking = automaticExposureTracking
+        }
+
+        fun pollOnStart(pollOnStart: Boolean) = apply {
+            this.pollOnStart = pollOnStart
+        }
+
+        fun fetchOnStart(fetchOnStart: Boolean?) = apply {
+            this.fetchOnStart = fetchOnStart
         }
 
         fun automaticFetchOnAmplitudeIdentityChange(automaticFetchOnAmplitudeIdentityChange: Boolean) = apply {
@@ -204,9 +257,13 @@ class ExperimentConfig internal constructor(
                 initialVariants = initialVariants,
                 source = source,
                 serverUrl = serverUrl,
+                flagsServerUrl = flagsServerUrl,
+                serverZone = serverZone,
                 fetchTimeoutMillis = fetchTimeoutMillis,
                 retryFetchOnFailure = retryFetchOnFailure,
                 automaticExposureTracking = automaticExposureTracking,
+                pollOnStart = pollOnStart,
+                fetchOnStart = fetchOnStart,
                 automaticFetchOnAmplitudeIdentityChange = automaticFetchOnAmplitudeIdentityChange,
                 userProvider = userProvider,
                 analyticsProvider = analyticsProvider,
@@ -223,9 +280,13 @@ class ExperimentConfig internal constructor(
             .initialVariants(initialVariants)
             .source(source)
             .serverUrl(serverUrl)
+            .flagsServerUrl(flagsServerUrl)
+            .serverZone(serverZone)
             .fetchTimeoutMillis(fetchTimeoutMillis)
             .retryFetchOnFailure(retryFetchOnFailure)
             .automaticExposureTracking(automaticExposureTracking)
+            .pollOnStart(pollOnStart)
+            .fetchOnStart(fetchOnStart)
             .automaticFetchOnAmplitudeIdentityChange((automaticFetchOnAmplitudeIdentityChange))
             .userProvider(userProvider)
             .analyticsProvider(analyticsProvider)

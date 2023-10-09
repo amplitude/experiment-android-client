@@ -166,6 +166,7 @@ class ExperimentUser internal constructor(
         fun deviceManufacturer(deviceManufacturer: String?) = apply {
             this.deviceManufacturer = deviceManufacturer
         }
+
         fun deviceBrand(deviceBrand: String?) = apply { this.deviceBrand = deviceBrand }
         fun deviceModel(deviceModel: String?) = apply { this.deviceModel = deviceModel }
         fun carrier(carrier: String?) = apply { this.carrier = carrier }
@@ -173,17 +174,21 @@ class ExperimentUser internal constructor(
         fun userProperties(userProperties: Map<String, Any?>?) = apply {
             this.userProperties = userProperties?.toMutableMap()
         }
+
         fun userProperty(key: String, value: Any?) = apply {
             userProperties = (userProperties ?: mutableMapOf()).apply {
                 this[key] = value
             }
         }
+
         fun groups(groups: Map<String, Set<String>>?) = apply {
             this.groups = groups?.toMutableMap()
         }
+
         fun group(groupType: String, groupName: String) = apply {
             this.groups = (this.groups ?: mutableMapOf()).apply { put(groupType, setOf(groupName)) }
         }
+
         fun groupProperties(groupProperties: Map<String, Map<String, Map<String, Any?>>>?) = apply {
             this.groupProperties = groupProperties?.mapValues { groupTypes ->
                 groupTypes.value.toMutableMap().mapValues { groupNames ->
@@ -191,6 +196,7 @@ class ExperimentUser internal constructor(
                 }.toMutableMap()
             }?.toMutableMap()
         }
+
         fun groupProperty(groupType: String, groupName: String, key: String, value: Any?) = apply {
             this.groupProperties = (this.groupProperties ?: mutableMapOf()).apply {
                 getOrPut(groupType) { mutableMapOf(groupName to mutableMapOf()) }
