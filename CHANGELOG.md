@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/amplitude/experiment-android-client/compare/1.10.1...1.11.0) (2023-10-11)
+
+
+### Features
+
+* local evaluation ([#38](https://github.com/amplitude/experiment-android-client/issues/38)) ([b512971](https://github.com/amplitude/experiment-android-client/commit/b512971e725f0d53bbd4c7e14525aa8482ac06d1))
+
 ## [1.10.1](https://github.com/amplitude/experiment-android-client/compare/1.10.0...1.10.1) (2023-09-26)
 
 
