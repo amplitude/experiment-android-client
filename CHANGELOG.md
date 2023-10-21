@@ -1,3 +1,10 @@
+## [1.11.1](https://github.com/amplitude/experiment-android-client/compare/1.11.0...1.11.1) (2023-10-21)
+
+
+### Bug Fixes
+
+* start() always sets user ([#41](https://github.com/amplitude/experiment-android-client/issues/41)) ([bc15a1f](https://github.com/amplitude/experiment-android-client/commit/bc15a1f1a754912cd64d3526c1f3dd84cf3264d2))
+
 # [1.11.0](https://github.com/amplitude/experiment-android-client/compare/1.10.1...1.11.0) (2023-10-11)
 
 
