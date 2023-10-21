@@ -117,6 +117,7 @@ internal class DefaultExperimentClient internal constructor(
 
     override fun start(user: ExperimentUser?): Future<ExperimentClient> {
         synchronized(isRunningLock) {
+            this.user = user
             if (isRunning) {
                 val future = AsyncFuture<ExperimentClient>()
                 future.complete(this)
@@ -128,7 +129,6 @@ internal class DefaultExperimentClient internal constructor(
                 this.poller.start()
             }
         }
-        this.user = user
         return this.executorService.submit(
             Callable {
                 val flagsFuture = doFlags()
