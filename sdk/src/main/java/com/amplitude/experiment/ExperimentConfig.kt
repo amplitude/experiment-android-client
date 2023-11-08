@@ -44,7 +44,7 @@ class ExperimentConfig internal constructor(
     @JvmField
     val pollOnStart: Boolean = Defaults.POLL_ON_START,
     @JvmField
-    val fetchOnStart: Boolean? = Defaults.FETCH_ON_START,
+    val fetchOnStart: Boolean = Defaults.FETCH_ON_START,
     @JvmField
     val automaticFetchOnAmplitudeIdentityChange: Boolean = Defaults.AUTOMATIC_FETCH_ON_AMPLITUDE_IDENTITY_CHANGE,
     @JvmField
@@ -129,7 +129,7 @@ class ExperimentConfig internal constructor(
         /**
          * null
          */
-        val FETCH_ON_START: Boolean? = null
+        const val FETCH_ON_START: Boolean = true
 
         /**
          * false
@@ -229,7 +229,7 @@ class ExperimentConfig internal constructor(
         }
 
         fun fetchOnStart(fetchOnStart: Boolean?) = apply {
-            this.fetchOnStart = fetchOnStart
+            this.fetchOnStart = fetchOnStart ?: true
         }
 
         fun automaticFetchOnAmplitudeIdentityChange(automaticFetchOnAmplitudeIdentityChange: Boolean) = apply {

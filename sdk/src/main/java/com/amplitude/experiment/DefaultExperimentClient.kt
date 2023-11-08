@@ -132,7 +132,7 @@ internal class DefaultExperimentClient internal constructor(
         return this.executorService.submit(
             Callable {
                 val flagsFuture = doFlags()
-                if (config.fetchOnStart != false) {
+                if (config.fetchOnStart) {
                     fetchInternal(
                         getUserMergedWithProviderOrWait(10000),
                         config.fetchTimeoutMillis,
