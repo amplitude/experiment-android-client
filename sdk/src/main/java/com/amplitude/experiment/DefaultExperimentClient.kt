@@ -132,28 +132,16 @@ internal class DefaultExperimentClient internal constructor(
         return this.executorService.submit(
             Callable {
                 val flagsFuture = doFlags()
-                var remoteFlags = config.fetchOnStart
-                    ?: allFlags().values.any { it.isRemoteEvaluationMode() }
-                if (remoteFlags) {
-                    flagsFuture.get()
+                if (config.fetchOnStart != false) {
                     fetchInternal(
                         getUserMergedWithProviderOrWait(10000),
                         config.fetchTimeoutMillis,
                         config.retryFetchOnFailure,
                         null
                     )
+                    flagsFuture.get()
                 } else {
                     flagsFuture.get()
-                    remoteFlags = config.fetchOnStart
-                        ?: allFlags().values.any { it.isRemoteEvaluationMode() }
-                    if (remoteFlags) {
-                        fetchInternal(
-                            getUserMergedWithProviderOrWait(10000),
-                            config.fetchTimeoutMillis,
-                            config.retryFetchOnFailure,
-                            null
-                        )
-                    }
                 }
                 this
             }
