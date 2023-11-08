@@ -17,7 +17,6 @@ import com.amplitude.experiment.util.UserSessionExposureTracker
 import com.amplitude.experiment.util.backoff
 import com.amplitude.experiment.util.convertToVariant
 import com.amplitude.experiment.util.isLocalEvaluationMode
-import com.amplitude.experiment.util.isRemoteEvaluationMode
 import com.amplitude.experiment.util.merge
 import com.amplitude.experiment.util.toEvaluationContext
 import com.amplitude.experiment.util.toJson
