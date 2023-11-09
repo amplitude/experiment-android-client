@@ -17,7 +17,6 @@ import com.amplitude.experiment.util.UserSessionExposureTracker
 import com.amplitude.experiment.util.backoff
 import com.amplitude.experiment.util.convertToVariant
 import com.amplitude.experiment.util.isLocalEvaluationMode
-import com.amplitude.experiment.util.isRemoteEvaluationMode
 import com.amplitude.experiment.util.merge
 import com.amplitude.experiment.util.toEvaluationContext
 import com.amplitude.experiment.util.toJson
@@ -132,28 +131,16 @@ internal class DefaultExperimentClient internal constructor(
         return this.executorService.submit(
             Callable {
                 val flagsFuture = doFlags()
-                var remoteFlags = config.fetchOnStart
-                    ?: allFlags().values.any { it.isRemoteEvaluationMode() }
-                if (remoteFlags) {
-                    flagsFuture.get()
+                if (config.fetchOnStart) {
                     fetchInternal(
                         getUserMergedWithProviderOrWait(10000),
                         config.fetchTimeoutMillis,
                         config.retryFetchOnFailure,
                         null
                     )
+                    flagsFuture.get()
                 } else {
                     flagsFuture.get()
-                    remoteFlags = config.fetchOnStart
-                        ?: allFlags().values.any { it.isRemoteEvaluationMode() }
-                    if (remoteFlags) {
-                        fetchInternal(
-                            getUserMergedWithProviderOrWait(10000),
-                            config.fetchTimeoutMillis,
-                            config.retryFetchOnFailure,
-                            null
-                        )
-                    }
                 }
                 this
             }

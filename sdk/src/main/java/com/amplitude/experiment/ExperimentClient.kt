@@ -12,12 +12,8 @@ interface ExperimentClient {
      * local flag configurations have been updated, and the fetch()
      * result has been received (if the request was made).
      *
-     * This function determines whether to fetch() based on the result of
-     * the flag configurations cached locally or received in the initial flag
-     * configuration response.
-     *
-     * To explicitly force this request to fetch or not, set the
-     * fetchOnStart configuration option when initializing the SDK.
+     * To force this function not to fetch variants, set the {@link fetchOnStart}
+     * configuration option to `false` when initializing the SDK.
      *
      * Finally, this function will start polling for flag configurations at a
      * fixed interval. To disable polling, set the pollOnStart

@@ -1078,7 +1078,7 @@ class ExperimentClientTest {
     }
 
     @Test
-    fun `start - with local evaluation only, does not call fetchInternal`() {
+    fun `start - with local evaluation only, calls fetchInternal`() {
         val client = DefaultExperimentClient(
             API_KEY,
             ExperimentConfig(),
@@ -1089,7 +1089,7 @@ class ExperimentClientTest {
         val spyClient = spyk(client)
         every { spyClient.allFlags() } returns emptyMap()
         spyClient.start(null).get()
-        verify(exactly = 0) { spyClient.fetchInternal(any(), any(), any(), any()) }
+        verify(exactly = 1) { spyClient.fetchInternal(any(), any(), any(), any()) }
     }
 
     @Test
