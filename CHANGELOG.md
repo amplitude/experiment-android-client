@@ -1,3 +1,10 @@
+## [1.11.2](https://github.com/amplitude/experiment-android-client/compare/1.11.1...1.11.2) (2023-11-09)
+
+
+### Bug Fixes
+
+* call fetch on start by default ([#43](https://github.com/amplitude/experiment-android-client/issues/43)) ([cb55293](https://github.com/amplitude/experiment-android-client/commit/cb552933f0e3bfe7c8f949e33567d37fda462547))
+
 ## [1.11.1](https://github.com/amplitude/experiment-android-client/compare/1.11.0...1.11.1) (2023-10-21)
 
 
