@@ -57,12 +57,7 @@ internal fun JSONObject?.toVariant(): Variant? {
 
         val payload = when {
             has("payload") -> {
-                val payload = get("payload")
-                if (payload is JSONObject) {
-                    payload.toMap()
-                } else {
-                    payload
-                }
+                get("payload")
             }
 
             else -> null
@@ -104,7 +99,7 @@ internal fun EvaluationVariant.convertToVariant(): Variant {
     val payload = when {
         this.payload != null -> {
             if (this.payload is Map<*, *>) {
-                JSONObject(this.payload).toMap()
+                JSONObject(this.payload)
             } else {
                 this.payload
             }
