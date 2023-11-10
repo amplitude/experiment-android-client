@@ -25,8 +25,8 @@ class StorageTest {
             )
         ).toString()
         Assert.assertEquals(
-            Variant(key = "on", value = "on", payload = mapOf("k" to "v")),
-            decodeVariantFromStorage(storedVariant)
+            Variant(key = "on", value = "on", payload = JSONObject(mapOf("k" to "v"))).toString(),
+            decodeVariantFromStorage(storedVariant).toString()
         )
     }
 
@@ -43,11 +43,11 @@ class StorageTest {
             Variant(
                 key = "on",
                 value = "on",
-                payload = mapOf("k" to "v"),
+                payload = JSONObject(mapOf("k" to "v")),
                 expKey = "exp-1",
                 metadata = mapOf("experimentKey" to "exp-1")
-            ),
-            decodeVariantFromStorage(storedVariant)
+            ).toString(),
+            decodeVariantFromStorage(storedVariant).toString()
         )
     }
 
@@ -78,9 +78,9 @@ class StorageTest {
             Variant(
                 key = "treatment",
                 value = "on",
-                payload = mapOf("k" to "v")
-            ),
-            decodeVariantFromStorage(storedVariant)
+                payload = JSONObject(mapOf("k" to "v"))
+            ).toString(),
+            decodeVariantFromStorage(storedVariant).toString()
         )
     }
 
@@ -98,11 +98,11 @@ class StorageTest {
             Variant(
                 key = "treatment",
                 value = "on",
-                payload = mapOf("k" to "v"),
+                payload = JSONObject(mapOf("k" to "v")),
                 expKey = "exp-1",
                 metadata = mapOf("experimentKey" to "exp-1")
-            ),
-            decodeVariantFromStorage(storedVariant)
+            ).toString(),
+            decodeVariantFromStorage(storedVariant).toString()
         )
     }
 
@@ -120,11 +120,11 @@ class StorageTest {
             Variant(
                 key = "treatment",
                 value = "on",
-                payload = mapOf("k" to "v"),
+                payload = JSONObject(mapOf("k" to "v")),
                 expKey = "exp-1",
                 metadata = mapOf("experimentKey" to "exp-1")
-            ),
-            decodeVariantFromStorage(storedVariant)
+            ).toString(),
+            decodeVariantFromStorage(storedVariant).toString()
         )
     }
 }
