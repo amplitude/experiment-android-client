@@ -59,7 +59,6 @@ internal fun JSONObject?.toVariant(): Variant? {
             has("payload") -> {
                 get("payload")
             }
-
             else -> null
         }
 
