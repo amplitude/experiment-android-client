@@ -394,7 +394,7 @@ internal class DefaultExperimentClient internal constructor(
         return variants
     }
 
-    private fun storeVariants(variants: Map<String, Variant>, options: FetchOptions?) = synchronized(this.variants) {
+    private fun storeVariants(variants: Map<String, Variant>, options: FetchOptions?) {
         val failedFlagKeys = options?.flagKeys?.toMutableList() ?: mutableListOf()
         synchronized(this.variants) {
             if (options?.flagKeys == null) {
@@ -672,7 +672,7 @@ enum class VariantSource(val type: String) {
 
     fun isFallback(): Boolean {
         return this == FALLBACK_INLINE ||
-            this == FALLBACK_CONFIG ||
-            this == SECONDARY_INITIAL_VARIANTS
+                this == FALLBACK_CONFIG ||
+                this == SECONDARY_INITIAL_VARIANTS
     }
 }
