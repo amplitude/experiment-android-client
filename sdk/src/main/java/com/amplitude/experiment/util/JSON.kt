@@ -49,7 +49,6 @@ private fun Any?.fromJSON(): Any? {
     return when (this) {
         is JSONObject -> this.toMap()
         is JSONArray -> this.toList()
-        is String -> JSONObject.quote(this).drop(1).dropLast(1) // Unescape JSON string
         // org.json uses BigDecimal for doubles and floats; normalize to double
         // to make testing for equality easier.
         is BigDecimal -> this.toDouble()
