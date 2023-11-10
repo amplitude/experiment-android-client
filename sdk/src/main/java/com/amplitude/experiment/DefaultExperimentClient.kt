@@ -671,8 +671,6 @@ enum class VariantSource(val type: String) {
     }
 
     fun isFallback(): Boolean {
-        return this == FALLBACK_INLINE ||
-                this == FALLBACK_CONFIG ||
-                this == SECONDARY_INITIAL_VARIANTS
+        return this == FALLBACK_INLINE || this == FALLBACK_CONFIG || this == SECONDARY_INITIAL_VARIANTS
     }
 }
