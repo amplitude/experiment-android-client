@@ -394,7 +394,7 @@ internal class DefaultExperimentClient internal constructor(
         return variants
     }
 
-    private fun storeVariants(variants: Map<String, Variant>, options: FetchOptions?) = synchronized(variants) {
+    private fun storeVariants(variants: Map<String, Variant>, options: FetchOptions?) = synchronized(this.variants) {
         val failedFlagKeys = options?.flagKeys?.toMutableList() ?: mutableListOf()
         synchronized(this.variants) {
             if (options?.flagKeys == null) {

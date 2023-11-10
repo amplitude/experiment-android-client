@@ -102,7 +102,13 @@ internal fun EvaluationVariant.convertToVariant(): Variant {
         else -> null
     }
     val payload = when {
-        this.payload != null -> this.payload
+        this.payload != null -> {
+            if (this.payload is Map<*, *>) {
+                JSONObject(this.payload).toMap()
+            } else {
+                this.payload
+            }
+        }
         else -> null
     }
     val metadata = when {
