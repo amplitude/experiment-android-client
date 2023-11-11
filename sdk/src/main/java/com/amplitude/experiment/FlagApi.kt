@@ -24,7 +24,10 @@ internal data class GetFlagsOptions(
 )
 
 internal interface FlagApi {
-    fun getFlags(options: GetFlagsOptions? = null, callback: ((Map<String, EvaluationFlag>) -> Unit)? = null): Future<Map<String, EvaluationFlag>>
+    fun getFlags(
+        options: GetFlagsOptions? = null,
+        callback: ((Map<String, EvaluationFlag>) -> Unit)? = null
+    ): Future<Map<String, EvaluationFlag>>
 }
 
 internal class SdkFlagApi(
@@ -80,6 +83,9 @@ internal class SdkFlagApi(
                     }
                 } catch (e: IOException) {
                     onFailure(call, e)
+                } catch (e: SerializationException) {
+                    Logger.e("Error decoding JSON: ${e.message}")
+                    future.completeExceptionally(e)
                 }
             }
 
