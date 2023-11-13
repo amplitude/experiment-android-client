@@ -98,7 +98,9 @@ internal fun EvaluationVariant.convertToVariant(): Variant {
     val payload = when {
         this.payload != null -> {
             if (this.payload is Map<*, *>) {
-                JSONObject(this.payload)
+                this.payload.toJSONObject()
+            } else if (this.payload is Collection<*>) {
+                this.payload.toJSONArray()
             } else {
                 this.payload
             }
