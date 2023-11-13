@@ -68,7 +68,7 @@ internal class SdkFlagApi(
                     if (response.isSuccessful) {
                         val body = response.body?.string() ?: ""
 
-                        // Check if the response is a JSON array
+                        // Check if the response is a valid JSON array
                         if (body.startsWith("[") && body.endsWith("]")) {
                             val flags = json.decodeFromString<List<EvaluationFlag>>(body)
                                 .associateBy { it.key }
