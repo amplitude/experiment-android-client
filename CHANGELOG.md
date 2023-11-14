@@ -1,3 +1,11 @@
+## [1.11.3](https://github.com/amplitude/experiment-android-client/compare/1.11.2...1.11.3) (2023-11-14)
+
+
+### Bug Fixes
+
+* FlagApi fetch error handling ([#47](https://github.com/amplitude/experiment-android-client/issues/47)) ([7e1da40](https://github.com/amplitude/experiment-android-client/commit/7e1da40ebad333a538f90032b6db0d746102013f))
+* Variant payload parsing format ([#46](https://github.com/amplitude/experiment-android-client/issues/46)) ([7f75de9](https://github.com/amplitude/experiment-android-client/commit/7f75de9cd834ab5e69de34759b0cece418d6c1b4))
+
 ## [1.11.2](https://github.com/amplitude/experiment-android-client/compare/1.11.1...1.11.2) (2023-11-09)
 
 
