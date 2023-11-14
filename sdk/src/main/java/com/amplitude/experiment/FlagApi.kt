@@ -67,6 +67,9 @@ internal class SdkFlagApi(
 
                     if (response.isSuccessful) {
                         val body = response.body?.string() ?: ""
+                        val flags = json.decodeFromString<List<EvaluationFlag>>(body)
+                            .associateBy { it.key }
+                        future.complete(flags)
                     } else {
                         Logger.e("Non-successful response: ${response.code}")
                         future.completeExceptionally(IOException("Non-successful response: ${response.code}"))
