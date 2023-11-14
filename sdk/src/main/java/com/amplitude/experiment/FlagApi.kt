@@ -4,6 +4,7 @@ import com.amplitude.experiment.evaluation.EvaluationFlag
 import com.amplitude.experiment.evaluation.json
 import com.amplitude.experiment.util.AsyncFuture
 import com.amplitude.experiment.util.Logger
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import okhttp3.Call
 import okhttp3.Callback
@@ -23,7 +24,10 @@ internal data class GetFlagsOptions(
 )
 
 internal interface FlagApi {
-    fun getFlags(options: GetFlagsOptions? = null, callback: ((Map<String, EvaluationFlag>) -> Unit)? = null): Future<Map<String, EvaluationFlag>>
+    fun getFlags(
+        options: GetFlagsOptions? = null,
+        callback: ((Map<String, EvaluationFlag>) -> Unit)? = null
+    ): Future<Map<String, EvaluationFlag>>
 }
 
 internal class SdkFlagApi(
@@ -60,12 +64,20 @@ internal class SdkFlagApi(
             override fun onResponse(call: Call, response: Response) {
                 try {
                     Logger.d("Received fetch flags response: $response")
-                    val body = response.body?.string() ?: ""
-                    val flags = json.decodeFromString<List<EvaluationFlag>>(body)
-                        .associateBy { it.key }
-                    future.complete(flags)
+                    if (response.isSuccessful) {
+                        val body = response.body?.string() ?: ""
+                        val flags = json.decodeFromString<List<EvaluationFlag>>(body)
+                            .associateBy { it.key }
+                        future.complete(flags)
+                    } else {
+                        Logger.e("Non-successful response: ${response.code}")
+                        future.completeExceptionally(IOException("Non-successful response: ${response.code}"))
+                    }
                 } catch (e: IOException) {
                     onFailure(call, e)
+                } catch (e: SerializationException) {
+                    Logger.e("Error decoding JSON: ${e.message}")
+                    future.completeExceptionally(e)
                 }
             }
 
