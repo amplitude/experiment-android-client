@@ -14,6 +14,8 @@ import io.mockk.spyk
 import io.mockk.verify
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
+import org.json.JSONArray
+import org.json.JSONObject
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -1119,5 +1121,35 @@ class ExperimentClientTest {
         val spyClient = spyk(client)
         spyClient.start(null).get()
         verify(exactly = 0) { spyClient.fetchInternal(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `LocalEvaluation - test payload format`() {
+        val user = ExperimentUser(userId = "test_user")
+        val exposureTrackingProvider = mockk<TestExposureTrackingProvider>()
+        every { exposureTrackingProvider.track(any()) } just Runs
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                debug = true,
+                exposureTrackingProvider = exposureTrackingProvider,
+                fetchOnStart = false,
+                source = Source.LOCAL_STORAGE,
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
+        client.start(user).get()
+        var variant = client.variant("sdk-payload-ci-test")
+        val obj = JSONObject().put("key1", "val1").put("key2", "val2")
+        val array = JSONArray().put(JSONObject().put("key1", "obj1")).put(JSONObject().put("key2", "obj2"))
+        Assert.assertEquals(obj::class, variant.payload!!::class)
+        Assert.assertEquals(obj.toString(), variant.payload.toString())
+        // set null user to get array variant
+        client.start(ExperimentUser()).get()
+        variant = client.variant("sdk-payload-ci-test")
+        Assert.assertEquals(array::class, variant.payload!!::class)
+        Assert.assertEquals(array.toString(), variant.payload.toString())
     }
 }
