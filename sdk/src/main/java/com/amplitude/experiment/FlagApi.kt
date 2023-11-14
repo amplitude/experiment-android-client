@@ -64,7 +64,6 @@ internal class SdkFlagApi(
             override fun onResponse(call: Call, response: Response) {
                 try {
                     Logger.d("Received fetch flags response: $response")
-
                     if (response.isSuccessful) {
                         val body = response.body?.string() ?: ""
                         val flags = json.decodeFromString<List<EvaluationFlag>>(body)
