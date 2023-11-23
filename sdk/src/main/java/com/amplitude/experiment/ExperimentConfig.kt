@@ -26,6 +26,8 @@ class ExperimentConfig internal constructor(
     @JvmField
     val fallbackVariant: Variant = Defaults.FALLBACK_VARIANT,
     @JvmField
+    val initialFlags: String? = Defaults.INITIAL_FLAGS,
+    @JvmField
     val initialVariants: Map<String, Variant> = Defaults.INITIAL_VARIANTS,
     @JvmField
     val source: Source = Defaults.SOURCE,
@@ -80,6 +82,11 @@ class ExperimentConfig internal constructor(
          * Variant(null,  null)
          */
         val FALLBACK_VARIANT: Variant = Variant()
+
+        /**
+         * null
+         */
+        val INITIAL_FLAGS: String? = null
 
         /**
          * Empty Map<String, Variant>
@@ -165,6 +172,7 @@ class ExperimentConfig internal constructor(
         private var debug = Defaults.DEBUG
         private var instanceName = Defaults.INSTANCE_NAME
         private var fallbackVariant = Defaults.FALLBACK_VARIANT
+        private var initialFlags = Defaults.INITIAL_FLAGS
         private var initialVariants = Defaults.INITIAL_VARIANTS
         private var source = Defaults.SOURCE
         private var serverUrl = Defaults.SERVER_URL
@@ -190,6 +198,10 @@ class ExperimentConfig internal constructor(
 
         fun fallbackVariant(fallbackVariant: Variant) = apply {
             this.fallbackVariant = fallbackVariant
+        }
+
+        fun initialFlags(initialFlags: String?) = apply {
+            this.initialFlags = initialFlags
         }
 
         fun initialVariants(initialVariants: Map<String, Variant>) = apply {
@@ -254,6 +266,7 @@ class ExperimentConfig internal constructor(
                 debug = debug,
                 instanceName = instanceName,
                 fallbackVariant = fallbackVariant,
+                initialFlags = initialFlags,
                 initialVariants = initialVariants,
                 source = source,
                 serverUrl = serverUrl,
@@ -277,6 +290,7 @@ class ExperimentConfig internal constructor(
             .debug(debug)
             .instanceName(instanceName)
             .fallbackVariant(fallbackVariant)
+            .initialFlags(initialFlags)
             .initialVariants(initialVariants)
             .source(source)
             .serverUrl(serverUrl)

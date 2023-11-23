@@ -2,6 +2,7 @@ package com.amplitude.experiment
 
 import com.amplitude.experiment.evaluation.EvaluationEngineImpl
 import com.amplitude.experiment.evaluation.EvaluationFlag
+import com.amplitude.experiment.evaluation.json
 import com.amplitude.experiment.evaluation.topologicalSort
 import com.amplitude.experiment.storage.LoadStoreCache
 import com.amplitude.experiment.storage.Storage
@@ -21,6 +22,7 @@ import com.amplitude.experiment.util.merge
 import com.amplitude.experiment.util.toEvaluationContext
 import com.amplitude.experiment.util.toJson
 import com.amplitude.experiment.util.toVariant
+import kotlinx.serialization.decodeFromString
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.HttpUrl
@@ -70,6 +72,15 @@ internal class DefaultExperimentClient internal constructor(
     init {
         this.variants.load()
         this.flags.load()
+        // Load initial flags for all flags that don't already exist in the cache.
+        if (config.initialFlags != null) {
+            val initialFlags: Map<String, EvaluationFlag> = json.decodeFromString(config.initialFlags)
+            for ((flagKey, flag) in initialFlags) {
+                if (this.flags.get(flagKey) == null) {
+                    this.flags.put(flagKey, flag)
+                }
+            }
+        }
     }
 
     private val backoffLock = Any()
