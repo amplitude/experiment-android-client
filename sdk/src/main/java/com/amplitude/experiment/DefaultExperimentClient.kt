@@ -72,15 +72,7 @@ internal class DefaultExperimentClient internal constructor(
     init {
         this.variants.load()
         this.flags.load()
-        // Load initial flags for all flags that don't already exist in the cache.
-        if (config.initialFlags != null) {
-            val initialFlags: Map<String, EvaluationFlag> = json.decodeFromString(config.initialFlags)
-            for ((flagKey, flag) in initialFlags) {
-                if (this.flags.get(flagKey) == null) {
-                    this.flags.put(flagKey, flag)
-                }
-            }
-        }
+        mergeInitialFlagsWithStorage()
     }
 
     private val backoffLock = Any()
@@ -373,6 +365,7 @@ internal class DefaultExperimentClient internal constructor(
                 this.flags.clear()
                 this.flags.putAll(flags)
                 this.flags.store()
+                mergeInitialFlagsWithStorage()
             }
         }
     }
@@ -659,6 +652,17 @@ internal class DefaultExperimentClient internal constructor(
             return fallbackVariantAndSource
         }
         return defaultVariantAndSource
+    }
+
+    private fun mergeInitialFlagsWithStorage() {
+        if (config.initialFlags != null) {
+            val initialFlags: List<EvaluationFlag> = json.decodeFromString(config.initialFlags)
+            for (flag in initialFlags) {
+                if (this.flags.get(flag.key) == null) {
+                    this.flags.put(flag.key, flag)
+                }
+            }
+        }
     }
 }
 
