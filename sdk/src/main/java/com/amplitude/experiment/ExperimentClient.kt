@@ -26,7 +26,7 @@ interface ExperimentClient {
      * @see fetch
      * @see variant
      */
-    fun start(user: ExperimentUser?): Future<ExperimentClient>
+    fun start(user: ExperimentUser? = null): Future<ExperimentClient>
 
     /**
      * Stop the local flag configuration poller.

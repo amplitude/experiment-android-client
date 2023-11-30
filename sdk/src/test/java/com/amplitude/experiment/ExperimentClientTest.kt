@@ -1152,4 +1152,52 @@ class ExperimentClientTest {
         Assert.assertEquals(array::class, variant.payload!!::class)
         Assert.assertEquals(array.toString(), variant.payload.toString())
     }
+
+    @Test
+    fun `initial flags`() {
+        val storage = MockStorage()
+        // Flag, sdk-ci-test-local is modified to always return off
+        val initialFlags = """
+            [
+                {"key":"sdk-ci-test-local","metadata":{"deployed":true,"evaluationMode":"local","flagType":"release","flagVersion":1},"segments":[{"metadata":{"segmentName":"All Other Users"},"variant":"off"}],"variants":{"off":{"key":"off","metadata":{"default":true}},"on":{"key":"on","value":"on"}}},
+                {"key":"sdk-ci-test-local-2","metadata":{"deployed":true,"evaluationMode":"local","flagType":"release","flagVersion":1},"segments":[{"metadata":{"segmentName":"All Other Users"},"variant":"on"}],"variants":{"off":{"key":"off","metadata":{"default":true}},"on":{"key":"on","value":"on"}}}
+            ]
+        """.trimIndent()
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                initialFlags = initialFlags,
+            ),
+            OkHttpClient(),
+            storage,
+            Experiment.executorService,
+        )
+        val user = ExperimentUser(userId = "user_id", deviceId = "device_id")
+        client.setUser(user)
+        var variant = client.variant("sdk-ci-test-local")
+        Assert.assertEquals("off", variant.key)
+        var variant2 = client.variant("sdk-ci-test-local-2")
+        Assert.assertEquals("on", variant2.key)
+        // Call start to update the flag, overwrites the initial flag to return on
+        client.start(user).get()
+        variant = client.variant("sdk-ci-test-local")
+        Assert.assertEquals("on", variant.key)
+        variant2 = client.variant("sdk-ci-test-local-2")
+        Assert.assertEquals("on", variant2.key)
+        // Initialize a second client with the same storage to simulate an app restart
+        val client2 = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                initialFlags = initialFlags,
+            ),
+            OkHttpClient(),
+            storage,
+            Experiment.executorService,
+        )
+        // Storage flag should take precedent over initial flag
+        variant = client.variant("sdk-ci-test-local")
+        Assert.assertEquals("on", variant.key)
+        variant2 = client.variant("sdk-ci-test-local-2")
+        Assert.assertEquals("on", variant2.key)
+    }
 }

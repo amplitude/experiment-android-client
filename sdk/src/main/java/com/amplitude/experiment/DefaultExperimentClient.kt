@@ -2,6 +2,7 @@ package com.amplitude.experiment
 
 import com.amplitude.experiment.evaluation.EvaluationEngineImpl
 import com.amplitude.experiment.evaluation.EvaluationFlag
+import com.amplitude.experiment.evaluation.json
 import com.amplitude.experiment.evaluation.topologicalSort
 import com.amplitude.experiment.storage.LoadStoreCache
 import com.amplitude.experiment.storage.Storage
@@ -21,6 +22,7 @@ import com.amplitude.experiment.util.merge
 import com.amplitude.experiment.util.toEvaluationContext
 import com.amplitude.experiment.util.toJson
 import com.amplitude.experiment.util.toVariant
+import kotlinx.serialization.decodeFromString
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.HttpUrl
@@ -70,6 +72,7 @@ internal class DefaultExperimentClient internal constructor(
     init {
         this.variants.load()
         this.flags.load()
+        mergeInitialFlagsWithStorage()
     }
 
     private val backoffLock = Any()
@@ -362,6 +365,7 @@ internal class DefaultExperimentClient internal constructor(
                 this.flags.clear()
                 this.flags.putAll(flags)
                 this.flags.store()
+                mergeInitialFlagsWithStorage()
             }
         }
     }
@@ -648,6 +652,17 @@ internal class DefaultExperimentClient internal constructor(
             return fallbackVariantAndSource
         }
         return defaultVariantAndSource
+    }
+
+    private fun mergeInitialFlagsWithStorage() {
+        if (config.initialFlags != null) {
+            val initialFlags: List<EvaluationFlag> = json.decodeFromString(config.initialFlags)
+            for (flag in initialFlags) {
+                if (this.flags.get(flag.key) == null) {
+                    this.flags.put(flag.key, flag)
+                }
+            }
+        }
     }
 }
 
