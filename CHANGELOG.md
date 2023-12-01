@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/amplitude/experiment-android-client/compare/1.11.3...1.12.0) (2023-12-01)
+
+
+### Features
+
+* support bootstrapping initial local eval flags ([#48](https://github.com/amplitude/experiment-android-client/issues/48)) ([7f1e96d](https://github.com/amplitude/experiment-android-client/commit/7f1e96d8a05f49d0bc2fb0a64efe1756cdee5320))
+
 ## [1.11.3](https://github.com/amplitude/experiment-android-client/compare/1.11.2...1.11.3) (2023-11-14)
 
 
