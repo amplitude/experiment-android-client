@@ -8,6 +8,7 @@ import com.amplitude.experiment.storage.LoadStoreCache
 import com.amplitude.experiment.storage.Storage
 import com.amplitude.experiment.storage.getFlagStorage
 import com.amplitude.experiment.storage.getVariantStorage
+import com.amplitude.experiment.util.FetchException
 import com.amplitude.experiment.util.AsyncFuture
 import com.amplitude.experiment.util.Backoff
 import com.amplitude.experiment.util.BackoffConfig
@@ -36,6 +37,7 @@ import org.json.JSONObject
 import java.io.IOException
 import java.lang.IllegalStateException
 import java.util.concurrent.Callable
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
@@ -293,7 +295,7 @@ internal class DefaultExperimentClient internal constructor(
             val variants = doFetch(user, timeoutMillis, options).get()
             storeVariants(variants, options)
         } catch (e: Exception) {
-            if (retry) {
+            if (retry && shouldRetryFetch(e)) {
                 startRetries(user, options)
             }
             throw e
@@ -339,6 +341,9 @@ internal class DefaultExperimentClient internal constructor(
             override fun onResponse(call: Call, response: Response) {
                 try {
                     Logger.d("Received fetch variants response: $response")
+                    if (!response.isSuccessful) {
+                        throw FetchException(response.code, "fetch error response: $response")
+                    }
                     val variants = parseResponse(response)
                     future.complete(variants)
                 } catch (e: Exception) {
@@ -663,6 +668,15 @@ internal class DefaultExperimentClient internal constructor(
                 }
             }
         }
+    }
+
+    private fun shouldRetryFetch(e: Exception): Boolean {
+        println(e.toString())
+        if (e is ExecutionException && e.cause is FetchException) {
+            val fetchException = e.cause as FetchException
+            return fetchException.statusCode < 400 || fetchException.statusCode >= 500 || fetchException.statusCode == 429
+        }
+        return true
     }
 }
 
