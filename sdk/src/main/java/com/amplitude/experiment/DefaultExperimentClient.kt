@@ -671,7 +671,6 @@ internal class DefaultExperimentClient internal constructor(
     }
 
     private fun shouldRetryFetch(e: Exception): Boolean {
-        println(e.toString())
         if (e is ExecutionException && e.cause is FetchException) {
             val fetchException = e.cause as FetchException
             return fetchException.statusCode < 400 || fetchException.statusCode >= 500 || fetchException.statusCode == 429
