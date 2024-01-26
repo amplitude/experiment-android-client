@@ -2,10 +2,11 @@ package com.amplitude.experiment
 
 import com.amplitude.experiment.analytics.ExperimentAnalyticsEvent
 import com.amplitude.experiment.analytics.ExperimentAnalyticsProvider
-import com.amplitude.experiment.util.*
+import com.amplitude.experiment.util.FetchException
 import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.MockStorage
 import com.amplitude.experiment.util.SystemLogger
+import com.amplitude.experiment.util.TestExposureTrackingProvider
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
@@ -1222,7 +1223,8 @@ class ExperimentClientTest {
                     OkHttpClient(),
                     storage,
                     Experiment.executorService,
-                ), recordPrivateCalls = true
+                ),
+                recordPrivateCalls = true
             )
             // Mock the private method to throw FetchException or other exceptions
             every { client["doFetch"](any<ExperimentUser>(), any<Long>(), any<FetchOptions>()) } answers {
@@ -1238,7 +1240,7 @@ class ExperimentClientTest {
             try {
                 client.fetch(ExperimentUser("test_user")).get()
             } catch (t: Throwable) {
-                println(t.toString())
+                // Ignore exception
             }
 
             verify(exactly = retryCalled) { client["startRetries"](any<ExperimentUser>(), any<FetchOptions>()) }
