@@ -356,7 +356,7 @@ internal class DefaultExperimentClient internal constructor(
     private fun doFlags(): Future<Map<String, EvaluationFlag>> {
         return flagApi.getFlags(
             GetFlagsOptions(
-                libraryName = "experiment-js-client",
+                libraryName = "experiment-android-client",
                 libraryVersion = BuildConfig.VERSION_NAME,
                 timeoutMillis = config.fetchTimeoutMillis
             )
