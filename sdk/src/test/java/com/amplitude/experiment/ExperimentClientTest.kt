@@ -2,6 +2,7 @@ package com.amplitude.experiment
 
 import com.amplitude.experiment.analytics.ExperimentAnalyticsEvent
 import com.amplitude.experiment.analytics.ExperimentAnalyticsProvider
+import com.amplitude.experiment.util.FetchException
 import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.MockStorage
 import com.amplitude.experiment.util.SystemLogger
@@ -19,6 +20,7 @@ import org.json.JSONObject
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 
 private const val API_KEY = "client-DvWljIjiiuqLbyjqdvBaLFfEBrAvGuA3"
@@ -1199,5 +1201,49 @@ class ExperimentClientTest {
         Assert.assertEquals("on", variant.key)
         variant2 = client.variant("sdk-ci-test-local-2")
         Assert.assertEquals("on", variant2.key)
+    }
+
+    @Test
+    fun `fetch retry with different response codes`() {
+        // Response code, error message, and whether retry should be called
+        val testData = listOf(
+            Triple(300, "Fetch Exception 300", 1),
+            Triple(400, "Fetch Exception 400", 0),
+            Triple(429, "Fetch Exception 429", 1),
+            Triple(500, "Fetch Exception 500", 1),
+            Triple(0, "Other Exception", 1)
+        )
+
+        testData.forEach { (responseCode, errorMessage, retryCalled) ->
+            val storage = MockStorage()
+            val client = spyk(
+                DefaultExperimentClient(
+                    API_KEY,
+                    ExperimentConfig(retryFetchOnFailure = true),
+                    OkHttpClient(),
+                    storage,
+                    Experiment.executorService,
+                ),
+                recordPrivateCalls = true
+            )
+            // Mock the private method to throw FetchException or other exceptions
+            every { client["doFetch"](any<ExperimentUser>(), any<Long>(), any<FetchOptions>()) } answers {
+                val future = CompletableFuture<Map<String, Variant>>()
+                if (responseCode == 0) {
+                    future.completeExceptionally(Exception(errorMessage))
+                } else {
+                    future.completeExceptionally(FetchException(responseCode, errorMessage))
+                }
+                future
+            }
+
+            try {
+                client.fetch(ExperimentUser("test_user")).get()
+            } catch (t: Throwable) {
+                // Ignore exception
+            }
+
+            verify(exactly = retryCalled) { client["startRetries"](any<ExperimentUser>(), any<FetchOptions>()) }
+        }
     }
 }
