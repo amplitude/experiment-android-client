@@ -1,3 +1,11 @@
+## [1.12.1](https://github.com/amplitude/experiment-android-client/compare/1.12.0...1.12.1) (2024-01-29)
+
+
+### Bug Fixes
+
+* Improve remote evaluation fetch retry logic ([#49](https://github.com/amplitude/experiment-android-client/issues/49)) ([c172d15](https://github.com/amplitude/experiment-android-client/commit/c172d150a202c77037740d422bef05fcda5bc588))
+* library name for flags api ([#50](https://github.com/amplitude/experiment-android-client/issues/50)) ([2bd41b2](https://github.com/amplitude/experiment-android-client/commit/2bd41b2d141704b9f33cf5a7d2b26163e75be826))
+
 # [1.12.0](https://github.com/amplitude/experiment-android-client/compare/1.11.3...1.12.0) (2023-12-01)
 
 
