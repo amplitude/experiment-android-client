@@ -28,8 +28,8 @@ object Experiment {
      * instance name.
      *
      * @param application The Android Application context
-     * @param apiKey  The API key. This can be found in the Experiment settings
-     * and should not be null or empty.
+     * @param apiKey  The Amplitude Project API key. This can be found in Organization Settings -> Projects
+     * and should not be null or empty. If a deployment key is provided in the [ExperimentConfig], it will be used instead.
      * @param config see [ExperimentConfig] for configuration options
      */
     @JvmStatic
@@ -38,8 +38,9 @@ object Experiment {
         apiKey: String,
         config: ExperimentConfig
     ): ExperimentClient = synchronized(instances) {
+        val usedKey = config.deploymentKey ?: apiKey
         val instanceName = config.instanceName
-        val instanceKey = "$instanceName.$apiKey"
+        val instanceKey = "$instanceName.$usedKey"
         return when (val instance = instances[instanceKey]) {
             null -> {
                 Logger.implementation = AndroidLogger(config.debug)
@@ -50,7 +51,7 @@ object Experiment {
                         .build()
                 }
                 val newInstance = DefaultExperimentClient(
-                    apiKey,
+                    usedKey,
                     mergedConfig,
                     httpClient,
                     SharedPrefsStorage(application),
@@ -72,8 +73,8 @@ object Experiment {
      * Amplitude-Kotlin 1.5.0+ for this integration to work.
      *
      * @param application The Android Application context
-     * @param apiKey  The API key. This can be found in the Experiment settings
-     * and should not be null or empty.
+     * @param apiKey  The Amplitude Project API key. This can be found in Organization Settings -> Projects
+     * and should not be null or empty. If a deployment key is provided in the [ExperimentConfig], it will be used instead.
      * @param config see [ExperimentConfig] for configuration options
      */
     @JvmStatic
@@ -82,8 +83,9 @@ object Experiment {
         apiKey: String,
         config: ExperimentConfig
     ): ExperimentClient = synchronized(instances) {
+        val usedKey = config.deploymentKey ?: apiKey
         val instanceName = config.instanceName
-        val instanceKey = "$instanceName.$apiKey"
+        val instanceKey = "$instanceName.$usedKey"
         val connector = AnalyticsConnector.getInstance(instanceName)
         val instance = when (val instance = instances[instanceKey]) {
             null -> {
@@ -100,7 +102,7 @@ object Experiment {
                     )
                 }
                 val newInstance = DefaultExperimentClient(
-                    apiKey,
+                    usedKey,
                     configBuilder.build(),
                     httpClient,
                     SharedPrefsStorage(application),
