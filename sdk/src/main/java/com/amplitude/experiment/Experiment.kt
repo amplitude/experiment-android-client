@@ -28,7 +28,7 @@ object Experiment {
      * instance name.
      *
      * @param application The Android Application context
-     * @param apiKey  The Amplitude Project API key. This can be found in Organization Settings -> Projects
+     * @param apiKey  The Amplitude Project API key used in the client. This can be found in Organization Settings -> Projects
      * and should not be null or empty. If a deployment key is provided in the [ExperimentConfig], it will be used instead.
      * @param config see [ExperimentConfig] for configuration options
      */
