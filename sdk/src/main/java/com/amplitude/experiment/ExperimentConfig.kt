@@ -56,6 +56,8 @@ class ExperimentConfig internal constructor(
     val analyticsProvider: ExperimentAnalyticsProvider? = Defaults.ANALYTICS_PROVIDER,
     @JvmField
     val exposureTrackingProvider: ExposureTrackingProvider? = Defaults.EXPOSURE_TRACKING_PROVIDER,
+    @JvmField
+    val deploymentKey: String? = Defaults.DEPLOYMENT_KEY,
 ) {
 
     /**
@@ -158,6 +160,11 @@ class ExperimentConfig internal constructor(
          * null
          */
         val EXPOSURE_TRACKING_PROVIDER: ExposureTrackingProvider? = null
+
+        /**
+         * null
+         */
+        val DEPLOYMENT_KEY: String? = null
     }
 
     companion object {
@@ -187,6 +194,7 @@ class ExperimentConfig internal constructor(
         private var userProvider = Defaults.USER_PROVIDER
         private var analyticsProvider = Defaults.ANALYTICS_PROVIDER
         private var exposureTrackingProvider = Defaults.EXPOSURE_TRACKING_PROVIDER
+        private var deploymentKey = Defaults.DEPLOYMENT_KEY
 
         fun debug(debug: Boolean) = apply {
             this.debug = debug
@@ -261,6 +269,10 @@ class ExperimentConfig internal constructor(
             this.exposureTrackingProvider = exposureTrackingProvider
         }
 
+        fun deploymentKey(deploymentKey: String?) = apply {
+            this.deploymentKey = deploymentKey
+        }
+
         fun build(): ExperimentConfig {
             return ExperimentConfig(
                 debug = debug,
@@ -281,6 +293,7 @@ class ExperimentConfig internal constructor(
                 userProvider = userProvider,
                 analyticsProvider = analyticsProvider,
                 exposureTrackingProvider = exposureTrackingProvider,
+                deploymentKey = deploymentKey,
             )
         }
     }
@@ -305,5 +318,6 @@ class ExperimentConfig internal constructor(
             .userProvider(userProvider)
             .analyticsProvider(analyticsProvider)
             .exposureTrackingProvider(exposureTrackingProvider)
+            .deploymentKey(deploymentKey)
     }
 }
