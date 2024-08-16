@@ -64,8 +64,8 @@ internal class LoadStoreCache<V>(
             }.toMap()
         clear()
         putAll(values)
-        onLoad?.invoke()
         isLoaded = true
+        onLoad?.invoke()
     }
 
     fun store(values: MutableMap<String, V> = cache) {
