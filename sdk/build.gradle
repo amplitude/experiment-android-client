@@ -20,7 +20,7 @@ android {
 
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 30
+        targetSdkVersion 33
         versionName PUBLISH_VERSION
         buildConfigField "String", "VERSION_NAME", "\"$PUBLISH_VERSION\""
         consumerProguardFiles "consumer-rules.pro"
