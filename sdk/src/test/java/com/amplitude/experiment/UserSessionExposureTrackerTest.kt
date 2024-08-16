@@ -6,7 +6,6 @@ import org.junit.Assert
 import org.junit.Test
 
 class UserSessionExposureTrackerTest {
-
     @Test
     fun `test track called once per flag`() {
         val provider = TestExposureTrackingProvider()

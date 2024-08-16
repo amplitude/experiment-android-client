@@ -38,78 +38,89 @@ internal fun String?.toVariant(): Variant? {
 internal fun JSONObject?.toVariant(): Variant? {
     return if (this == null) {
         null
-    } else try {
-        var key = when {
-            has("key") -> getString("key")
-            else -> null
-        }
-        val value = when {
-            has("value") -> getString("value")
-            else -> null
-        }
+    } else {
+        try {
+            var key =
+                when {
+                    has("key") -> getString("key")
+                    else -> null
+                }
+            val value =
+                when {
+                    has("value") -> getString("value")
+                    else -> null
+                }
 
-        if (key == null && value == null) {
-            return null
-        }
-        if (key == null && value != null) {
-            key = value
-        }
-
-        val payload = when {
-            has("payload") -> {
-                get("payload")
+            if (key == null && value == null) {
+                return null
             }
-            else -> null
-        }
+            if (key == null && value != null) {
+                key = value
+            }
 
-        var expKey = when {
-            has("expKey") -> getString("expKey")
-            else -> null
-        }
-        var metadata = when {
-            has("metadata") -> getJSONObject("metadata").toMap()
-            else -> null
-        }?.toMutableMap()
-        if (metadata != null && metadata["experimentKey"] != null) {
-            expKey = metadata["experimentKey"] as? String
-        } else if (expKey != null) {
-            metadata = metadata ?: HashMap()
-            metadata["experimentKey"] = expKey
-        }
+            val payload =
+                when {
+                    has("payload") -> {
+                        get("payload")
+                    }
+                    else -> null
+                }
 
-        Variant(value, payload, expKey, key, metadata)
-    } catch (e: JSONException) {
-        e.printStackTrace()
-        Logger.w("Error parsing Variant from json string $this, $e")
-        null
+            var expKey =
+                when {
+                    has("expKey") -> getString("expKey")
+                    else -> null
+                }
+            var metadata =
+                when {
+                    has("metadata") -> getJSONObject("metadata").toMap()
+                    else -> null
+                }?.toMutableMap()
+            if (metadata != null && metadata["experimentKey"] != null) {
+                expKey = metadata["experimentKey"] as? String
+            } else if (expKey != null) {
+                metadata = metadata ?: HashMap()
+                metadata["experimentKey"] = expKey
+            }
+
+            Variant(value, payload, expKey, key, metadata)
+        } catch (e: JSONException) {
+            e.printStackTrace()
+            Logger.w("Error parsing Variant from json string $this, $e")
+            null
+        }
     }
 }
 
 internal fun EvaluationVariant.convertToVariant(): Variant {
     val experimentKey = this.metadata?.get("experimentKey")?.toString()
-    val value = when {
-        this.value != null -> this.value.toString()
-        else -> null
-    }
-    val expKey = when {
-        experimentKey != null -> experimentKey
-        else -> null
-    }
-    val payload = when {
-        this.payload != null -> {
-            if (this.payload is Map<*, *>) {
-                this.payload.toJSONObject()
-            } else if (this.payload is Collection<*>) {
-                this.payload.toJSONArray()
-            } else {
-                this.payload
-            }
+    val value =
+        when {
+            this.value != null -> this.value.toString()
+            else -> null
         }
-        else -> null
-    }
-    val metadata = when {
-        this.metadata != null -> this.metadata
-        else -> null
-    }
+    val expKey =
+        when {
+            experimentKey != null -> experimentKey
+            else -> null
+        }
+    val payload =
+        when {
+            this.payload != null -> {
+                if (this.payload is Map<*, *>) {
+                    this.payload.toJSONObject()
+                } else if (this.payload is Collection<*>) {
+                    this.payload.toJSONArray()
+                } else {
+                    this.payload
+                }
+            }
+            else -> null
+        }
+    val metadata =
+        when {
+            this.metadata != null -> this.metadata
+            else -> null
+        }
     return Variant(value, payload, expKey, this.key, metadata)
 }

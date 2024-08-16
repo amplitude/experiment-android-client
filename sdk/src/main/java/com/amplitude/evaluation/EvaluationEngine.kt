@@ -8,15 +8,14 @@ import kotlinx.serialization.json.JsonArray
 internal interface EvaluationEngine {
     fun evaluate(
         context: EvaluationContext,
-        flags: List<EvaluationFlag>
+        flags: List<EvaluationFlag>,
     ): Map<String, EvaluationVariant>
 }
 
 internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) : EvaluationEngine {
-
     data class EvaluationTarget(
         val context: EvaluationContext,
-        val result: MutableMap<String, EvaluationVariant>
+        val result: MutableMap<String, EvaluationVariant>,
     ) : Selectable {
         override fun select(selector: String): Any? {
             return when (selector) {
@@ -29,7 +28,7 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
 
     override fun evaluate(
         context: EvaluationContext,
-        flags: List<EvaluationFlag>
+        flags: List<EvaluationFlag>,
     ): Map<String, EvaluationVariant> {
         log?.debug { "Evaluating flags ${flags.map { it.key }} with context $context." }
         val results: MutableMap<String, EvaluationVariant> = mutableMapOf()
@@ -47,7 +46,10 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
         return results
     }
 
-    private fun evaluateFlag(target: EvaluationTarget, flag: EvaluationFlag): EvaluationVariant? {
+    private fun evaluateFlag(
+        target: EvaluationTarget,
+        flag: EvaluationFlag,
+    ): EvaluationVariant? {
         log?.verbose { "Evaluating flag $flag with target $target." }
         var result: EvaluationVariant? = null
         for (segment in flag.segments) {
@@ -66,7 +68,7 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
     private fun evaluateSegment(
         target: EvaluationTarget,
         flag: EvaluationFlag,
-        segment: EvaluationSegment
+        segment: EvaluationSegment,
     ): EvaluationVariant? {
         log?.verbose { "Evaluating segment $segment with target $target." }
         if (segment.conditions == null) {
@@ -98,7 +100,10 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
         return null
     }
 
-    private fun matchCondition(target: EvaluationTarget, condition: EvaluationCondition): Boolean {
+    private fun matchCondition(
+        target: EvaluationTarget,
+        condition: EvaluationCondition,
+    ): Boolean {
         val propValue = target.select(condition.selector)
         // We need special matching for null properties and set type prop values
         // and operators. All other values are matched as strings, since the
@@ -122,7 +127,10 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
         return value.toLong() and 0xffffffffL
     }
 
-    private fun bucket(target: EvaluationTarget, segment: EvaluationSegment): String? {
+    private fun bucket(
+        target: EvaluationTarget,
+        segment: EvaluationSegment,
+    ): String? {
         log?.verbose { "Bucketing segment $segment with target $target" }
         if (segment.bucket == null) {
             // A null bucket means the segment is fully rolled out. Select the default variant.
@@ -175,7 +183,10 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
         }
     }
 
-    private fun matchNull(op: String, filterValues: Set<String>): Boolean {
+    private fun matchNull(
+        op: String,
+        filterValues: Set<String>,
+    ): Boolean {
         val containsNone = containsNone(filterValues)
         return when (op) {
             EvaluationOperator.IS, EvaluationOperator.CONTAINS, EvaluationOperator.LESS_THAN,
@@ -183,10 +194,12 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
             EvaluationOperator.GREATER_THAN_EQUALS, EvaluationOperator.VERSION_LESS_THAN,
             EvaluationOperator.VERSION_LESS_THAN_EQUALS, EvaluationOperator.VERSION_GREATER_THAN,
             EvaluationOperator.VERSION_GREATER_THAN_EQUALS, EvaluationOperator.SET_IS,
-            EvaluationOperator.SET_CONTAINS, EvaluationOperator.SET_CONTAINS_ANY -> containsNone
+            EvaluationOperator.SET_CONTAINS, EvaluationOperator.SET_CONTAINS_ANY,
+            -> containsNone
 
             EvaluationOperator.IS_NOT, EvaluationOperator.DOES_NOT_CONTAIN,
-            EvaluationOperator.SET_DOES_NOT_CONTAIN, EvaluationOperator.SET_DOES_NOT_CONTAIN_ANY -> !containsNone
+            EvaluationOperator.SET_DOES_NOT_CONTAIN, EvaluationOperator.SET_DOES_NOT_CONTAIN_ANY,
+            -> !containsNone
 
             EvaluationOperator.REGEX_MATCH -> false
             EvaluationOperator.REGEX_DOES_NOT_MATCH, EvaluationOperator.SET_IS_NOT -> true
@@ -194,7 +207,11 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
         }
     }
 
-    private fun matchSet(propValues: Set<String>, op: String, filterValues: Set<String>): Boolean {
+    private fun matchSet(
+        propValues: Set<String>,
+        op: String,
+        filterValues: Set<String>,
+    ): Boolean {
         return when (op) {
             EvaluationOperator.SET_IS -> propValues == filterValues
             EvaluationOperator.SET_IS_NOT -> propValues != filterValues
@@ -206,18 +223,24 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
         }
     }
 
-    private fun matchString(propValue: String, op: String, filterValues: Set<String>): Boolean {
+    private fun matchString(
+        propValue: String,
+        op: String,
+        filterValues: Set<String>,
+    ): Boolean {
         return when (op) {
             EvaluationOperator.IS -> matchesIs(propValue, filterValues)
             EvaluationOperator.IS_NOT -> !matchesIs(propValue, filterValues)
             EvaluationOperator.CONTAINS -> matchesContains(propValue, filterValues)
             EvaluationOperator.DOES_NOT_CONTAIN -> !matchesContains(propValue, filterValues)
             EvaluationOperator.LESS_THAN, EvaluationOperator.LESS_THAN_EQUALS,
-            EvaluationOperator.GREATER_THAN, EvaluationOperator.GREATER_THAN_EQUALS ->
+            EvaluationOperator.GREATER_THAN, EvaluationOperator.GREATER_THAN_EQUALS,
+            ->
                 matchesComparable(propValue, op, filterValues) { value -> parseDouble(value) }
 
             EvaluationOperator.VERSION_LESS_THAN, EvaluationOperator.VERSION_LESS_THAN_EQUALS,
-            EvaluationOperator.VERSION_GREATER_THAN, EvaluationOperator.VERSION_GREATER_THAN_EQUALS ->
+            EvaluationOperator.VERSION_GREATER_THAN, EvaluationOperator.VERSION_GREATER_THAN_EQUALS,
+            ->
                 matchesComparable(propValue, op, filterValues) { value -> SemanticVersion.parse(value) }
 
             EvaluationOperator.REGEX_MATCH -> matchesRegex(propValue, filterValues)
@@ -226,7 +249,10 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
         }
     }
 
-    private fun matchesIs(propValue: String, filterValues: Set<String>): Boolean {
+    private fun matchesIs(
+        propValue: String,
+        filterValues: Set<String>,
+    ): Boolean {
         if (containsBooleans(filterValues)) {
             val lower: String = propValue.lowercase()
             if (lower == "true" || lower == "false") {
@@ -236,7 +262,10 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
         return filterValues.contains(propValue)
     }
 
-    private fun matchesContains(propValue: String, filterValues: Set<String>): Boolean {
+    private fun matchesContains(
+        propValue: String,
+        filterValues: Set<String>,
+    ): Boolean {
         for (filterValue in filterValues) {
             if (propValue.lowercase().contains(filterValue.lowercase())) {
                 return true
@@ -245,7 +274,10 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
         return false
     }
 
-    private fun matchesSetContainsAll(propValues: Set<String>, filterValues: Set<String>): Boolean {
+    private fun matchesSetContainsAll(
+        propValues: Set<String>,
+        filterValues: Set<String>,
+    ): Boolean {
         if (propValues.size < filterValues.size) {
             return false
         }
@@ -257,7 +289,10 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
         return true
     }
 
-    private fun matchesSetContainsAny(propValues: Set<String>, filterValues: Set<String>): Boolean {
+    private fun matchesSetContainsAny(
+        propValues: Set<String>,
+        filterValues: Set<String>,
+    ): Boolean {
         for (filterValue in filterValues) {
             if (matchesIs(filterValue, propValues)) {
                 return true
@@ -288,7 +323,11 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
         }
     }
 
-    private fun <T> matchesComparable(propValue: Comparable<T>, op: String, filterValue: T): Boolean {
+    private fun <T> matchesComparable(
+        propValue: Comparable<T>,
+        op: String,
+        filterValue: T,
+    ): Boolean {
         val compareTo = propValue.compareTo(filterValue)
         return when (op) {
             EvaluationOperator.LESS_THAN, EvaluationOperator.VERSION_LESS_THAN -> compareTo < 0
@@ -299,7 +338,10 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
         }
     }
 
-    private fun matchesRegex(propValue: String, filterValues: Set<String>): Boolean {
+    private fun matchesRegex(
+        propValue: String,
+        filterValues: Set<String>,
+    ): Boolean {
         return filterValues.any { filterValue -> Regex(filterValue).matches(propValue) }
     }
 
@@ -341,11 +383,12 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
         // Parse a string as json array and convert to list of strings, or
         // return null if the string could not be parsed as a json array.
         val stringValue = value.toString()
-        val jsonArray = try {
-            json.decodeFromString<JsonArray>(stringValue)
-        } catch (e: SerializationException) {
-            return null
-        }
+        val jsonArray =
+            try {
+                json.decodeFromString<JsonArray>(stringValue)
+            } catch (e: SerializationException) {
+                return null
+            }
         return jsonArray.toList().mapNotNull { coerceString(it) }.toSet()
     }
 
@@ -356,7 +399,8 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
             EvaluationOperator.SET_CONTAINS,
             EvaluationOperator.SET_DOES_NOT_CONTAIN,
             EvaluationOperator.SET_CONTAINS_ANY,
-            EvaluationOperator.SET_DOES_NOT_CONTAIN_ANY -> true
+            EvaluationOperator.SET_DOES_NOT_CONTAIN_ANY,
+            -> true
 
             else -> false
         }

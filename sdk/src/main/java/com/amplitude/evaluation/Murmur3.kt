@@ -1,7 +1,6 @@
 package com.amplitude.experiment.evaluation
 
 internal object Murmur3 {
-
     private const val C1_32 = -0x3361d2af
     private const val C2_32 = 0x1b873593
     private const val R1_32 = 15
@@ -9,7 +8,11 @@ internal object Murmur3 {
     private const val M_32 = 5
     private const val N_32 = -0x19ab949c
 
-    internal fun hash32x86(data: ByteArray, length: Int, seed: Int): Int {
+    internal fun hash32x86(
+        data: ByteArray,
+        length: Int,
+        seed: Int,
+    ): Int {
         var hash = seed
         val nblocks = length shr 2
 
@@ -56,7 +59,10 @@ internal object Murmur3 {
         return fmix32(hash)
     }
 
-    private fun mix32(k: Int, hash: Int): Int {
+    private fun mix32(
+        k: Int,
+        hash: Int,
+    ): Int {
         var kResult = k
         var hashResult = hash
         kResult *= C1_32
@@ -64,7 +70,7 @@ internal object Murmur3 {
         kResult *= C2_32
         hashResult = hashResult xor kResult
         return hashResult.rotateLeft(
-            R2_32
+            R2_32,
         ) * M_32 + N_32
     }
 
@@ -91,6 +97,6 @@ internal object Murmur3 {
                 or (this[index + 1].toInt() and 0xff shl 16)
                 or (this[index + 2].toInt() and 0xff shl 8)
                 or (this[index + 3].toInt() and 0xff)
-            ).reverseBytes()
+        ).reverseBytes()
     }
 }

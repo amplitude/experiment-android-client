@@ -9,11 +9,12 @@ import java.util.concurrent.TimeoutException
 
 internal class AsyncFuture<T>(
     private val call: Call? = null,
-    private val callback: ((T) -> Unit)? = null
+    private val callback: ((T) -> Unit)? = null,
 ) : Future<T> {
-
     @Volatile private var value: T? = null
+
     @Volatile private var completed = false
+
     @Volatile private var throwable: Throwable? = null
     private val lock = Object()
 
@@ -45,7 +46,10 @@ internal class AsyncFuture<T>(
     }
 
     @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
-    override fun get(timeout: Long, unit: TimeUnit): T {
+    override fun get(
+        timeout: Long,
+        unit: TimeUnit,
+    ): T {
         var nanosRemaining = unit.toNanos(timeout)
         val end = System.nanoTime() + nanosRemaining
         synchronized(lock) {

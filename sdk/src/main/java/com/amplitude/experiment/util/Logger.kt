@@ -4,14 +4,23 @@ import android.util.Log
 
 internal interface ILogger {
     fun v(msg: String)
+
     fun d(msg: String)
+
     fun i(msg: String)
-    fun w(msg: String, e: Throwable? = null)
-    fun e(msg: String, e: Throwable? = null)
+
+    fun w(
+        msg: String,
+        e: Throwable? = null,
+    )
+
+    fun e(
+        msg: String,
+        e: Throwable? = null,
+    )
 }
 
 internal object Logger : ILogger {
-
     internal var implementation: ILogger? = null
 
     override fun v(msg: String) {
@@ -26,17 +35,22 @@ internal object Logger : ILogger {
         implementation?.i(msg)
     }
 
-    override fun w(msg: String, e: Throwable?) {
+    override fun w(
+        msg: String,
+        e: Throwable?,
+    ) {
         implementation?.w(msg)
     }
 
-    override fun e(msg: String, e: Throwable?) {
+    override fun e(
+        msg: String,
+        e: Throwable?,
+    ) {
         implementation?.e(msg, e)
     }
 }
 
 internal class AndroidLogger(private val debug: Boolean) : ILogger {
-
     private val tag = "Experiment"
 
     override fun v(msg: String) {
@@ -57,11 +71,17 @@ internal class AndroidLogger(private val debug: Boolean) : ILogger {
         }
     }
 
-    override fun w(msg: String, e: Throwable?) {
+    override fun w(
+        msg: String,
+        e: Throwable?,
+    ) {
         Log.w(tag, msg)
     }
 
-    override fun e(msg: String, e: Throwable?) {
+    override fun e(
+        msg: String,
+        e: Throwable?,
+    ) {
         Log.e(tag, msg, e)
     }
 }

@@ -23,49 +23,52 @@ internal class Backoff constructor(
     private val config: BackoffConfig,
     private val executorService: ScheduledExecutorService,
 ) {
-
     private val lock = Any()
     private var started = false
     private var cancelled = false
     private var future: Future<*>? = null
 
-    fun start(function: () -> Unit) = synchronized(lock) {
-        if (started) {
-            return
+    fun start(function: () -> Unit) =
+        synchronized(lock) {
+            if (started) {
+                return
+            }
+            started = true
+            backoff(0, config.min, function)
         }
-        started = true
-        backoff(0, config.min, function)
-    }
 
-    fun cancel() = synchronized(lock) {
-        if (!cancelled) {
-            cancelled = true
-            future?.cancel(true)
+    fun cancel() =
+        synchronized(lock) {
+            if (!cancelled) {
+                cancelled = true
+                future?.cancel(true)
+            }
         }
-    }
 
     private fun backoff(
         attempt: Int,
         delay: Long,
-        function: () -> Unit
-    ): Unit = synchronized(lock) {
-        future = executorService.schedule(
-            {
-                if (cancelled) {
-                    return@schedule
-                }
-                try {
-                    function.invoke()
-                } catch (e: Exception) {
-                    // Retry the request function
-                    val nextAttempt = attempt + 1
-                    if (nextAttempt < config.attempts) {
-                        val nextDelay = min(delay * config.scalar, config.max.toFloat()).toLong()
-                        backoff(nextAttempt, nextDelay, function)
-                    }
-                }
-            },
-            delay, TimeUnit.MILLISECONDS
-        )
-    }
+        function: () -> Unit,
+    ): Unit =
+        synchronized(lock) {
+            future =
+                executorService.schedule(
+                    {
+                        if (cancelled) {
+                            return@schedule
+                        }
+                        try {
+                            function.invoke()
+                        } catch (e: Exception) {
+                            // Retry the request function
+                            val nextAttempt = attempt + 1
+                            if (nextAttempt < config.attempts) {
+                                val nextDelay = min(delay * config.scalar, config.max.toFloat()).toLong()
+                                backoff(nextAttempt, nextDelay, function)
+                            }
+                        }
+                    },
+                    delay, TimeUnit.MILLISECONDS,
+                )
+        }
 }

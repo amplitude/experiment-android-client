@@ -10,15 +10,16 @@ import org.junit.Test
 class TestEventBridge : EventBridge {
     var logEventCount = 0
     var recentEvent: AnalyticsEvent? = null
+
     override fun logEvent(event: AnalyticsEvent) {
         recentEvent = event
         logEventCount++
     }
+
     override fun setEventReceiver(receiver: AnalyticsEventReceiver?) {}
 }
 
 class ConnectorExposureTrackingProviderTest {
-
     @Test
     fun `track called once each per variant for different flag keys`() {
         val eventBridge = TestEventBridge()

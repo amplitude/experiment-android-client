@@ -28,11 +28,9 @@ internal data class SemanticVersion(
     val major: Int = 0,
     val minor: Int = 0,
     val patch: Int = 0,
-    val preRelease: String? = null
+    val preRelease: String? = null,
 ) : Comparable<SemanticVersion> {
-
     companion object {
-
         fun parse(version: String?): SemanticVersion? {
             if (version == null) {
                 return null

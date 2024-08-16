@@ -10,12 +10,11 @@ import org.json.JSONObject
  */
 @Deprecated(
     "Update your version of the amplitude analytics SDK to 2.36.0+ and for seamless " +
-        "integration with the amplitude analytics SDK"
+        "integration with the amplitude analytics SDK",
 )
 class AmplitudeAnalyticsProvider(
     private val amplitudeClient: AmplitudeClient,
 ) : ExperimentAnalyticsProvider {
-
     override fun track(event: ExperimentAnalyticsEvent) {
         amplitudeClient.logEvent(event.name, JSONObject(event.properties))
     }

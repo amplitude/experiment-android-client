@@ -4,11 +4,11 @@ import java.util.concurrent.TimeoutException
 
 internal sealed class LockResult<T> {
     data class Success<T>(val value: T) : LockResult<T>()
+
     data class Error<T>(val error: Exception) : LockResult<T>()
 }
 
 internal class Lock<T> {
-
     private val lock = Object()
     private var result: LockResult<T>? = null
 
@@ -25,7 +25,7 @@ internal class Lock<T> {
                 }
             }
             result ?: LockResult.Error(
-                TimeoutException("Lock timed out waiting $ms ms for notify.")
+                TimeoutException("Lock timed out waiting $ms ms for notify."),
             )
         }
     }

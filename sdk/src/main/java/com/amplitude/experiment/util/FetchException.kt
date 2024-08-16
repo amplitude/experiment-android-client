@@ -4,5 +4,5 @@ import okio.IOException
 
 internal class FetchException(
     val statusCode: Int,
-    message: String
+    message: String,
 ) : IOException(message)

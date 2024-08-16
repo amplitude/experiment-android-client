@@ -15,11 +15,12 @@ internal interface Selectable {
         for (i in 0 until selector.size - 1) {
             val selectorElement = selector[i] ?: return null
             val value = selectable.select(selectorElement)
-            selectable = when (value) {
-                is Selectable -> value
-                is Map<*, *> -> SelectableMap(value)
-                else -> return null
-            }
+            selectable =
+                when (value) {
+                    is Selectable -> value
+                    is Map<*, *> -> SelectableMap(value)
+                    else -> return null
+                }
         }
         val lastSelector = selector[selector.size - 1] ?: return null
         return selectable.select(lastSelector)

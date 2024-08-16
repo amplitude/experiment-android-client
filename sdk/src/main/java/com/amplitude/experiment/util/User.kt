@@ -25,15 +25,15 @@ internal fun ExperimentUser.toJson(): String {
         json.put("library", library)
         json.put(
             "user_properties",
-            JSONObject(userProperties?.toMutableMap() ?: mutableMapOf<String, Any?>())
+            JSONObject(userProperties?.toMutableMap() ?: mutableMapOf<String, Any?>()),
         )
         json.put(
             "groups",
-            groups?.toJSONObject()
+            groups?.toJSONObject(),
         )
         json.put(
             "group_properties",
-            groupProperties?.toJSONObject()
+            groupProperties?.toJSONObject(),
         )
     } catch (e: JSONException) {
         Logger.w("Error converting SkylabUser to JSONObject", e)
@@ -86,7 +86,7 @@ internal fun ExperimentUser.toMap(): Map<String, Any?> {
         "library" to library,
         "user_properties" to userProperties,
         "groups" to groups,
-        "group_properties" to groupProperties
+        "group_properties" to groupProperties,
     ).filterValues { it != null }
 }
 
@@ -113,7 +113,7 @@ internal fun ExperimentUser?.merge(other: ExperimentUser?): ExperimentUser {
         .version(user.version.merge(other?.version))
         .os(user.os.merge(other?.os))
         .deviceManufacturer(
-            user.deviceManufacturer.merge(other?.deviceManufacturer)
+            user.deviceManufacturer.merge(other?.deviceManufacturer),
         )
         .deviceBrand(user.deviceBrand.merge(other?.deviceBrand))
         .deviceModel(user.deviceModel.merge(other?.deviceModel))
@@ -127,7 +127,10 @@ internal fun ExperimentUser?.merge(other: ExperimentUser?): ExperimentUser {
 
 // Private Helpers
 
-private fun <T> Map<String, T>?.mergeMapValues(other: Map<String, T>?, merger: (T, T) -> T?): Map<String, T>? {
+private fun <T> Map<String, T>?.mergeMapValues(
+    other: Map<String, T>?,
+    merger: (T, T) -> T?,
+): Map<String, T>? {
     return when {
         this == null -> other
         other == null -> this
@@ -135,11 +138,12 @@ private fun <T> Map<String, T>?.mergeMapValues(other: Map<String, T>?, merger: (
             val result = mutableMapOf<String, T>()
             for ((thisKey, thisValue) in this.entries) {
                 val otherValue = other[thisKey]
-                val value = if (otherValue != null) {
-                    merger(thisValue, otherValue)
-                } else {
-                    thisValue
-                }
+                val value =
+                    if (otherValue != null) {
+                        merger(thisValue, otherValue)
+                    } else {
+                        thisValue
+                    }
                 if (value != null) {
                     result[thisKey] = value
                 }
@@ -154,7 +158,10 @@ private fun <T> Map<String, T>?.mergeMapValues(other: Map<String, T>?, merger: (
     }
 }
 
-private fun <T> T?.merge(other: T?, merger: (T, T) -> T = { t, o -> t }): T? {
+private fun <T> T?.merge(
+    other: T?,
+    merger: (T, T) -> T = { t, o -> t },
+): T? {
     return when {
         this == null -> other
         other == null -> this

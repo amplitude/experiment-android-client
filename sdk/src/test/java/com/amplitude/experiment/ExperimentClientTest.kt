@@ -30,7 +30,6 @@ private const val KEY = "sdk-ci-test"
 private const val INITIAL_KEY = "initial-key"
 
 class ExperimentClientTest {
-
     init {
         Logger.implementation = SystemLogger(true)
     }
@@ -43,57 +42,62 @@ class ExperimentClientTest {
     private val initialVariant = Variant(key = "initial", value = "initial")
     private val inlineVariant = Variant(key = "inline", value = "inline")
 
-    private val initialVariants = mapOf(
-        INITIAL_KEY to initialVariant,
-        KEY to Variant(key = "off"),
-    )
+    private val initialVariants =
+        mapOf(
+            INITIAL_KEY to initialVariant,
+            KEY to Variant(key = "off"),
+        )
 
-    private val client = DefaultExperimentClient(
-        API_KEY,
-        ExperimentConfig(
-            debug = true,
-            fallbackVariant = fallbackVariant,
-            initialVariants = initialVariants,
-        ),
-        OkHttpClient(),
-        mockStorage,
-        Experiment.executorService,
-    )
+    private val client =
+        DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                debug = true,
+                fallbackVariant = fallbackVariant,
+                initialVariants = initialVariants,
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
 
-    private val timeoutClient = DefaultExperimentClient(
-        API_KEY,
-        ExperimentConfig(
-            debug = true,
-            fallbackVariant = fallbackVariant,
-            initialVariants = initialVariants,
-            fetchTimeoutMillis = 1,
-        ),
-        OkHttpClient(),
-        mockStorage,
-        Experiment.executorService,
-    )
+    private val timeoutClient =
+        DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                debug = true,
+                fallbackVariant = fallbackVariant,
+                initialVariants = initialVariants,
+                fetchTimeoutMillis = 1,
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
 
-    private val initialVariantSourceClient = DefaultExperimentClient(
-        API_KEY,
-        ExperimentConfig(
-            debug = true,
-            source = Source.INITIAL_VARIANTS,
-            initialVariants = initialVariants,
-        ),
-        OkHttpClient(),
-        mockStorage,
-        Experiment.executorService,
-    )
+    private val initialVariantSourceClient =
+        DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                debug = true,
+                source = Source.INITIAL_VARIANTS,
+                initialVariants = initialVariants,
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
 
-    private val generalClient = DefaultExperimentClient(
-        API_KEY,
-        ExperimentConfig(
-            debug = true,
-        ),
-        OkHttpClient(),
-        mockStorage,
-        Experiment.executorService,
-    )
+    private val generalClient =
+        DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                debug = true,
+            ),
+            OkHttpClient(),
+            mockStorage,
+            Experiment.executorService,
+        )
 
     @Before
     fun init() {
@@ -236,43 +240,45 @@ class ExperimentClientTest {
     fun `test exposure event through analytics provider when variant called`() {
         var didExposureGetTracked = false
         var didUserPropertyGetSet = false
-        val analyticsProvider = object : ExperimentAnalyticsProvider {
-            override fun track(event: ExperimentAnalyticsEvent) {
-                Assert.assertEquals("[Experiment] Exposure", event.name)
-                Assert.assertEquals(
-                    mapOf(
-                        "key" to KEY,
-                        "variant" to serverVariant.key,
-                        "source" to VariantSource.LOCAL_STORAGE.toString()
-                    ),
-                    event.properties
-                )
+        val analyticsProvider =
+            object : ExperimentAnalyticsProvider {
+                override fun track(event: ExperimentAnalyticsEvent) {
+                    Assert.assertEquals("[Experiment] Exposure", event.name)
+                    Assert.assertEquals(
+                        mapOf(
+                            "key" to KEY,
+                            "variant" to serverVariant.key,
+                            "source" to VariantSource.LOCAL_STORAGE.toString(),
+                        ),
+                        event.properties,
+                    )
 
-                Assert.assertEquals(KEY, event.key)
-                Assert.assertEquals(serverVariant, event.variant)
-                didExposureGetTracked = true
-            }
+                    Assert.assertEquals(KEY, event.key)
+                    Assert.assertEquals(serverVariant, event.variant)
+                    didExposureGetTracked = true
+                }
 
-            override fun setUserProperty(event: ExperimentAnalyticsEvent) {
-                Assert.assertEquals("[Experiment] $KEY", event.userProperty)
-                Assert.assertEquals(serverVariant, event.variant)
-                didUserPropertyGetSet = true
-            }
+                override fun setUserProperty(event: ExperimentAnalyticsEvent) {
+                    Assert.assertEquals("[Experiment] $KEY", event.userProperty)
+                    Assert.assertEquals(serverVariant, event.variant)
+                    didUserPropertyGetSet = true
+                }
 
-            override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
-                Assert.fail("analytics provider unset() should not be called")
+                override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
+                    Assert.fail("analytics provider unset() should not be called")
+                }
             }
-        }
-        val analyticsProviderClient = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                debug = true,
-                analyticsProvider = analyticsProvider,
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val analyticsProviderClient =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    debug = true,
+                    analyticsProvider = analyticsProvider,
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         analyticsProviderClient.fetch(testUser).get()
         analyticsProviderClient.variant(KEY)
         Assert.assertTrue(didExposureGetTracked)
@@ -282,40 +288,42 @@ class ExperimentClientTest {
     @Test
     fun `test exposure event not tracked on fallback variant and unset called`() {
         var didExposureGetUnset = false
-        val analyticsProvider = object : ExperimentAnalyticsProvider {
-            override fun track(event: ExperimentAnalyticsEvent) {
-                Assert.fail("analytics provider track() should not be called.")
-            }
+        val analyticsProvider =
+            object : ExperimentAnalyticsProvider {
+                override fun track(event: ExperimentAnalyticsEvent) {
+                    Assert.fail("analytics provider track() should not be called.")
+                }
 
-            override fun setUserProperty(event: ExperimentAnalyticsEvent) {
-                Assert.fail("analytics provider setUserProperty() should not be called")
-            }
+                override fun setUserProperty(event: ExperimentAnalyticsEvent) {
+                    Assert.fail("analytics provider setUserProperty() should not be called")
+                }
 
-            override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
-                Assert.assertEquals(
-                    event.userProperty,
-                    "[Experiment] asdf"
-                )
-                Assert.assertEquals(
-                    event.variant,
-                    fallbackVariant
-                )
-                Assert.assertEquals(event.properties["source"], "fallback-config")
-                didExposureGetUnset = true
+                override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
+                    Assert.assertEquals(
+                        event.userProperty,
+                        "[Experiment] asdf",
+                    )
+                    Assert.assertEquals(
+                        event.variant,
+                        fallbackVariant,
+                    )
+                    Assert.assertEquals(event.properties["source"], "fallback-config")
+                    didExposureGetUnset = true
+                }
             }
-        }
-        val analyticsProviderClient = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                debug = true,
-                fallbackVariant = fallbackVariant,
-                initialVariants = initialVariants,
-                analyticsProvider = analyticsProvider,
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val analyticsProviderClient =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    debug = true,
+                    fallbackVariant = fallbackVariant,
+                    initialVariants = initialVariants,
+                    analyticsProvider = analyticsProvider,
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         analyticsProviderClient.fetch(testUser).get()
         analyticsProviderClient.variant("asdf")
         Assert.assertTrue(didExposureGetUnset)
@@ -324,40 +332,42 @@ class ExperimentClientTest {
     @Test
     fun `test exposure event not tracked on secondary variant and unset not called`() {
         var didExposureGetUnset = false
-        val analyticsProvider = object : ExperimentAnalyticsProvider {
-            override fun track(event: ExperimentAnalyticsEvent) {
-                Assert.assertEquals(
-                    event.userProperty,
-                    "[Experiment] $INITIAL_KEY"
-                )
-                Assert.assertEquals(
-                    event.variant,
-                    initialVariants[INITIAL_KEY]
-                )
-                Assert.assertEquals(event.properties["source"], "secondary-initial")
-                didExposureGetUnset = true
-            }
+        val analyticsProvider =
+            object : ExperimentAnalyticsProvider {
+                override fun track(event: ExperimentAnalyticsEvent) {
+                    Assert.assertEquals(
+                        event.userProperty,
+                        "[Experiment] $INITIAL_KEY",
+                    )
+                    Assert.assertEquals(
+                        event.variant,
+                        initialVariants[INITIAL_KEY],
+                    )
+                    Assert.assertEquals(event.properties["source"], "secondary-initial")
+                    didExposureGetUnset = true
+                }
 
-            override fun setUserProperty(event: ExperimentAnalyticsEvent) {
-                Assert.fail("analytics provider set() should not be called.")
-            }
+                override fun setUserProperty(event: ExperimentAnalyticsEvent) {
+                    Assert.fail("analytics provider set() should not be called.")
+                }
 
-            override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
-                Assert.assertEquals("[Experiment] $INITIAL_KEY", event.userProperty)
+                override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
+                    Assert.assertEquals("[Experiment] $INITIAL_KEY", event.userProperty)
+                }
             }
-        }
-        val analyticsProviderClient = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                debug = true,
-                fallbackVariant = fallbackVariant,
-                initialVariants = initialVariants,
-                analyticsProvider = analyticsProvider,
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val analyticsProviderClient =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    debug = true,
+                    fallbackVariant = fallbackVariant,
+                    initialVariants = initialVariants,
+                    analyticsProvider = analyticsProvider,
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         analyticsProviderClient.fetch(testUser).get()
         analyticsProviderClient.variant(INITIAL_KEY)
         Assert.assertFalse(didExposureGetUnset)
@@ -367,37 +377,39 @@ class ExperimentClientTest {
     fun `test exposure event through analytics provider with user properties`() {
         var didExposureGetTracked = false
         var didUserPropertyGetSet = false
-        val analyticsProvider = object : ExperimentAnalyticsProvider {
-            override fun track(event: ExperimentAnalyticsEvent) {
-                Assert.assertEquals(
-                    event.userProperties,
-                    mapOf("[Experiment] $KEY" to serverVariant.key)
-                )
-                didExposureGetTracked = true
-            }
+        val analyticsProvider =
+            object : ExperimentAnalyticsProvider {
+                override fun track(event: ExperimentAnalyticsEvent) {
+                    Assert.assertEquals(
+                        event.userProperties,
+                        mapOf("[Experiment] $KEY" to serverVariant.key),
+                    )
+                    didExposureGetTracked = true
+                }
 
-            override fun setUserProperty(event: ExperimentAnalyticsEvent) {
-                Assert.assertEquals(
-                    "[Experiment] $KEY",
-                    event.userProperty
-                )
-                didUserPropertyGetSet = true
-            }
+                override fun setUserProperty(event: ExperimentAnalyticsEvent) {
+                    Assert.assertEquals(
+                        "[Experiment] $KEY",
+                        event.userProperty,
+                    )
+                    didUserPropertyGetSet = true
+                }
 
-            override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
-                Assert.fail("analytics provider unset() should not be called")
+                override fun unsetUserProperty(event: ExperimentAnalyticsEvent) {
+                    Assert.fail("analytics provider unset() should not be called")
+                }
             }
-        }
-        val analyticsProviderClient = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                debug = true,
-                analyticsProvider = analyticsProvider,
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val analyticsProviderClient =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    debug = true,
+                    analyticsProvider = analyticsProvider,
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         analyticsProviderClient.fetch(testUser).get()
         analyticsProviderClient.variant(KEY)
         Assert.assertTrue(didExposureGetTracked)
@@ -407,112 +419,120 @@ class ExperimentClientTest {
     @Test
     fun `test exposure through exposure tracking provider has experiment key from variant`() {
         var didTrack = false
-        val exposureTrackingProvider = object : ExposureTrackingProvider {
-            override fun track(exposure: Exposure) {
-                Assert.assertEquals("flagKey", exposure.flagKey)
-                Assert.assertEquals("variant", exposure.variant)
-                Assert.assertEquals("experimentKey", exposure.experimentKey)
-                didTrack = true
+        val exposureTrackingProvider =
+            object : ExposureTrackingProvider {
+                override fun track(exposure: Exposure) {
+                    Assert.assertEquals("flagKey", exposure.flagKey)
+                    Assert.assertEquals("variant", exposure.variant)
+                    Assert.assertEquals("experimentKey", exposure.experimentKey)
+                    didTrack = true
+                }
             }
-        }
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                debug = true,
-                exposureTrackingProvider = exposureTrackingProvider,
-                source = Source.INITIAL_VARIANTS,
-                initialVariants = mapOf("flagKey" to Variant(key = "variant", expKey = "experimentKey"))
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    debug = true,
+                    exposureTrackingProvider = exposureTrackingProvider,
+                    source = Source.INITIAL_VARIANTS,
+                    initialVariants = mapOf("flagKey" to Variant(key = "variant", expKey = "experimentKey")),
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         client.variant("flagKey")
         Assert.assertTrue(didTrack)
     }
 
     @Test
     fun `ServerZone - test no config uses defaults`() {
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         Assert.assertEquals("https://api.lab.amplitude.com/".toHttpUrl(), client.serverUrl)
         Assert.assertEquals("https://flag.lab.amplitude.com/".toHttpUrl(), client.flagsServerUrl)
     }
 
     @Test
     fun `ServerZone - test us server zone config uses defaults`() {
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(serverZone = ServerZone.US),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(serverZone = ServerZone.US),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         Assert.assertEquals("https://api.lab.amplitude.com/".toHttpUrl(), client.serverUrl)
         Assert.assertEquals("https://flag.lab.amplitude.com/".toHttpUrl(), client.flagsServerUrl)
     }
 
     @Test
     fun `ServerZone - test us server zone config with explicit config uses explicit config`() {
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                serverZone = ServerZone.US,
-                serverUrl = "https://experiment.company.com",
-                flagsServerUrl = "https://flags.company.com"
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    serverZone = ServerZone.US,
+                    serverUrl = "https://experiment.company.com",
+                    flagsServerUrl = "https://flags.company.com",
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         Assert.assertEquals("https://experiment.company.com".toHttpUrl(), client.serverUrl)
         Assert.assertEquals("https://flags.company.com".toHttpUrl(), client.flagsServerUrl)
     }
 
     @Test
     fun `ServerZone - test eu server zone uses eu defaults`() {
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(serverZone = ServerZone.EU),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(serverZone = ServerZone.EU),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         Assert.assertEquals("https://api.lab.eu.amplitude.com/".toHttpUrl(), client.serverUrl)
         Assert.assertEquals("https://flag.lab.eu.amplitude.com/".toHttpUrl(), client.flagsServerUrl)
     }
 
     @Test
     fun `ServerZone - test eu server zone with explicit config uses explicit config`() {
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                serverZone = ServerZone.EU,
-                serverUrl = "https://experiment.company.com",
-                flagsServerUrl = "https://flags.company.com"
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    serverZone = ServerZone.EU,
+                    serverUrl = "https://experiment.company.com",
+                    flagsServerUrl = "https://flags.company.com",
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         Assert.assertEquals("https://experiment.company.com".toHttpUrl(), client.serverUrl)
         Assert.assertEquals("https://flags.company.com".toHttpUrl(), client.flagsServerUrl)
     }
 
     @Test
     fun `LocalEvaluation - test start loads flags into local storage`() {
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(fetchOnStart = true),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(fetchOnStart = true),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         client.start(ExperimentUser(deviceId = "test_device")).get()
         Assert.assertEquals("sdk-ci-test-local", client.allFlags()["sdk-ci-test-local"]?.key)
         client.stop()
@@ -520,13 +540,14 @@ class ExperimentClientTest {
 
     @Test
     fun `LocalEvaluation - test variant after start returns expected locally evaluated variant`() {
-        val client = DefaultExperimentClient(
-            SERVER_API_KEY,
-            ExperimentConfig(fetchOnStart = true),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                SERVER_API_KEY,
+                ExperimentConfig(fetchOnStart = true),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         client.start(ExperimentUser(deviceId = "test_device")).get()
         var variant = client.variant("sdk-ci-test-local")
         Assert.assertEquals("on", variant.key)
@@ -540,13 +561,14 @@ class ExperimentClientTest {
 
     @Test
     fun `LocalEvaluation - remote evaluation variant preferred over local evaluation variant`() {
-        val client = DefaultExperimentClient(
-            SERVER_API_KEY,
-            ExperimentConfig(fetchOnStart = false),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                SERVER_API_KEY,
+                ExperimentConfig(fetchOnStart = false),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         val user = ExperimentUser(userId = "test_user", deviceId = "test_device")
         client.start(user).get()
         var variant = client.variant("sdk-ci-test")
@@ -565,17 +587,18 @@ class ExperimentClientTest {
         val user = ExperimentUser(userId = "test_user")
         val exposureTrackingProvider = mockk<TestExposureTrackingProvider>()
         every { exposureTrackingProvider.track(any()) } just Runs
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                exposureTrackingProvider = exposureTrackingProvider,
-                fetchOnStart = true,
-                source = Source.LOCAL_STORAGE
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = exposureTrackingProvider,
+                    fetchOnStart = true,
+                    source = Source.LOCAL_STORAGE,
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals("on", variant.key)
@@ -585,7 +608,7 @@ class ExperimentClientTest {
             exposureTrackingProvider.track(
                 match {
                     it.flagKey == "sdk-ci-test" && it.variant == "on"
-                }
+                },
             )
         }
     }
@@ -595,19 +618,20 @@ class ExperimentClientTest {
         val user = ExperimentUser()
         val exposureTrackingProvider = mockk<TestExposureTrackingProvider>()
         every { exposureTrackingProvider.track(any()) } just Runs
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                exposureTrackingProvider = exposureTrackingProvider,
-                fetchOnStart = true,
-                source = Source.LOCAL_STORAGE,
-                initialVariants = mapOf("sdk-ci-test" to initialVariant),
-                fallbackVariant = fallbackVariant
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = exposureTrackingProvider,
+                    fetchOnStart = true,
+                    source = Source.LOCAL_STORAGE,
+                    initialVariants = mapOf("sdk-ci-test" to initialVariant),
+                    fallbackVariant = fallbackVariant,
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test", inlineVariant)
         Assert.assertEquals(inlineVariant, variant)
@@ -615,7 +639,7 @@ class ExperimentClientTest {
             exposureTrackingProvider.track(
                 match {
                     it.flagKey == "sdk-ci-test" && it.variant == null
-                }
+                },
             )
         }
     }
@@ -625,19 +649,20 @@ class ExperimentClientTest {
         val user = ExperimentUser()
         val exposureTrackingProvider = mockk<TestExposureTrackingProvider>()
         every { exposureTrackingProvider.track(any()) } just Runs
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                exposureTrackingProvider = exposureTrackingProvider,
-                fetchOnStart = true,
-                source = Source.LOCAL_STORAGE,
-                initialVariants = mapOf("sdk-ci-test" to initialVariant),
-                fallbackVariant = fallbackVariant
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = exposureTrackingProvider,
+                    fetchOnStart = true,
+                    source = Source.LOCAL_STORAGE,
+                    initialVariants = mapOf("sdk-ci-test" to initialVariant),
+                    fallbackVariant = fallbackVariant,
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals(initialVariant, variant)
@@ -645,7 +670,7 @@ class ExperimentClientTest {
             exposureTrackingProvider.track(
                 match {
                     it.flagKey == "sdk-ci-test" && it.variant == null
-                }
+                },
             )
         }
     }
@@ -655,19 +680,20 @@ class ExperimentClientTest {
         val user = ExperimentUser()
         val exposureTrackingProvider = mockk<TestExposureTrackingProvider>()
         every { exposureTrackingProvider.track(any()) } just Runs
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                exposureTrackingProvider = exposureTrackingProvider,
-                fetchOnStart = true,
-                source = Source.LOCAL_STORAGE,
-                initialVariants = mapOf("sdk-ci-test-not-selected" to initialVariant),
-                fallbackVariant = fallbackVariant
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = exposureTrackingProvider,
+                    fetchOnStart = true,
+                    source = Source.LOCAL_STORAGE,
+                    initialVariants = mapOf("sdk-ci-test-not-selected" to initialVariant),
+                    fallbackVariant = fallbackVariant,
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals(Variant(key = "fallback", value = "fallback"), variant)
@@ -675,7 +701,7 @@ class ExperimentClientTest {
             exposureTrackingProvider.track(
                 match {
                     it.flagKey == "sdk-ci-test" && it.variant == null
-                }
+                },
             )
         }
     }
@@ -685,18 +711,19 @@ class ExperimentClientTest {
         val user = ExperimentUser()
         val exposureTrackingProvider = mockk<TestExposureTrackingProvider>()
         every { exposureTrackingProvider.track(any()) } just Runs
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                exposureTrackingProvider = exposureTrackingProvider,
-                fetchOnStart = true,
-                source = Source.LOCAL_STORAGE,
-                initialVariants = mapOf("sdk-ci-test-not-selected" to initialVariant),
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = exposureTrackingProvider,
+                    fetchOnStart = true,
+                    source = Source.LOCAL_STORAGE,
+                    initialVariants = mapOf("sdk-ci-test-not-selected" to initialVariant),
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals(variant.key, "off")
@@ -706,7 +733,7 @@ class ExperimentClientTest {
             exposureTrackingProvider.track(
                 match {
                     it.flagKey == "sdk-ci-test" && it.variant == null
-                }
+                },
             )
         }
     }
@@ -716,19 +743,20 @@ class ExperimentClientTest {
         val user = ExperimentUser(userId = "test_user")
         val exposureTrackingProvider = mockk<TestExposureTrackingProvider>()
         every { exposureTrackingProvider.track(any()) } just Runs
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                exposureTrackingProvider = exposureTrackingProvider,
-                fetchOnStart = true,
-                source = Source.INITIAL_VARIANTS,
-                initialVariants = mapOf("sdk-ci-test" to initialVariant),
-                fallbackVariant = fallbackVariant
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = exposureTrackingProvider,
+                    fetchOnStart = true,
+                    source = Source.INITIAL_VARIANTS,
+                    initialVariants = mapOf("sdk-ci-test" to initialVariant),
+                    fallbackVariant = fallbackVariant,
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals(initialVariant, variant)
@@ -736,7 +764,7 @@ class ExperimentClientTest {
             exposureTrackingProvider.track(
                 match {
                     it.flagKey == "sdk-ci-test" && it.variant == "initial"
-                }
+                },
             )
         }
     }
@@ -746,19 +774,20 @@ class ExperimentClientTest {
         val user = ExperimentUser(userId = "test_user")
         val exposureTrackingProvider = mockk<TestExposureTrackingProvider>()
         every { exposureTrackingProvider.track(any()) } just Runs
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                exposureTrackingProvider = exposureTrackingProvider,
-                fetchOnStart = true,
-                source = Source.INITIAL_VARIANTS,
-                initialVariants = mapOf("sdk-ci-test-not-selected" to initialVariant),
-                fallbackVariant = fallbackVariant
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = exposureTrackingProvider,
+                    fetchOnStart = true,
+                    source = Source.INITIAL_VARIANTS,
+                    initialVariants = mapOf("sdk-ci-test-not-selected" to initialVariant),
+                    fallbackVariant = fallbackVariant,
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test", inlineVariant)
         Assert.assertEquals("on", variant.key)
@@ -768,7 +797,7 @@ class ExperimentClientTest {
             exposureTrackingProvider.track(
                 match {
                     it.flagKey == "sdk-ci-test" && it.variant == "on"
-                }
+                },
             )
         }
     }
@@ -778,19 +807,20 @@ class ExperimentClientTest {
         val user = ExperimentUser()
         val exposureTrackingProvider = mockk<TestExposureTrackingProvider>()
         every { exposureTrackingProvider.track(any()) } just Runs
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                exposureTrackingProvider = exposureTrackingProvider,
-                fetchOnStart = true,
-                source = Source.INITIAL_VARIANTS,
-                initialVariants = mapOf("sdk-ci-test-not-selected" to initialVariant),
-                fallbackVariant = fallbackVariant
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = exposureTrackingProvider,
+                    fetchOnStart = true,
+                    source = Source.INITIAL_VARIANTS,
+                    initialVariants = mapOf("sdk-ci-test-not-selected" to initialVariant),
+                    fallbackVariant = fallbackVariant,
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test", inlineVariant)
         Assert.assertEquals(inlineVariant, variant)
@@ -798,7 +828,7 @@ class ExperimentClientTest {
             exposureTrackingProvider.track(
                 match {
                     it.flagKey == "sdk-ci-test" && it.variant == null
-                }
+                },
             )
         }
     }
@@ -808,19 +838,20 @@ class ExperimentClientTest {
         val user = ExperimentUser()
         val exposureTrackingProvider = mockk<TestExposureTrackingProvider>()
         every { exposureTrackingProvider.track(any()) } just Runs
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                exposureTrackingProvider = exposureTrackingProvider,
-                fetchOnStart = true,
-                source = Source.INITIAL_VARIANTS,
-                initialVariants = mapOf("sdk-ci-test-not-selected" to initialVariant),
-                fallbackVariant = fallbackVariant
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = exposureTrackingProvider,
+                    fetchOnStart = true,
+                    source = Source.INITIAL_VARIANTS,
+                    initialVariants = mapOf("sdk-ci-test-not-selected" to initialVariant),
+                    fallbackVariant = fallbackVariant,
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals(fallbackVariant, variant)
@@ -828,7 +859,7 @@ class ExperimentClientTest {
             exposureTrackingProvider.track(
                 match {
                     it.flagKey == "sdk-ci-test" && it.variant == null
-                }
+                },
             )
         }
     }
@@ -838,18 +869,19 @@ class ExperimentClientTest {
         val user = ExperimentUser()
         val exposureTrackingProvider = mockk<TestExposureTrackingProvider>()
         every { exposureTrackingProvider.track(any()) } just Runs
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                exposureTrackingProvider = exposureTrackingProvider,
-                fetchOnStart = true,
-                source = Source.INITIAL_VARIANTS,
-                initialVariants = mapOf("sdk-ci-test-not-selected" to initialVariant),
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = exposureTrackingProvider,
+                    fetchOnStart = true,
+                    source = Source.INITIAL_VARIANTS,
+                    initialVariants = mapOf("sdk-ci-test-not-selected" to initialVariant),
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test")
         Assert.assertEquals(Variant(key = "off", metadata = mapOf("default" to true)), variant)
@@ -857,7 +889,7 @@ class ExperimentClientTest {
             exposureTrackingProvider.track(
                 match {
                     it.flagKey == "sdk-ci-test" && it.variant == null
-                }
+                },
             )
         }
     }
@@ -867,19 +899,20 @@ class ExperimentClientTest {
         val user = ExperimentUser(deviceId = "0123456789")
         val exposureTrackingProvider = mockk<TestExposureTrackingProvider>()
         every { exposureTrackingProvider.track(any()) } just Runs
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                exposureTrackingProvider = exposureTrackingProvider,
-                fetchOnStart = true,
-                source = Source.LOCAL_STORAGE,
-                initialVariants = mapOf("sdk-ci-test-local" to initialVariant),
-                fallbackVariant = fallbackVariant
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = exposureTrackingProvider,
+                    fetchOnStart = true,
+                    source = Source.LOCAL_STORAGE,
+                    initialVariants = mapOf("sdk-ci-test-local" to initialVariant),
+                    fallbackVariant = fallbackVariant,
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test-local", inlineVariant)
         Assert.assertEquals("on", variant.key)
@@ -889,7 +922,7 @@ class ExperimentClientTest {
             exposureTrackingProvider.track(
                 match {
                     it.flagKey == "sdk-ci-test-local" && it.variant == "on"
-                }
+                },
             )
         }
     }
@@ -899,19 +932,20 @@ class ExperimentClientTest {
         val user = ExperimentUser()
         val exposureTrackingProvider = mockk<TestExposureTrackingProvider>()
         every { exposureTrackingProvider.track(any()) } just Runs
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                exposureTrackingProvider = exposureTrackingProvider,
-                fetchOnStart = true,
-                source = Source.LOCAL_STORAGE,
-                initialVariants = mapOf("sdk-ci-test-local" to initialVariant),
-                fallbackVariant = fallbackVariant
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = exposureTrackingProvider,
+                    fetchOnStart = true,
+                    source = Source.LOCAL_STORAGE,
+                    initialVariants = mapOf("sdk-ci-test-local" to initialVariant),
+                    fallbackVariant = fallbackVariant,
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test-local", inlineVariant)
         Assert.assertEquals(inlineVariant, variant)
@@ -919,7 +953,7 @@ class ExperimentClientTest {
             exposureTrackingProvider.track(
                 match {
                     it.flagKey == "sdk-ci-test-local" && it.variant == null
-                }
+                },
             )
         }
     }
@@ -929,19 +963,20 @@ class ExperimentClientTest {
         val user = ExperimentUser()
         val exposureTrackingProvider = mockk<TestExposureTrackingProvider>()
         every { exposureTrackingProvider.track(any()) } just Runs
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                exposureTrackingProvider = exposureTrackingProvider,
-                fetchOnStart = true,
-                source = Source.LOCAL_STORAGE,
-                initialVariants = mapOf("sdk-ci-test-local" to initialVariant),
-                fallbackVariant = fallbackVariant
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = exposureTrackingProvider,
+                    fetchOnStart = true,
+                    source = Source.LOCAL_STORAGE,
+                    initialVariants = mapOf("sdk-ci-test-local" to initialVariant),
+                    fallbackVariant = fallbackVariant,
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test-local")
         Assert.assertEquals(initialVariant, variant)
@@ -949,7 +984,7 @@ class ExperimentClientTest {
             exposureTrackingProvider.track(
                 match {
                     it.flagKey == "sdk-ci-test-local" && it.variant == null
-                }
+                },
             )
         }
     }
@@ -959,19 +994,20 @@ class ExperimentClientTest {
         val user = ExperimentUser()
         val exposureTrackingProvider = mockk<TestExposureTrackingProvider>()
         every { exposureTrackingProvider.track(any()) } just Runs
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                exposureTrackingProvider = exposureTrackingProvider,
-                fetchOnStart = true,
-                source = Source.LOCAL_STORAGE,
-                initialVariants = mapOf("sdk-ci-test-local-not-selected" to initialVariant),
-                fallbackVariant = fallbackVariant
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = exposureTrackingProvider,
+                    fetchOnStart = true,
+                    source = Source.LOCAL_STORAGE,
+                    initialVariants = mapOf("sdk-ci-test-local-not-selected" to initialVariant),
+                    fallbackVariant = fallbackVariant,
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test-local")
         Assert.assertEquals(fallbackVariant, variant)
@@ -979,7 +1015,7 @@ class ExperimentClientTest {
             exposureTrackingProvider.track(
                 match {
                     it.flagKey == "sdk-ci-test-local" && it.variant == null
-                }
+                },
             )
         }
     }
@@ -989,17 +1025,18 @@ class ExperimentClientTest {
         val user = ExperimentUser()
         val exposureTrackingProvider = mockk<TestExposureTrackingProvider>()
         every { exposureTrackingProvider.track(any()) } just Runs
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                exposureTrackingProvider = exposureTrackingProvider,
-                fetchOnStart = true,
-                source = Source.LOCAL_STORAGE,
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = exposureTrackingProvider,
+                    fetchOnStart = true,
+                    source = Source.LOCAL_STORAGE,
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test-local")
         Assert.assertEquals("off", variant.key)
@@ -1008,7 +1045,7 @@ class ExperimentClientTest {
             exposureTrackingProvider.track(
                 match {
                     it.flagKey == "sdk-ci-test-local" && it.variant == null
-                }
+                },
             )
         }
     }
@@ -1017,18 +1054,19 @@ class ExperimentClientTest {
     fun `LocalEvaluationFlags - test all returns local evaluation variant over remote or initialVariants with local storage source`() {
         val user = ExperimentUser(userId = "test_user", deviceId = "0123456789")
         val exposureTrackingProvider = TestExposureTrackingProvider()
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                exposureTrackingProvider = exposureTrackingProvider,
-                fetchOnStart = true,
-                source = Source.LOCAL_STORAGE,
-                initialVariants = mapOf("sdk-ci-test" to initialVariant, "sdk-ci-test-local" to initialVariant)
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = exposureTrackingProvider,
+                    fetchOnStart = true,
+                    source = Source.LOCAL_STORAGE,
+                    initialVariants = mapOf("sdk-ci-test" to initialVariant, "sdk-ci-test-local" to initialVariant),
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         client.start(user).get()
         val allVariants = client.all()
         val localVariant = allVariants["sdk-ci-test-local"]
@@ -1044,18 +1082,19 @@ class ExperimentClientTest {
     fun `LocalEvaluationFlags - test all returns local evaluation variant over remote or initialVariants with initial variants source`() {
         val user = ExperimentUser(userId = "test_user", deviceId = "0123456789")
         val exposureTrackingProvider = TestExposureTrackingProvider()
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                exposureTrackingProvider = exposureTrackingProvider,
-                fetchOnStart = true,
-                source = Source.INITIAL_VARIANTS,
-                initialVariants = mapOf("sdk-ci-test" to initialVariant, "sdk-ci-test-local" to initialVariant)
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = exposureTrackingProvider,
+                    fetchOnStart = true,
+                    source = Source.INITIAL_VARIANTS,
+                    initialVariants = mapOf("sdk-ci-test" to initialVariant, "sdk-ci-test-local" to initialVariant),
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         client.start(user).get()
         val allVariants = client.all()
         val localVariant = allVariants["sdk-ci-test-local"]
@@ -1069,13 +1108,14 @@ class ExperimentClientTest {
 
     @Test
     fun `start - test with local and remote evaluation, calls fetchInternal`() {
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         val spyClient = spyk(client)
         spyClient.start(null).get()
         verify(exactly = 1) { spyClient.fetchInternal(any(), any(), any(), any()) }
@@ -1083,13 +1123,14 @@ class ExperimentClientTest {
 
     @Test
     fun `start - with local evaluation only, calls fetchInternal`() {
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         val spyClient = spyk(client)
         every { spyClient.allFlags() } returns emptyMap()
         spyClient.start(null).get()
@@ -1098,13 +1139,14 @@ class ExperimentClientTest {
 
     @Test
     fun `start - test with local evaluation only, fetchOnStart enabled, calls fetchInternal`() {
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(fetchOnStart = true),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(fetchOnStart = true),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         val spyClient = spyk(client)
         every { spyClient.allFlags() } returns emptyMap()
         spyClient.start(null).get()
@@ -1113,13 +1155,14 @@ class ExperimentClientTest {
 
     @Test
     fun `start - test with local and remote evaluation, fetchOnStart disabled, does not call fetchInternal`() {
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(fetchOnStart = false),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(fetchOnStart = false),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         val spyClient = spyk(client)
         spyClient.start(null).get()
         verify(exactly = 0) { spyClient.fetchInternal(any(), any(), any(), any()) }
@@ -1130,18 +1173,19 @@ class ExperimentClientTest {
         val user = ExperimentUser(userId = "test_user")
         val exposureTrackingProvider = mockk<TestExposureTrackingProvider>()
         every { exposureTrackingProvider.track(any()) } just Runs
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                debug = true,
-                exposureTrackingProvider = exposureTrackingProvider,
-                fetchOnStart = false,
-                source = Source.LOCAL_STORAGE,
-            ),
-            OkHttpClient(),
-            mockStorage,
-            Experiment.executorService,
-        )
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    debug = true,
+                    exposureTrackingProvider = exposureTrackingProvider,
+                    fetchOnStart = false,
+                    source = Source.LOCAL_STORAGE,
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
         client.start(user).get()
         var variant = client.variant("sdk-payload-ci-test")
         val obj = JSONObject().put("key1", "val1").put("key2", "val2")
@@ -1159,21 +1203,23 @@ class ExperimentClientTest {
     fun `initial flags`() {
         val storage = MockStorage()
         // Flag, sdk-ci-test-local is modified to always return off
-        val initialFlags = """
+        val initialFlags =
+            """
             [
                 {"key":"sdk-ci-test-local","metadata":{"deployed":true,"evaluationMode":"local","flagType":"release","flagVersion":1},"segments":[{"metadata":{"segmentName":"All Other Users"},"variant":"off"}],"variants":{"off":{"key":"off","metadata":{"default":true}},"on":{"key":"on","value":"on"}}},
                 {"key":"sdk-ci-test-local-2","metadata":{"deployed":true,"evaluationMode":"local","flagType":"release","flagVersion":1},"segments":[{"metadata":{"segmentName":"All Other Users"},"variant":"on"}],"variants":{"off":{"key":"off","metadata":{"default":true}},"on":{"key":"on","value":"on"}}}
             ]
-        """.trimIndent()
-        val client = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                initialFlags = initialFlags,
-            ),
-            OkHttpClient(),
-            storage,
-            Experiment.executorService,
-        )
+            """.trimIndent()
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    initialFlags = initialFlags,
+                ),
+                OkHttpClient(),
+                storage,
+                Experiment.executorService,
+            )
         val user = ExperimentUser(userId = "user_id", deviceId = "device_id")
         client.setUser(user)
         var variant = client.variant("sdk-ci-test-local")
@@ -1187,15 +1233,16 @@ class ExperimentClientTest {
         variant2 = client.variant("sdk-ci-test-local-2")
         Assert.assertEquals("on", variant2.key)
         // Initialize a second client with the same storage to simulate an app restart
-        val client2 = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(
-                initialFlags = initialFlags,
-            ),
-            OkHttpClient(),
-            storage,
-            Experiment.executorService,
-        )
+        val client2 =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    initialFlags = initialFlags,
+                ),
+                OkHttpClient(),
+                storage,
+                Experiment.executorService,
+            )
         // Storage flag should take precedent over initial flag
         variant = client.variant("sdk-ci-test-local")
         Assert.assertEquals("on", variant.key)
@@ -1206,26 +1253,28 @@ class ExperimentClientTest {
     @Test
     fun `fetch retry with different response codes`() {
         // Response code, error message, and whether retry should be called
-        val testData = listOf(
-            Triple(300, "Fetch Exception 300", 1),
-            Triple(400, "Fetch Exception 400", 0),
-            Triple(429, "Fetch Exception 429", 1),
-            Triple(500, "Fetch Exception 500", 1),
-            Triple(0, "Other Exception", 1)
-        )
+        val testData =
+            listOf(
+                Triple(300, "Fetch Exception 300", 1),
+                Triple(400, "Fetch Exception 400", 0),
+                Triple(429, "Fetch Exception 429", 1),
+                Triple(500, "Fetch Exception 500", 1),
+                Triple(0, "Other Exception", 1),
+            )
 
         testData.forEach { (responseCode, errorMessage, retryCalled) ->
             val storage = MockStorage()
-            val client = spyk(
-                DefaultExperimentClient(
-                    API_KEY,
-                    ExperimentConfig(retryFetchOnFailure = true),
-                    OkHttpClient(),
-                    storage,
-                    Experiment.executorService,
-                ),
-                recordPrivateCalls = true
-            )
+            val client =
+                spyk(
+                    DefaultExperimentClient(
+                        API_KEY,
+                        ExperimentConfig(retryFetchOnFailure = true),
+                        OkHttpClient(),
+                        storage,
+                        Experiment.executorService,
+                    ),
+                    recordPrivateCalls = true,
+                )
             // Mock the private method to throw FetchException or other exceptions
             every { client["doFetch"](any<ExperimentUser>(), any<Long>(), any<FetchOptions>()) } answers {
                 val future = CompletableFuture<Map<String, Variant>>()

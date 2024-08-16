@@ -6,7 +6,6 @@ package com.amplitude.experiment.analytics
  */
 @Deprecated("Use ExposureTrackingProvider instead")
 interface ExperimentAnalyticsProvider {
-
     /**
      * Wraps an analytics event track call. This is typically called by the
      * experiment client after setting user properties to track an

@@ -57,7 +57,6 @@ class ExperimentConfig internal constructor(
     @JvmField
     val exposureTrackingProvider: ExposureTrackingProvider? = Defaults.EXPOSURE_TRACKING_PROVIDER,
 ) {
-
     /**
      * Construct the default [ExperimentConfig].
      */
@@ -67,7 +66,6 @@ class ExperimentConfig internal constructor(
      * Defaults for [ExperimentConfig]
      */
     object Defaults {
-
         /**
          * false
          */
@@ -168,7 +166,6 @@ class ExperimentConfig internal constructor(
     }
 
     class Builder {
-
         private var debug = Defaults.DEBUG
         private var instanceName = Defaults.INSTANCE_NAME
         private var fallbackVariant = Defaults.FALLBACK_VARIANT
@@ -188,78 +185,96 @@ class ExperimentConfig internal constructor(
         private var analyticsProvider = Defaults.ANALYTICS_PROVIDER
         private var exposureTrackingProvider = Defaults.EXPOSURE_TRACKING_PROVIDER
 
-        fun debug(debug: Boolean) = apply {
-            this.debug = debug
-        }
+        fun debug(debug: Boolean) =
+            apply {
+                this.debug = debug
+            }
 
-        fun instanceName(instanceName: String) = apply {
-            this.instanceName = instanceName
-        }
+        fun instanceName(instanceName: String) =
+            apply {
+                this.instanceName = instanceName
+            }
 
-        fun fallbackVariant(fallbackVariant: Variant) = apply {
-            this.fallbackVariant = fallbackVariant
-        }
+        fun fallbackVariant(fallbackVariant: Variant) =
+            apply {
+                this.fallbackVariant = fallbackVariant
+            }
 
-        fun initialFlags(initialFlags: String?) = apply {
-            this.initialFlags = initialFlags
-        }
+        fun initialFlags(initialFlags: String?) =
+            apply {
+                this.initialFlags = initialFlags
+            }
 
-        fun initialVariants(initialVariants: Map<String, Variant>) = apply {
-            this.initialVariants = initialVariants
-        }
+        fun initialVariants(initialVariants: Map<String, Variant>) =
+            apply {
+                this.initialVariants = initialVariants
+            }
 
-        fun source(source: Source) = apply {
-            this.source = source
-        }
+        fun source(source: Source) =
+            apply {
+                this.source = source
+            }
 
-        fun serverUrl(serverUrl: String) = apply {
-            this.serverUrl = serverUrl
-        }
+        fun serverUrl(serverUrl: String) =
+            apply {
+                this.serverUrl = serverUrl
+            }
 
-        fun flagsServerUrl(flagsServerUrl: String) = apply {
-            this.flagsServerUrl = flagsServerUrl
-        }
+        fun flagsServerUrl(flagsServerUrl: String) =
+            apply {
+                this.flagsServerUrl = flagsServerUrl
+            }
 
-        fun serverZone(serverZone: ServerZone) = apply {
-            this.serverZone = serverZone
-        }
+        fun serverZone(serverZone: ServerZone) =
+            apply {
+                this.serverZone = serverZone
+            }
 
-        fun fetchTimeoutMillis(fetchTimeoutMillis: Long) = apply {
-            this.fetchTimeoutMillis = fetchTimeoutMillis
-        }
+        fun fetchTimeoutMillis(fetchTimeoutMillis: Long) =
+            apply {
+                this.fetchTimeoutMillis = fetchTimeoutMillis
+            }
 
-        fun retryFetchOnFailure(retryFetchOnFailure: Boolean) = apply {
-            this.retryFetchOnFailure = retryFetchOnFailure
-        }
+        fun retryFetchOnFailure(retryFetchOnFailure: Boolean) =
+            apply {
+                this.retryFetchOnFailure = retryFetchOnFailure
+            }
 
-        fun automaticExposureTracking(automaticExposureTracking: Boolean) = apply {
-            this.automaticExposureTracking = automaticExposureTracking
-        }
+        fun automaticExposureTracking(automaticExposureTracking: Boolean) =
+            apply {
+                this.automaticExposureTracking = automaticExposureTracking
+            }
 
-        fun pollOnStart(pollOnStart: Boolean) = apply {
-            this.pollOnStart = pollOnStart
-        }
+        fun pollOnStart(pollOnStart: Boolean) =
+            apply {
+                this.pollOnStart = pollOnStart
+            }
 
-        fun fetchOnStart(fetchOnStart: Boolean?) = apply {
-            this.fetchOnStart = fetchOnStart ?: true
-        }
+        fun fetchOnStart(fetchOnStart: Boolean?) =
+            apply {
+                this.fetchOnStart = fetchOnStart ?: true
+            }
 
-        fun automaticFetchOnAmplitudeIdentityChange(automaticFetchOnAmplitudeIdentityChange: Boolean) = apply {
-            this.automaticFetchOnAmplitudeIdentityChange = automaticFetchOnAmplitudeIdentityChange
-        }
+        fun automaticFetchOnAmplitudeIdentityChange(automaticFetchOnAmplitudeIdentityChange: Boolean) =
+            apply {
+                this.automaticFetchOnAmplitudeIdentityChange = automaticFetchOnAmplitudeIdentityChange
+            }
 
-        fun userProvider(userProvider: ExperimentUserProvider?) = apply {
-            this.userProvider = userProvider
-        }
+        fun userProvider(userProvider: ExperimentUserProvider?) =
+            apply {
+                this.userProvider = userProvider
+            }
 
         @Deprecated("Use the exposureTrackingProvider instead")
-        fun analyticsProvider(analyticsProvider: ExperimentAnalyticsProvider?) = apply {
-            this.analyticsProvider = analyticsProvider
-        }
+        fun analyticsProvider(analyticsProvider: ExperimentAnalyticsProvider?) =
+            apply {
+                this.analyticsProvider = analyticsProvider
+            }
 
-        fun exposureTrackingProvider(exposureTrackingProvider: ExposureTrackingProvider?) = apply {
-            this.exposureTrackingProvider = exposureTrackingProvider
-        }
+        fun exposureTrackingProvider(exposureTrackingProvider: ExposureTrackingProvider?) =
+            apply {
+                this.exposureTrackingProvider = exposureTrackingProvider
+            }
 
         fun build(): ExperimentConfig {
             return ExperimentConfig(
