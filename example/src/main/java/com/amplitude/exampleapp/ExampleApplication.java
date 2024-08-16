@@ -2,10 +2,6 @@ package com.amplitude.exampleapp;
 
 import android.app.Application;
 
-import com.amplitude.api.Amplitude;
-import com.amplitude.api.AmplitudeAnalyticsProvider;
-import com.amplitude.api.AmplitudeClient;
-import com.amplitude.api.AmplitudeUserProvider;
 import com.amplitude.experiment.Experiment;
 import com.amplitude.experiment.ExperimentClient;
 import com.amplitude.experiment.ExperimentConfig;

@@ -3,7 +3,6 @@ package com.amplitude.exampleapp;
 import android.os.Bundle;
 import android.widget.TextView;
 
-import com.amplitude.experiment.Experiment;
 import com.amplitude.experiment.ExperimentClient;
 import com.amplitude.experiment.Variant;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
