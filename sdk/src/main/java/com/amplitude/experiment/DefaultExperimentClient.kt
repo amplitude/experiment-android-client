@@ -59,23 +59,31 @@ internal class DefaultExperimentClient internal constructor(
     private var user: ExperimentUser? = null
     private val engine = EvaluationEngineImpl()
 
-    private val variants: LoadStoreCache<Variant> =
+    private val variants =
         getVariantStorage(
             this.apiKey,
             this.config.instanceName,
             storage,
         )
-    private val flags: LoadStoreCache<EvaluationFlag> =
+    private val flags =
         getFlagStorage(
             this.apiKey,
             this.config.instanceName,
             storage,
+            ::mergeInitialFlagsWithStorage,
         )
 
     init {
-        this.variants.load()
-        this.flags.load()
-        mergeInitialFlagsWithStorage()
+        executorService.execute {
+            synchronized(variants) {
+                this.variants.load()
+            }
+        }
+        executorService.execute {
+            synchronized(flags) {
+                this.flags.load()
+            }
+        }
     }
 
     private val backoffLock = Any()

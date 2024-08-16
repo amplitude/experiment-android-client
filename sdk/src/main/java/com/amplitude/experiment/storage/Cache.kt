@@ -13,14 +13,18 @@ internal class LoadStoreCache<V>(
     private val storage: Storage,
     private val decoder: ((value: String) -> V?),
     private val encoder: ((value: V) -> String),
+    private val onLoad: (() -> Unit)? = null,
 ) {
     private val cache: MutableMap<String, V> = mutableMapOf()
+    private var isLoaded = false
 
     fun get(key: String): V? {
+        if (!isLoaded) load()
         return cache[key]
     }
 
     fun getAll(): Map<String, V> {
+        if (!isLoaded) load()
         return HashMap(cache)
     }
 
@@ -60,6 +64,8 @@ internal class LoadStoreCache<V>(
             }.toMap()
         clear()
         putAll(values)
+        onLoad?.invoke()
+        isLoaded = true
     }
 
     fun store(values: MutableMap<String, V> = cache) {
@@ -94,10 +100,11 @@ internal fun getFlagStorage(
     deploymentKey: String,
     instanceName: String,
     storage: Storage,
+    merger: () -> Unit,
 ): LoadStoreCache<EvaluationFlag> {
     val truncatedDeployment = deploymentKey.takeLast(6)
     val namespace = "amp-exp-$instanceName-$truncatedDeployment-flags"
-    return LoadStoreCache(namespace, storage, ::decodeFlagFromStorage, ::encodeFlagToStorage)
+    return LoadStoreCache(namespace, storage, ::decodeFlagFromStorage, ::encodeFlagToStorage, merger)
 }
 
 internal fun decodeVariantFromStorage(storageValue: String): Variant? {
