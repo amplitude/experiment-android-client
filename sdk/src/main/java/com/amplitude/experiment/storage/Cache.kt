@@ -16,15 +16,12 @@ internal class LoadStoreCache<V>(
     private val onLoad: (() -> Unit)? = null,
 ) {
     private val cache: MutableMap<String, V> = mutableMapOf()
-    private var isLoaded = false
 
     fun get(key: String): V? {
-        if (!isLoaded) load()
         return cache[key]
     }
 
     fun getAll(): Map<String, V> {
-        if (!isLoaded) load()
         return HashMap(cache)
     }
 
@@ -65,7 +62,6 @@ internal class LoadStoreCache<V>(
         clear()
         putAll(values)
         onLoad?.invoke()
-        isLoaded = true
     }
 
     fun store(values: MutableMap<String, V> = cache) {
