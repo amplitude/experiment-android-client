@@ -68,7 +68,10 @@ interface ExperimentClient {
      * @see ExperimentUser
      * @see ExperimentUserProvider
      */
-    fun fetch(user: ExperimentUser? = null, options: FetchOptions? = null): Future<ExperimentClient>
+    fun fetch(
+        user: ExperimentUser? = null,
+        options: FetchOptions? = null,
+    ): Future<ExperimentClient>
 
     /**
      * Returns the stored variant for the provided key.
@@ -95,7 +98,10 @@ interface ExperimentClient {
      * @see Variant
      * @see ExperimentConfig
      */
-    fun variant(key: String, fallback: Variant? = null): Variant
+    fun variant(
+        key: String,
+        fallback: Variant? = null,
+    ): Variant
 
     /**
      * Returns all variants for the user.

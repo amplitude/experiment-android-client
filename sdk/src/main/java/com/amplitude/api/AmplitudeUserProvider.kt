@@ -12,10 +12,9 @@ import java.util.Locale
 
 @Deprecated(
     "Update your version of the amplitude analytics SDK to 2.36.0+ and for seamless " +
-        "integration with the amplitude analytics SDK"
+        "integration with the amplitude analytics SDK",
 )
 class AmplitudeUserProvider(private val amplitudeClient: AmplitudeClient) : ExperimentUserProvider {
-
     private var initialized = false
     private var version: String? = null
     private var carrier: String? = null
@@ -39,8 +38,8 @@ class AmplitudeUserProvider(private val amplitudeClient: AmplitudeClient) : Expe
         Logger.d(
             String.format(
                 "Waited %.3f ms for Amplitude SDK initialization",
-                (end - start) / 1000000.0
-            )
+                (end - start) / 1000000.0,
+            ),
         )
     }
 
@@ -48,9 +47,10 @@ class AmplitudeUserProvider(private val amplitudeClient: AmplitudeClient) : Expe
         if (amplitudeClient.context != null) {
             val packageInfo: PackageInfo
             try {
-                packageInfo = amplitudeClient.context.packageManager.getPackageInfo(
-                    amplitudeClient.context.packageName, 0
-                )
+                packageInfo =
+                    amplitudeClient.context.packageManager.getPackageInfo(
+                        amplitudeClient.context.packageName, 0,
+                    )
                 version = packageInfo.versionName
             } catch (ignored: PackageManager.NameNotFoundException) {
             } catch (ignored: Exception) {
@@ -61,8 +61,9 @@ class AmplitudeUserProvider(private val amplitudeClient: AmplitudeClient) : Expe
     private fun cacheCarrier() {
         if (amplitudeClient.context != null) {
             try {
-                val manager = amplitudeClient.context
-                    .getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+                val manager =
+                    amplitudeClient.context
+                        .getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
                 carrier = manager.networkOperatorName
             } catch (e: Exception) {
                 // Failed to get network operator name from network

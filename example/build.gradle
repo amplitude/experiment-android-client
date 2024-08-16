@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
+apply plugin: 'org.jetbrains.kotlin.android'
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.1"
+    compileSdkVersion 34
 
     defaultConfig {
         applicationId "com.amplitude.exampleapp"
-        minSdkVersion 17
-        targetSdkVersion 30
+        minSdkVersion 19
+        targetSdkVersion 34
         versionCode 1
         versionName "1.0"
 
@@ -21,13 +21,14 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility 1.8
-        targetCompatibility 1.8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
-}
 
-configurations.all {
-    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+    namespace 'com.amplitude.exampleapp'
 }
 
 dependencies {
@@ -39,11 +40,10 @@ dependencies {
     implementation 'androidx.navigation:navigation-fragment:2.1.0'
     implementation 'androidx.navigation:navigation-ui:2.1.0'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
-    implementation 'com.amplitude:android-sdk:2.30.0'
-//    implementation("com.amplitude:experiment-android-client:0.0.4")
+    implementation 'com.amplitude:android-sdk:2.39.8'
     implementation project(path: ':sdk')
     implementation 'com.squareup.okhttp3:okhttp:4.2.2'
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.2.0'
     testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 }

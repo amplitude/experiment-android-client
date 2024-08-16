@@ -20,7 +20,7 @@ android {
 
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 30
+        targetSdkVersion 33
         versionName PUBLISH_VERSION
         buildConfigField "String", "VERSION_NAME", "\"$PUBLISH_VERSION\""
         consumerProguardFiles "consumer-rules.pro"
@@ -37,6 +37,10 @@ android {
         sourceCompatibility 1.8
         targetCompatibility 1.8
     }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    namespace 'com.amplitude.experiment'
 }
 
 dependencies {
@@ -47,7 +51,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
 
     testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.json:json:20201115'
+    testImplementation 'org.json:json:20240303'
     testImplementation project(path: ':sdk')
     testImplementation "io.mockk:mockk:1.12.0"
 }

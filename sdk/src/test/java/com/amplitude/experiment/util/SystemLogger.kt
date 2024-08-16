@@ -12,7 +12,6 @@ internal fun timestamp(): String {
 
 // For Testing
 internal class SystemLogger(private val debug: Boolean) : ILogger {
-
     override fun v(msg: String) {
         if (debug) {
             println("[${timestamp()}] VERBOSE: $msg")
@@ -31,7 +30,10 @@ internal class SystemLogger(private val debug: Boolean) : ILogger {
         }
     }
 
-    override fun w(msg: String, e: Throwable?) {
+    override fun w(
+        msg: String,
+        e: Throwable?,
+    ) {
         if (e == null) {
             println("[${timestamp()}] WARN: $msg")
         } else {
@@ -39,7 +41,10 @@ internal class SystemLogger(private val debug: Boolean) : ILogger {
         }
     }
 
-    override fun e(msg: String, e: Throwable?) {
+    override fun e(
+        msg: String,
+        e: Throwable?,
+    ) {
         if (e == null) {
             println("[${timestamp()}] ERROR: $msg")
         } else {

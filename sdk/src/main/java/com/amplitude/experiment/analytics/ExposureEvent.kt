@@ -14,30 +14,29 @@ class ExposureEvent(
      * The user exposed to the flag/experiment variant.
      */
     override val user: ExperimentUser,
-
     /**
      * The key of the flag/experiment that the user has been exposed to.
      */
     override val key: String,
-
     /**
      * The variant of the flag/experiment that the user has been exposed to.
      */
     override val variant: Variant,
-
     /**
      * The source of the determination of the variant.
      */
-    val source: VariantSource
+    val source: VariantSource,
 ) : ExperimentAnalyticsEvent {
     override val name: String = "[Experiment] Exposure"
-    override val properties: Map<String, String?> = mapOf(
-        "key" to key,
-        "variant" to variant.key,
-        "source" to source.toString(),
-    )
-    override val userProperties: Map<String, Any?> = mapOf(
-        "[Experiment] $key" to variant.key
-    )
+    override val properties: Map<String, String?> =
+        mapOf(
+            "key" to key,
+            "variant" to variant.key,
+            "source" to source.toString(),
+        )
+    override val userProperties: Map<String, Any?> =
+        mapOf(
+            "[Experiment] $key" to variant.key,
+        )
     override val userProperty: String = "[Experiment] $key"
 }

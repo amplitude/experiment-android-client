@@ -4,20 +4,20 @@ import com.amplitude.analytics.connector.AnalyticsEvent
 import com.amplitude.analytics.connector.EventBridge
 
 internal class ConnectorExposureTrackingProvider(
-    private val eventBridge: EventBridge
+    private val eventBridge: EventBridge,
 ) : ExposureTrackingProvider {
-
     override fun track(exposure: Exposure) {
         eventBridge.logEvent(
             AnalyticsEvent(
                 eventType = "\$exposure",
-                eventProperties = mapOf(
-                    "flag_key" to exposure.flagKey,
-                    "variant" to exposure.variant,
-                    "experiment_key" to exposure.experimentKey,
-                    "metadata" to exposure.metadata,
-                ).filterNull()
-            )
+                eventProperties =
+                    mapOf(
+                        "flag_key" to exposure.flagKey,
+                        "variant" to exposure.variant,
+                        "experiment_key" to exposure.experimentKey,
+                        "metadata" to exposure.metadata,
+                    ).filterNull(),
+            ),
         )
     }
 }

@@ -12,7 +12,6 @@ internal class ConnectorUserProvider(
     context: Context,
     private val identityStore: IdentityStore,
 ) : ExperimentUserProvider {
-
     private val base = DefaultUserProvider(context)
 
     override fun getUser(): ExperimentUser {
@@ -49,22 +48,23 @@ private fun IdentityStore.getIdentityOrWait(ms: Long): Identity {
     }
     addIdentityListener(callback)
     val immediateIdentity = getIdentity()
-    val result = if (immediateIdentity.isUnidentified()) {
-        when (val result = lock.wait(ms)) {
-            is LockResult.Success -> result.value
-            is LockResult.Error -> {
-                if (result.error is TimeoutException) {
-                    throw TimeoutException(
-                        "Timed out waiting for Amplitude Analytics SDK to initialize. " +
-                            "You should ensure that the analytics SDK is initialized prior to calling fetch()."
-                    )
+    val result =
+        if (immediateIdentity.isUnidentified()) {
+            when (val result = lock.wait(ms)) {
+                is LockResult.Success -> result.value
+                is LockResult.Error -> {
+                    if (result.error is TimeoutException) {
+                        throw TimeoutException(
+                            "Timed out waiting for Amplitude Analytics SDK to initialize. " +
+                                "You should ensure that the analytics SDK is initialized prior to calling fetch().",
+                        )
+                    }
+                    Identity()
                 }
-                Identity()
             }
+        } else {
+            immediateIdentity
         }
-    } else {
-        immediateIdentity
-    }
     removeIdentityListener(callback)
     return result
 }

@@ -6,125 +6,130 @@ import org.junit.Assert
 import org.junit.Test
 
 class StorageTest {
-
     @Test
     fun `v1 variant transformation`() {
         val storedVariant = JSONObject(mapOf("value" to "on")).toString()
         Assert.assertEquals(
             Variant(key = "on", value = "on"),
-            decodeVariantFromStorage(storedVariant)
+            decodeVariantFromStorage(storedVariant),
         )
     }
 
     @Test
     fun `v1 variant transformation with payload`() {
-        val storedVariant = JSONObject(
-            mapOf(
-                "value" to "on",
-                "payload" to mapOf("k" to "v")
-            )
-        ).toString()
+        val storedVariant =
+            JSONObject(
+                mapOf(
+                    "value" to "on",
+                    "payload" to mapOf("k" to "v"),
+                ),
+            ).toString()
         Assert.assertEquals(
             Variant(key = "on", value = "on", payload = JSONObject(mapOf("k" to "v"))).toString(),
-            decodeVariantFromStorage(storedVariant).toString()
+            decodeVariantFromStorage(storedVariant).toString(),
         )
     }
 
     @Test
     fun `v1 variant transformation with payload and experiment key`() {
-        val storedVariant = JSONObject(
-            mapOf(
-                "value" to "on",
-                "payload" to mapOf("k" to "v"),
-                "expKey" to "exp-1"
-            )
-        ).toString()
+        val storedVariant =
+            JSONObject(
+                mapOf(
+                    "value" to "on",
+                    "payload" to mapOf("k" to "v"),
+                    "expKey" to "exp-1",
+                ),
+            ).toString()
         Assert.assertEquals(
             Variant(
                 key = "on",
                 value = "on",
                 payload = JSONObject(mapOf("k" to "v")),
                 expKey = "exp-1",
-                metadata = mapOf("experimentKey" to "exp-1")
+                metadata = mapOf("experimentKey" to "exp-1"),
             ).toString(),
-            decodeVariantFromStorage(storedVariant).toString()
+            decodeVariantFromStorage(storedVariant).toString(),
         )
     }
 
     @Test
     fun `v2 variant transformation`() {
-        val storedVariant = JSONObject(
-            mapOf(
-                "key" to "treatment",
-                "value" to "on"
-            )
-        ).toString()
+        val storedVariant =
+            JSONObject(
+                mapOf(
+                    "key" to "treatment",
+                    "value" to "on",
+                ),
+            ).toString()
         Assert.assertEquals(
             Variant(key = "treatment", value = "on"),
-            decodeVariantFromStorage(storedVariant)
+            decodeVariantFromStorage(storedVariant),
         )
     }
 
     @Test
     fun `v2 variant transformation with payload`() {
-        val storedVariant = JSONObject(
-            mapOf(
-                "key" to "treatment",
-                "value" to "on",
-                "payload" to mapOf("k" to "v")
-            )
-        ).toString()
+        val storedVariant =
+            JSONObject(
+                mapOf(
+                    "key" to "treatment",
+                    "value" to "on",
+                    "payload" to mapOf("k" to "v"),
+                ),
+            ).toString()
         Assert.assertEquals(
             Variant(
                 key = "treatment",
                 value = "on",
-                payload = JSONObject(mapOf("k" to "v"))
+                payload = JSONObject(mapOf("k" to "v")),
             ).toString(),
-            decodeVariantFromStorage(storedVariant).toString()
+            decodeVariantFromStorage(storedVariant).toString(),
         )
     }
 
     @Test
     fun `v2 variant transformation with payload and experiment key`() {
-        val storedVariant = JSONObject(
-            mapOf(
-                "key" to "treatment",
-                "value" to "on",
-                "payload" to mapOf("k" to "v"),
-                "expKey" to "exp-1"
-            )
-        ).toString()
+        val storedVariant =
+            JSONObject(
+                mapOf(
+                    "key" to "treatment",
+                    "value" to "on",
+                    "payload" to mapOf("k" to "v"),
+                    "expKey" to "exp-1",
+                ),
+            ).toString()
         Assert.assertEquals(
             Variant(
                 key = "treatment",
                 value = "on",
                 payload = JSONObject(mapOf("k" to "v")),
                 expKey = "exp-1",
-                metadata = mapOf("experimentKey" to "exp-1")
+                metadata = mapOf("experimentKey" to "exp-1"),
             ).toString(),
-            decodeVariantFromStorage(storedVariant).toString()
+            decodeVariantFromStorage(storedVariant).toString(),
         )
     }
 
     @Test
     fun `v2 variant transformation with payload and experiment key metadata`() {
-        val storedVariant = JSONObject(
-            mapOf(
-                "key" to "treatment",
-                "value" to "on",
-                "payload" to mapOf("k" to "v"),
-                "metadata" to mapOf("experimentKey" to "exp-1")
-            )
-        ).toString()
+        val storedVariant =
+            JSONObject(
+                mapOf(
+                    "key" to "treatment",
+                    "value" to "on",
+                    "payload" to mapOf("k" to "v"),
+                    "metadata" to mapOf("experimentKey" to "exp-1"),
+                ),
+            ).toString()
         Assert.assertEquals(
             Variant(
                 key = "treatment",
                 value = "on",
                 payload = JSONObject(mapOf("k" to "v")),
                 expKey = "exp-1",
-                metadata = mapOf("experimentKey" to "exp-1")
+                metadata = mapOf("experimentKey" to "exp-1"),
             ).toString(),
-            decodeVariantFromStorage(storedVariant).toString()
+            decodeVariantFromStorage(storedVariant).toString(),
         )
     }
 }

@@ -5,22 +5,31 @@ internal enum class Level {
     DEBUG,
     INFO,
     WARN,
-    ERROR
+    ERROR,
 }
 
 internal interface Logger {
     fun verbose(log: () -> String)
+
     fun debug(log: () -> String)
+
     fun info(log: () -> String)
-    fun warn(e: Throwable? = null, log: () -> String)
-    fun error(e: Throwable? = null, log: () -> String)
+
+    fun warn(
+        e: Throwable? = null,
+        log: () -> String,
+    )
+
+    fun error(
+        e: Throwable? = null,
+        log: () -> String,
+    )
 }
 
 internal class DefaultLogger(
     private val level: Level = Level.ERROR,
-    private val tag: String = "Experiment"
+    private val tag: String = "Experiment",
 ) : Logger {
-
     override fun verbose(log: () -> String) {
         if (level <= Level.VERBOSE) {
             println("VERBOSE [$tag] ${log.invoke()}")
@@ -39,7 +48,10 @@ internal class DefaultLogger(
         }
     }
 
-    override fun warn(e: Throwable?, log: () -> String) {
+    override fun warn(
+        e: Throwable?,
+        log: () -> String,
+    ) {
         if (level <= Level.WARN) {
             if (e == null) {
                 println("WARN [$tag] ${log.invoke()}")
@@ -49,7 +61,10 @@ internal class DefaultLogger(
         }
     }
 
-    override fun error(e: Throwable?, log: () -> String) {
+    override fun error(
+        e: Throwable?,
+        log: () -> String,
+    ) {
         if (level <= Level.ERROR) {
             if (e == null) {
                 println("ERROR [$tag] ${log.invoke()}")

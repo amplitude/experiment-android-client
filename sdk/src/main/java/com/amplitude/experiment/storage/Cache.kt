@@ -12,7 +12,7 @@ internal class LoadStoreCache<V>(
     private val namespace: String,
     private val storage: Storage,
     private val decoder: ((value: String) -> V?),
-    private val encoder: ((value: V) -> String)
+    private val encoder: ((value: V) -> String),
 ) {
     private val cache: MutableMap<String, V> = mutableMapOf()
 
@@ -24,7 +24,10 @@ internal class LoadStoreCache<V>(
         return HashMap(cache)
     }
 
-    fun put(key: String, value: V) {
+    fun put(
+        key: String,
+        value: V,
+    ) {
         cache[key] = value
     }
 
@@ -42,40 +45,46 @@ internal class LoadStoreCache<V>(
 
     fun load() {
         val rawValues = storage.get(namespace)
-        val values = rawValues.mapNotNull { entry ->
-            try {
-                val value = decoder.invoke(entry.value)
-                if (value != null) {
-                    entry.key to value
-                } else {
+        val values =
+            rawValues.mapNotNull { entry ->
+                try {
+                    val value = decoder.invoke(entry.value)
+                    if (value != null) {
+                        entry.key to value
+                    } else {
+                        null
+                    }
+                } catch (e: Exception) {
                     null
                 }
-            } catch (e: Exception) {
-                null
-            }
-        }.toMap()
+            }.toMap()
         clear()
         putAll(values)
     }
 
     fun store(values: MutableMap<String, V> = cache) {
-        val stringValues = values.mapNotNull { entry ->
-            try {
-                val value = encoder(entry.value)
-                if (value != null) {
-                    entry.key to value
-                } else {
+        val stringValues =
+            values.mapNotNull { entry ->
+                try {
+                    val value = encoder(entry.value)
+                    if (value != null) {
+                        entry.key to value
+                    } else {
+                        null
+                    }
+                } catch (e: Exception) {
                     null
                 }
-            } catch (e: Exception) {
-                null
-            }
-        }.toMap()
+            }.toMap()
         storage.put(namespace, stringValues)
     }
 }
 
-internal fun getVariantStorage(deploymentKey: String, instanceName: String, storage: Storage): LoadStoreCache<Variant> {
+internal fun getVariantStorage(
+    deploymentKey: String,
+    instanceName: String,
+    storage: Storage,
+): LoadStoreCache<Variant> {
     val truncatedDeployment = deploymentKey.takeLast(6)
     val namespace = "amp-exp-$instanceName-$truncatedDeployment"
     return LoadStoreCache(namespace, storage, ::decodeVariantFromStorage, ::encodeVariantToStorage)
@@ -84,7 +93,7 @@ internal fun getVariantStorage(deploymentKey: String, instanceName: String, stor
 internal fun getFlagStorage(
     deploymentKey: String,
     instanceName: String,
-    storage: Storage
+    storage: Storage,
 ): LoadStoreCache<EvaluationFlag> {
     val truncatedDeployment = deploymentKey.takeLast(6)
     val namespace = "amp-exp-$instanceName-$truncatedDeployment-flags"

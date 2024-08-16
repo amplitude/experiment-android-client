@@ -9,7 +9,6 @@ import org.junit.Assert
 import org.junit.Test
 
 class VariantTest {
-
     init {
         Logger.implementation = SystemLogger(true)
     }

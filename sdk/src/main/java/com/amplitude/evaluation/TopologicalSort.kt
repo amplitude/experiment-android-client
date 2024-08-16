@@ -8,7 +8,7 @@ internal class CycleException(val cycle: Set<String>) : RuntimeException() {
 @Throws(CycleException::class)
 internal fun topologicalSort(
     flagConfigs: List<EvaluationFlag>,
-    flagKeys: Set<String> = setOf()
+    flagKeys: Set<String> = setOf(),
 ): List<EvaluationFlag> {
     return topologicalSort(flagConfigs.associateBy { it.key }, flagKeys)
 }
@@ -16,13 +16,14 @@ internal fun topologicalSort(
 @Throws(CycleException::class)
 internal fun topologicalSort(
     flagConfigs: Map<String, EvaluationFlag>,
-    flagKeys: Set<String> = setOf()
+    flagKeys: Set<String> = setOf(),
 ): List<EvaluationFlag> {
     val available = flagConfigs.toMutableMap()
     val result = mutableListOf<EvaluationFlag>()
-    val startingKeys = flagKeys.ifEmpty {
-        available.keys.toSet()
-    }
+    val startingKeys =
+        flagKeys.ifEmpty {
+            available.keys.toSet()
+        }
     for (flagKey in startingKeys) {
         val traversal = parentTraversal(flagKey, available) ?: continue
         result.addAll(traversal)

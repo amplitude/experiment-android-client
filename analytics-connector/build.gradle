@@ -18,7 +18,7 @@ android {
 
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 30
+        targetSdkVersion 33
         versionName PUBLISH_VERSION
     }
 
@@ -33,6 +33,10 @@ android {
         sourceCompatibility 1.8
         targetCompatibility 1.8
     }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    namespace 'com.amplitude.analytics.connector'
 }
 
 dependencies {
