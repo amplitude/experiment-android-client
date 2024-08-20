@@ -1,3 +1,11 @@
+## [1.12.2](https://github.com/amplitude/experiment-android-client/compare/1.12.1...1.12.2) (2024-08-20)
+
+
+### Bug Fixes
+
+* add consumer proguard rules; update kotlin & gradle; lint ([#57](https://github.com/amplitude/experiment-android-client/issues/57)) ([cb1699c](https://github.com/amplitude/experiment-android-client/commit/cb1699c05471ee546b80c4477aa51334ecf92937))
+* load from storage async in init ([#58](https://github.com/amplitude/experiment-android-client/issues/58)) ([827ce6b](https://github.com/amplitude/experiment-android-client/commit/827ce6bd46d5a62326b248a3235c8a4b3ea86c14))
+
 ## [1.12.1](https://github.com/amplitude/experiment-android-client/compare/1.12.0...1.12.1) (2024-01-29)
 
 
