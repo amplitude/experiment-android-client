@@ -1315,7 +1315,7 @@ class ExperimentClientTest {
             DefaultExperimentClient(
                 API_KEY,
                 ExperimentConfig(
-                    flagConfigPollingIntervalMillis = 1000
+                    flagConfigPollingIntervalMillis = 1000,
                 ),
                 OkHttpClient(),
                 mockStorage,
@@ -1330,7 +1330,7 @@ class ExperimentClientTest {
             DefaultExperimentClient(
                 API_KEY,
                 ExperimentConfig(
-                    flagConfigPollingIntervalMillis = 900000
+                    flagConfigPollingIntervalMillis = 900000,
                 ),
                 OkHttpClient(),
                 mockStorage,

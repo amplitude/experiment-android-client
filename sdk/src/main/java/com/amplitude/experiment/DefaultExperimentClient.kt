@@ -103,11 +103,12 @@ internal class DefaultExperimentClient internal constructor(
             config.flagConfigPollingIntervalMillis
         }
 
-    private val poller: Poller = Poller(
-        this.executorService,
-        ::doFlags,
-        flagConfigPollingIntervalMillis
-    )
+    private val poller: Poller =
+        Poller(
+            this.executorService,
+            ::doFlags,
+            flagConfigPollingIntervalMillis,
+        )
 
     internal val serverUrl: HttpUrl =
         if (config.serverUrl == ExperimentConfig.Defaults.SERVER_URL &&
