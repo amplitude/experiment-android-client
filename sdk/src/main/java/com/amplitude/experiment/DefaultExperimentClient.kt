@@ -46,7 +46,7 @@ import com.amplitude.experiment.analytics.ExposureEvent as OldExposureEvent
 
 private const val EU_SERVER_URL = "https://api.lab.eu.amplitude.com/"
 private const val EU_FLAGS_SERVER_URL = "https://flag.lab.eu.amplitude.com/"
-private const val FLAG_POLLER_INTERVAL_MILLIS: Long = 60000
+private const val MIN_FLAG_POLLING_INTERVAL_MILLIS: Long = 60000
 
 internal class DefaultExperimentClient internal constructor(
     private val apiKey: String,
@@ -96,7 +96,18 @@ internal class DefaultExperimentClient internal constructor(
             scalar = 1.5f,
         )
 
-    private val poller: Poller = Poller(this.executorService, ::doFlags, FLAG_POLLER_INTERVAL_MILLIS)
+    internal val flagConfigPollingIntervalMillis =
+        if (config.flagConfigPollingIntervalMillis < MIN_FLAG_POLLING_INTERVAL_MILLIS) {
+            MIN_FLAG_POLLING_INTERVAL_MILLIS
+        } else {
+            config.flagConfigPollingIntervalMillis
+        }
+
+    private val poller: Poller = Poller(
+        this.executorService,
+        ::doFlags,
+        flagConfigPollingIntervalMillis
+    )
 
     internal val serverUrl: HttpUrl =
         if (config.serverUrl == ExperimentConfig.Defaults.SERVER_URL &&

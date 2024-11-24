@@ -1295,4 +1295,47 @@ class ExperimentClientTest {
             verify(exactly = retryCalled) { client["startRetries"](any<ExperimentUser>(), any<FetchOptions>()) }
         }
     }
+
+    @Test
+    fun `test flag config polling interval, config not set`() {
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
+        Assert.assertEquals(300000, client.flagConfigPollingIntervalMillis)
+    }
+
+    @Test
+    fun `test flag config polling interval, config set under min`() {
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    flagConfigPollingIntervalMillis = 1000
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
+        Assert.assertEquals(60000, client.flagConfigPollingIntervalMillis)
+    }
+
+    @Test
+    fun `test flag config polling interval, config set over min`() {
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    flagConfigPollingIntervalMillis = 900000
+                ),
+                OkHttpClient(),
+                mockStorage,
+                Experiment.executorService,
+            )
+        Assert.assertEquals(900000, client.flagConfigPollingIntervalMillis)
+    }
 }
