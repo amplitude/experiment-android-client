@@ -46,6 +46,8 @@ class ExperimentConfig internal constructor(
     @JvmField
     val pollOnStart: Boolean = Defaults.POLL_ON_START,
     @JvmField
+    val flagConfigPollingIntervalMillis: Long = Defaults.FLAG_CONFIG_POLLING_INTERVAL_MILLIS,
+    @JvmField
     val fetchOnStart: Boolean = Defaults.FETCH_ON_START,
     @JvmField
     val automaticFetchOnAmplitudeIdentityChange: Boolean = Defaults.AUTOMATIC_FETCH_ON_AMPLITUDE_IDENTITY_CHANGE,
@@ -132,6 +134,11 @@ class ExperimentConfig internal constructor(
         const val POLL_ON_START = true
 
         /**
+         * 300000
+         */
+        const val FLAG_CONFIG_POLLING_INTERVAL_MILLIS = 300000L
+
+        /**
          * null
          */
         const val FETCH_ON_START: Boolean = true
@@ -179,6 +186,7 @@ class ExperimentConfig internal constructor(
         private var retryFetchOnFailure = Defaults.RETRY_FETCH_ON_FAILURE
         private var automaticExposureTracking = Defaults.AUTOMATIC_EXPOSURE_TRACKING
         private var pollOnStart = Defaults.POLL_ON_START
+        private var flagConfigPollingIntervalMillis = Defaults.FLAG_CONFIG_POLLING_INTERVAL_MILLIS
         private var fetchOnStart = Defaults.FETCH_ON_START
         private var automaticFetchOnAmplitudeIdentityChange = Defaults.AUTOMATIC_FETCH_ON_AMPLITUDE_IDENTITY_CHANGE
         private var userProvider = Defaults.USER_PROVIDER
@@ -250,6 +258,11 @@ class ExperimentConfig internal constructor(
                 this.pollOnStart = pollOnStart
             }
 
+        fun flagConfigPollingIntervalMillis(flagConfigPollingIntervalMillis: Long) =
+            apply {
+                this.flagConfigPollingIntervalMillis = flagConfigPollingIntervalMillis
+            }
+
         fun fetchOnStart(fetchOnStart: Boolean?) =
             apply {
                 this.fetchOnStart = fetchOnStart ?: true
@@ -291,6 +304,7 @@ class ExperimentConfig internal constructor(
                 retryFetchOnFailure = retryFetchOnFailure,
                 automaticExposureTracking = automaticExposureTracking,
                 pollOnStart = pollOnStart,
+                flagConfigPollingIntervalMillis = flagConfigPollingIntervalMillis,
                 fetchOnStart = fetchOnStart,
                 automaticFetchOnAmplitudeIdentityChange = automaticFetchOnAmplitudeIdentityChange,
                 userProvider = userProvider,
@@ -315,6 +329,7 @@ class ExperimentConfig internal constructor(
             .retryFetchOnFailure(retryFetchOnFailure)
             .automaticExposureTracking(automaticExposureTracking)
             .pollOnStart(pollOnStart)
+            .flagConfigPollingIntervalMillis(flagConfigPollingIntervalMillis)
             .fetchOnStart(fetchOnStart)
             .automaticFetchOnAmplitudeIdentityChange((automaticFetchOnAmplitudeIdentityChange))
             .userProvider(userProvider)
