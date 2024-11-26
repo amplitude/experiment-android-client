@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/amplitude/experiment-android-client/compare/1.12.2...1.13.0) (2024-11-26)
+
+
+### Features
+
+* increase flag polling interval; add flag poller interval config ([#59](https://github.com/amplitude/experiment-android-client/issues/59)) ([214c7d3](https://github.com/amplitude/experiment-android-client/commit/214c7d3d63cbb052b729ddcc4b1adbfddfad9614))
+
 ## [1.12.2](https://github.com/amplitude/experiment-android-client/compare/1.12.1...1.12.2) (2024-08-20)
 
 
