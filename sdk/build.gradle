@@ -70,5 +70,8 @@ task docs(dependsOn: dokkaHtml) {
         }
     }
 }
+afterEvaluate {
+    generateMetadataFileForReleasePublication.dependsOn androidSourcesJar
+}
 
 
