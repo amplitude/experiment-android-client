@@ -72,19 +72,21 @@ internal class SdkFlagApi(
                         Logger.d("Received fetch flags response: $response")
                         if (response.isSuccessful) {
                             val body = response.body?.string() ?: ""
-                            val flags =
-                                json.decodeFromString<List<EvaluationFlag>>(body)
-                                    .associateBy { it.key }
-                            future.complete(flags)
+                            try {
+                                val flags =
+                                    json.decodeFromString<List<EvaluationFlag>>(body)
+                                        .associateBy { it.key }
+                                future.complete(flags)
+                            } catch (e: SerializationException) {
+                                Logger.e("Error decoding JSON: ${e.message}")
+                                future.completeExceptionally(e)
+                            }
                         } else {
                             Logger.e("Non-successful response: ${response.code}")
                             future.completeExceptionally(IOException("Non-successful response: ${response.code}"))
                         }
                     } catch (e: IOException) {
                         onFailure(call, e)
-                    } catch (e: SerializationException) {
-                        Logger.e("Error decoding JSON: ${e.message}")
-                        future.completeExceptionally(e)
                     }
                 }
 
