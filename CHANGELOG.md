@@ -1,3 +1,10 @@
+## [1.13.1](https://github.com/amplitude/experiment-android-client/compare/1.13.0...1.13.1) (2025-04-17)
+
+
+### Bug Fixes
+
+* catch FlagApi JSON decode error ([#60](https://github.com/amplitude/experiment-android-client/issues/60)) ([b70f056](https://github.com/amplitude/experiment-android-client/commit/b70f056f6bbc7a7f2925cb3968de7075c9cc219a))
+
 # [1.13.0](https://github.com/amplitude/experiment-android-client/compare/1.12.2...1.13.0) (2024-11-26)
 
 
