@@ -3,4 +3,4 @@ Android Client SDK for Experiment
 
 ## Getting Started
 
-See the [Documentation](https://amplitude-lab.readme.io/docs/android-sdk) for getting started.
+See the [Documentation](https://amplitude.com/docs/sdks/experiment-sdks/experiment-android) for getting started.
