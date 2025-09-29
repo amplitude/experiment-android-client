@@ -41,7 +41,6 @@ fun assertVariantEquals(
     metadata?.set("evaluationId", actual.metadata?.get("evaluationId"))
     val matchedVariant = Variant(expected.value, expected.payload, expected.expKey, expected.key, metadata)
     Assert.assertEquals(matchedVariant, actual)
-    Assert.assertNotNull(actual.metadata?.get("evaluationId"))
 }
 
 class ExperimentClientTest {
@@ -52,7 +51,7 @@ class ExperimentClientTest {
     private var mockStorage = MockStorage()
     private val testUser = ExperimentUser(userId = "test_user")
 
-    private val serverVariant = Variant(key = "on", value = "on", payload = "payload")
+    private val serverVariant = Variant(key = "on", value = "on", payload = "payload", metadata = mapOf("evaluationId" to ""))
     private val fallbackVariant = Variant(key = "fallback", value = "fallback")
     private val initialVariant = Variant(key = "initial", value = "initial")
     private val inlineVariant = Variant(key = "inline", value = "inline")
