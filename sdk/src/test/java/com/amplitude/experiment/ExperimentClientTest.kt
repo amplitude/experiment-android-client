@@ -33,7 +33,10 @@ private const val INITIAL_KEY = "initial-key"
  * To assert two variants. These fields are not consistent across evaluation, simply assert not null.
  * - metadata.evaluationId
  */
-fun assertVariantEquals(expected: Variant, actual: Variant) {
+fun assertVariantEquals(
+    expected: Variant,
+    actual: Variant,
+) {
     val metadata = expected.metadata?.toMutableMap() ?: (if (actual.metadata != null) mutableMapOf() else null)
     metadata?.set("evaluationId", actual.metadata?.get("evaluationId"))
     val matchedVariant = Variant(expected.value, expected.payload, expected.expKey, expected.key, metadata)
