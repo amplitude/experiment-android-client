@@ -29,6 +29,18 @@ private const val SERVER_API_KEY = "server-qz35UwzJ5akieoAdIgzM4m9MIiOLXLoz"
 private const val KEY = "sdk-ci-test"
 private const val INITIAL_KEY = "initial-key"
 
+/**
+ * To assert two variants. These fields are not consistent across evaluation, simply assert not null.
+ * - metadata.evaluationId
+ */
+fun assertVariantEquals(expected: Variant, actual: Variant) {
+    val metadata = expected.metadata?.toMutableMap() ?: (if (actual.metadata != null) mutableMapOf() else null)
+    metadata?.set("evaluationId", actual.metadata?.get("evaluationId"))
+    val matchedVariant = Variant(expected.value, expected.payload, expected.expKey, expected.key, metadata)
+    Assert.assertEquals(matchedVariant, actual)
+    Assert.assertNotNull(actual.metadata?.get("evaluationId"))
+}
+
 class ExperimentClientTest {
     init {
         Logger.implementation = SystemLogger(true)
@@ -109,7 +121,7 @@ class ExperimentClientTest {
         client.fetch(testUser).get()
         val variant = client.variant(KEY)
         Assert.assertNotNull(variant)
-        Assert.assertEquals(serverVariant, variant)
+        assertVariantEquals(serverVariant, variant)
     }
 
     @Test
@@ -137,7 +149,7 @@ class ExperimentClientTest {
             Thread.sleep(1000)
             val variant = timeoutClient.variant(KEY)
             Assert.assertNotNull(variant)
-            Assert.assertEquals(serverVariant, variant)
+            assertVariantEquals(serverVariant, variant)
             return
         }
         Assert.fail("expected timeout exception")
@@ -150,13 +162,13 @@ class ExperimentClientTest {
         Assert.assertEquals(firstFallback, variant)
 
         variant = client.variant("asdf")
-        Assert.assertEquals(fallbackVariant, variant)
+        assertVariantEquals(fallbackVariant, variant)
 
         variant = client.variant(INITIAL_KEY, firstFallback)
         Assert.assertEquals(firstFallback, variant)
 
         variant = client.variant(INITIAL_KEY)
-        Assert.assertEquals(initialVariant, variant)
+        assertVariantEquals(initialVariant, variant)
 
         client.fetch(testUser).get()
 
@@ -164,16 +176,16 @@ class ExperimentClientTest {
         Assert.assertEquals(firstFallback, variant)
 
         variant = client.variant("asdf")
-        Assert.assertEquals(fallbackVariant, variant)
+        assertVariantEquals(fallbackVariant, variant)
 
         variant = client.variant(INITIAL_KEY, firstFallback)
         Assert.assertEquals(firstFallback, variant)
 
         variant = client.variant(INITIAL_KEY)
-        Assert.assertEquals(initialVariant, variant)
+        assertVariantEquals(initialVariant, variant)
 
         variant = client.variant(KEY, firstFallback)
-        Assert.assertEquals(serverVariant, variant)
+        assertVariantEquals(serverVariant, variant)
     }
 
     @Test
@@ -186,7 +198,7 @@ class ExperimentClientTest {
     fun `clear the flag config in storage`() {
         generalClient.fetch(testUser).get()
         val variant = generalClient.variant("sdk-ci-test")
-        Assert.assertEquals(Variant(key = "on", value = "on", payload = "payload"), variant)
+        assertVariantEquals(Variant(key = "on", value = "on", payload = "payload"), variant)
         generalClient.clear()
         val clearedVariants = generalClient.all()
         Assert.assertEquals(0, clearedVariants.entries.size)
@@ -217,7 +229,7 @@ class ExperimentClientTest {
         client.fetch(testUser, FetchOptions(flagKeys = listOf(KEY))).get()
         val variant = client.variant(KEY)
         Assert.assertNotNull(variant)
-        Assert.assertEquals(serverVariant, variant)
+        assertVariantEquals(serverVariant, variant)
     }
 
     @Test
@@ -226,14 +238,14 @@ class ExperimentClientTest {
         client.fetch(testUser, FetchOptions(flagKeys = listOf(KEY, INITIAL_KEY, invalidKey))).get()
         val variant = client.variant(KEY)
         Assert.assertNotNull(variant)
-        Assert.assertEquals(serverVariant, variant)
+        assertVariantEquals(serverVariant, variant)
 
         val firstFallback = Variant("first")
         val initialVariant = client.variant(INITIAL_KEY, firstFallback)
         Assert.assertEquals(firstFallback, initialVariant)
 
         val invalidVariant = client.variant(invalidKey)
-        Assert.assertEquals(fallbackVariant, invalidVariant)
+        assertVariantEquals(fallbackVariant, invalidVariant)
     }
 
     @Test
@@ -254,13 +266,13 @@ class ExperimentClientTest {
                     )
 
                     Assert.assertEquals(KEY, event.key)
-                    Assert.assertEquals(serverVariant, event.variant)
+                    assertVariantEquals(serverVariant, event.variant)
                     didExposureGetTracked = true
                 }
 
                 override fun setUserProperty(event: ExperimentAnalyticsEvent) {
                     Assert.assertEquals("[Experiment] $KEY", event.userProperty)
-                    Assert.assertEquals(serverVariant, event.variant)
+                    assertVariantEquals(serverVariant, event.variant)
                     didUserPropertyGetSet = true
                 }
 
@@ -634,7 +646,7 @@ class ExperimentClientTest {
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test", inlineVariant)
-        Assert.assertEquals(inlineVariant, variant)
+        assertVariantEquals(inlineVariant, variant)
         verify(exactly = 1) {
             exposureTrackingProvider.track(
                 match {
@@ -665,7 +677,7 @@ class ExperimentClientTest {
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test")
-        Assert.assertEquals(initialVariant, variant)
+        assertVariantEquals(initialVariant, variant)
         verify(exactly = 1) {
             exposureTrackingProvider.track(
                 match {
@@ -759,7 +771,7 @@ class ExperimentClientTest {
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test")
-        Assert.assertEquals(initialVariant, variant)
+        assertVariantEquals(initialVariant, variant)
         verify(exactly = 1) {
             exposureTrackingProvider.track(
                 match {
@@ -823,7 +835,7 @@ class ExperimentClientTest {
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test", inlineVariant)
-        Assert.assertEquals(inlineVariant, variant)
+        assertVariantEquals(inlineVariant, variant)
         verify(exactly = 1) {
             exposureTrackingProvider.track(
                 match {
@@ -854,7 +866,7 @@ class ExperimentClientTest {
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test")
-        Assert.assertEquals(fallbackVariant, variant)
+        assertVariantEquals(fallbackVariant, variant)
         verify(exactly = 1) {
             exposureTrackingProvider.track(
                 match {
@@ -884,7 +896,7 @@ class ExperimentClientTest {
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test")
-        Assert.assertEquals(Variant(key = "off", metadata = mapOf("default" to true)), variant)
+        assertVariantEquals(Variant(key = "off", metadata = mapOf("default" to true)), variant)
         verify(exactly = 1) {
             exposureTrackingProvider.track(
                 match {
@@ -948,7 +960,7 @@ class ExperimentClientTest {
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test-local", inlineVariant)
-        Assert.assertEquals(inlineVariant, variant)
+        assertVariantEquals(inlineVariant, variant)
         verify(exactly = 1) {
             exposureTrackingProvider.track(
                 match {
@@ -979,7 +991,7 @@ class ExperimentClientTest {
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test-local")
-        Assert.assertEquals(initialVariant, variant)
+        assertVariantEquals(initialVariant, variant)
         verify(exactly = 1) {
             exposureTrackingProvider.track(
                 match {
@@ -1010,7 +1022,7 @@ class ExperimentClientTest {
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test-local")
-        Assert.assertEquals(fallbackVariant, variant)
+        assertVariantEquals(fallbackVariant, variant)
         verify(exactly = 1) {
             exposureTrackingProvider.track(
                 match {
