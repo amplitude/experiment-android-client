@@ -38,8 +38,8 @@ fun assertVariantEquals(
     actual: Variant,
 ) {
     val metadata = when {
-        expected.metadata != null -> expected.metadata.toMutableMap()
-        actual.metadata != null -> mutableMapOf<String, Any?>()
+        expected.metadata != null -> expected.metadata?.toMutableMap()
+        actual.metadata != null -> mutableMapOf()
         else -> null
     }
     metadata?.set("evaluationId", actual.metadata?.get("evaluationId"))
