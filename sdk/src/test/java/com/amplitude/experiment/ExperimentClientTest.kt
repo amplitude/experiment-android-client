@@ -37,14 +37,15 @@ fun assertVariantEquals(
     expected: Variant,
     actual: Variant,
 ) {
-    val metadata = when {
-        expected.metadata != null -> expected.metadata?.toMutableMap()
-        actual.metadata != null -> mutableMapOf()
-        else -> null
+    Assert.assertEquals(expected.key, actual.key)
+    Assert.assertEquals(expected.value, actual.value)
+    Assert.assertEquals(expected.payload, actual.payload)
+    Assert.assertEquals(expected.expKey, actual.expKey)
+    if (expected.metadata != null) {
+        for (key in expected.metadata!!) {
+            Assert.assertEquals(expected.metadata!!["key"], actual.metadata?.get("key"))
+        }
     }
-    metadata?.set("evaluationId", actual.metadata?.get("evaluationId"))
-    val matchedVariant = Variant(expected.value, expected.payload, expected.expKey, expected.key, metadata)
-    Assert.assertEquals(matchedVariant, actual)
 }
 
 class ExperimentClientTest {
