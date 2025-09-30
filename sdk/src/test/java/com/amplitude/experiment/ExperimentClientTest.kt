@@ -41,10 +41,8 @@ fun assertVariantEquals(
     Assert.assertEquals(expected.value, actual.value)
     Assert.assertEquals(expected.payload, actual.payload)
     Assert.assertEquals(expected.expKey, actual.expKey)
-    if (expected.metadata != null) {
-        for (key in expected.metadata!!) {
-            Assert.assertEquals(expected.metadata!!["key"], actual.metadata?.get("key"))
-        }
+    if (expected.metadata?.get("evaluationId") != null) {
+        Assert.assertNotNull(actual.metadata?.get("evaluationId"))
     }
 }
 
