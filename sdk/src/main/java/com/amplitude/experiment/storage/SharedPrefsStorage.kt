@@ -45,4 +45,17 @@ internal class SharedPrefsStorage(
         synchronized(this) {
             appContext.getSharedPreferences(key, Context.MODE_PRIVATE).edit().remove(key).commit()
         }
+
+    override fun getSingle(key: String): String? =
+        synchronized(this) {
+            val sharedPrefs = appContext.getSharedPreferences(key, Context.MODE_PRIVATE)
+            return sharedPrefs.getString("value", null)
+        }
+
+    override fun putSingle(key: String, value: String): Unit =
+        synchronized(this) {
+            val editor = appContext.getSharedPreferences(key, Context.MODE_PRIVATE).edit()
+            editor.putString("value", value)
+            editor.commit()
+        }
 }
