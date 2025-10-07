@@ -29,7 +29,10 @@ internal class MockStorage() : Storage {
             return singleStore[key]
         }
 
-    override fun putSingle(key: String, value: String): Unit =
+    override fun putSingle(
+        key: String,
+        value: String,
+    ): Unit =
         synchronized(this) {
             singleStore[key] = value
         }

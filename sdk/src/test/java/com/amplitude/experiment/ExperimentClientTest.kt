@@ -1360,13 +1360,14 @@ class ExperimentClientTest {
     @Test
     fun testSetTrackAssignmentEvent() {
         val storage = MockStorage()
-        val testClient = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(),
-            OkHttpClient(),
-            storage,
-            Experiment.executorService,
-        )
+        val testClient =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(),
+                OkHttpClient(),
+                storage,
+                Experiment.executorService,
+            )
 
         // Test that setTrackAssignmentEvent returns the client for chaining
         val result = testClient.setTrackAssignmentEvent(true)
@@ -1380,24 +1381,26 @@ class ExperimentClientTest {
     @Test
     fun testSetTrackAssignmentEventPersistence() {
         val storage = MockStorage()
-        
+
         // Create first client
-        val client1 = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(),
-            OkHttpClient(),
-            storage,
-            Experiment.executorService,
-        )
-        
+        val client1 =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(),
+                OkHttpClient(),
+                storage,
+                Experiment.executorService,
+            )
+
         // Create second client with same storage
-        val client2 = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(),
-            OkHttpClient(),
-            storage,
-            Experiment.executorService,
-        )
+        val client2 =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(),
+                OkHttpClient(),
+                storage,
+                Experiment.executorService,
+            )
 
         // Set track assignment event on first client
         client1.setTrackAssignmentEvent(true)
@@ -1411,13 +1414,14 @@ class ExperimentClientTest {
     @Test
     fun testMultipleCallsToSetTrackAssignmentEventUsesLatestSetting() {
         val storage = MockStorage()
-        val testClient = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(),
-            OkHttpClient(),
-            storage,
-            Experiment.executorService,
-        )
+        val testClient =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(),
+                OkHttpClient(),
+                storage,
+                Experiment.executorService,
+            )
 
         // Set track assignment event to true, then false
         testClient.setTrackAssignmentEvent(true)
@@ -1432,13 +1436,14 @@ class ExperimentClientTest {
     @Test
     fun testSetTrackAssignmentEventPreservesOtherOptions() {
         val storage = MockStorage()
-        val testClient = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(),
-            OkHttpClient(),
-            storage,
-            Experiment.executorService,
-        )
+        val testClient =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(),
+                OkHttpClient(),
+                storage,
+                Experiment.executorService,
+            )
 
         // Set track assignment event to true
         testClient.setTrackAssignmentEvent(true)
@@ -1450,7 +1455,7 @@ class ExperimentClientTest {
 
         // Test that the setting works with fetch options
         val fetchOptions = FetchOptions(listOf("test-flag"))
-        
+
         // This test verifies that the tracking option setting doesn't interfere with other fetch options
         Assert.assertNotNull(fetchOptions.flagKeys)
         Assert.assertEquals(listOf("test-flag"), fetchOptions.flagKeys)
@@ -1459,13 +1464,14 @@ class ExperimentClientTest {
     @Test
     fun testSetTrackAssignmentEventTrue() {
         val storage = MockStorage()
-        val testClient = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(),
-            OkHttpClient(),
-            storage,
-            Experiment.executorService,
-        )
+        val testClient =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(),
+                OkHttpClient(),
+                storage,
+                Experiment.executorService,
+            )
 
         // Set track assignment event to true
         testClient.setTrackAssignmentEvent(true)
@@ -1479,13 +1485,14 @@ class ExperimentClientTest {
     @Test
     fun testSetTrackAssignmentEventFalse() {
         val storage = MockStorage()
-        val testClient = DefaultExperimentClient(
-            API_KEY,
-            ExperimentConfig(),
-            OkHttpClient(),
-            storage,
-            Experiment.executorService,
-        )
+        val testClient =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(),
+                OkHttpClient(),
+                storage,
+                Experiment.executorService,
+            )
 
         // Set track assignment event to false
         testClient.setTrackAssignmentEvent(false)

@@ -12,5 +12,8 @@ internal interface Storage {
 
     fun getSingle(key: String): String?
 
-    fun putSingle(key: String, value: String)
+    fun putSingle(
+        key: String,
+        value: String,
+    )
 }

@@ -408,11 +408,12 @@ internal class DefaultExperimentClient internal constructor(
                     .base64()
             builder.addHeader("X-Amp-Exp-Flag-Keys", flagKeysBase64)
         }
-        
+
         // Add tracking option header
-        val trackingOption = synchronized(trackAssignmentEvent) {
-            trackAssignmentEvent.get()
-        }
+        val trackingOption =
+            synchronized(trackAssignmentEvent) {
+                trackAssignmentEvent.get()
+            }
         if (trackingOption != null) {
             val trackingOptionValue = if (trackingOption) "track" else "no-track"
             builder.addHeader("X-Amp-Exp-Tracking-Option", trackingOptionValue)
