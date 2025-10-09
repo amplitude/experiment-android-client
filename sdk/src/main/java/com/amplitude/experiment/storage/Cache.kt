@@ -143,6 +143,16 @@ internal fun getFlagStorage(
     return LoadStoreCache(namespace, storage, ::decodeFlagFromStorage, ::encodeFlagToStorage, merger)
 }
 
+internal fun getTrackAssignmentEventStorage(
+    deploymentKey: String,
+    instanceName: String,
+    storage: Storage,
+): SingleValueStoreCache<Boolean> {
+    val truncatedDeployment = deploymentKey.takeLast(6)
+    val namespace = "amp-exp-$instanceName-$truncatedDeployment-track-assignment"
+    return SingleValueStoreCache(namespace, storage, ::decodeBooleanFromStorage, ::encodeBooleanToStorage)
+}
+
 internal fun decodeVariantFromStorage(storageValue: String): Variant? {
     return storageValue.toVariant()
 }
@@ -157,16 +167,6 @@ internal fun encodeVariantToStorage(value: Variant): String {
 
 internal fun encodeFlagToStorage(value: EvaluationFlag): String {
     return json.encodeToString(value)
-}
-
-internal fun getTrackAssignmentEventStorage(
-    deploymentKey: String,
-    instanceName: String,
-    storage: Storage,
-): SingleValueStoreCache<Boolean> {
-    val truncatedDeployment = deploymentKey.takeLast(6)
-    val namespace = "amp-exp-$instanceName-$truncatedDeployment-track-assignment"
-    return SingleValueStoreCache(namespace, storage, ::decodeBooleanFromStorage, ::encodeBooleanToStorage)
 }
 
 internal fun decodeBooleanFromStorage(storageValue: String): Boolean? {

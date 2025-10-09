@@ -416,7 +416,7 @@ internal class DefaultExperimentClient internal constructor(
             }
         if (trackingOption != null) {
             val trackingOptionValue = if (trackingOption) "track" else "no-track"
-            builder.addHeader("X-Amp-Exp-Tracking-Option", trackingOptionValue)
+            builder.addHeader("X-Amp-Exp-Track", trackingOptionValue)
         }
         val request = builder.build()
         val call = httpClient.newCall(request)
