@@ -1358,7 +1358,7 @@ class ExperimentClientTest {
     }
 
     @Test
-    fun testSetTrackAssignmentEvent() {
+    fun `test set track assignment event`() {
         val storage = MockStorage()
         val testClient =
             DefaultExperimentClient(
@@ -1379,7 +1379,7 @@ class ExperimentClientTest {
     }
 
     @Test
-    fun testSetTrackAssignmentEventPersistence() {
+    fun `test set track assignment event persistence`() {
         val storage = MockStorage()
 
         // Create first client
@@ -1412,7 +1412,7 @@ class ExperimentClientTest {
     }
 
     @Test
-    fun testMultipleCallsToSetTrackAssignmentEventUsesLatestSetting() {
+    fun `test multiple calls to set track assignment event uses latest setting`() {
         val storage = MockStorage()
         val testClient =
             DefaultExperimentClient(
@@ -1434,7 +1434,7 @@ class ExperimentClientTest {
     }
 
     @Test
-    fun testSetTrackAssignmentEventPreservesOtherOptions() {
+    fun `test set track assignment event preserves other options`() {
         val storage = MockStorage()
         val testClient =
             DefaultExperimentClient(
