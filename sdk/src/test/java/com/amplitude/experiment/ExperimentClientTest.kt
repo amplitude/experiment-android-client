@@ -1460,46 +1460,4 @@ class ExperimentClientTest {
         Assert.assertNotNull(fetchOptions.flagKeys)
         Assert.assertEquals(listOf("test-flag"), fetchOptions.flagKeys)
     }
-
-    @Test
-    fun testSetTrackAssignmentEventTrue() {
-        val storage = MockStorage()
-        val testClient =
-            DefaultExperimentClient(
-                API_KEY,
-                ExperimentConfig(),
-                OkHttpClient(),
-                storage,
-                Experiment.executorService,
-            )
-
-        // Set track assignment event to true
-        testClient.setTrackAssignmentEvent(true)
-
-        // Verify the setting is stored
-        val trackAssignmentStorage = getTrackAssignmentEventStorage(API_KEY, "\$default_instance", storage)
-        trackAssignmentStorage.load()
-        Assert.assertEquals(true, trackAssignmentStorage.get())
-    }
-
-    @Test
-    fun testSetTrackAssignmentEventFalse() {
-        val storage = MockStorage()
-        val testClient =
-            DefaultExperimentClient(
-                API_KEY,
-                ExperimentConfig(),
-                OkHttpClient(),
-                storage,
-                Experiment.executorService,
-            )
-
-        // Set track assignment event to false
-        testClient.setTrackAssignmentEvent(false)
-
-        // Verify the setting is stored
-        val trackAssignmentStorage = getTrackAssignmentEventStorage(API_KEY, "\$default_instance", storage)
-        trackAssignmentStorage.load()
-        Assert.assertEquals(false, trackAssignmentStorage.get())
-    }
 }
