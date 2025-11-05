@@ -435,6 +435,9 @@ internal class DefaultExperimentClient internal constructor(
                 libraryVersion = BuildConfig.VERSION_NAME,
                 timeoutMillis = config.fetchTimeoutMillis,
             ),
+            customRequestHeaders = user?.let {
+                config.customRequestHeaders?.invoke(it)
+            } ?: mapOf()
         ) { flags ->
             synchronized(this.flags) {
                 this.flags.clear()

@@ -54,7 +54,12 @@ class ExperimentClientTest {
     private var mockStorage = MockStorage()
     private val testUser = ExperimentUser(userId = "test_user")
 
-    private val serverVariant = Variant(key = "on", value = "on", payload = "payload", metadata = mapOf("evaluationId" to ""))
+    private val serverVariant = Variant(
+        key = "on",
+        value = "on",
+        payload = "payload",
+        metadata = mapOf("evaluationId" to "")
+    )
     private val fallbackVariant = Variant(key = "fallback", value = "fallback")
     private val initialVariant = Variant(key = "initial", value = "initial")
     private val inlineVariant = Variant(key = "inline", value = "inline")
@@ -452,7 +457,12 @@ class ExperimentClientTest {
                     debug = true,
                     exposureTrackingProvider = exposureTrackingProvider,
                     source = Source.INITIAL_VARIANTS,
-                    initialVariants = mapOf("flagKey" to Variant(key = "variant", expKey = "experimentKey")),
+                    initialVariants = mapOf(
+                        "flagKey" to Variant(
+                            key = "variant",
+                            expKey = "experimentKey"
+                        )
+                    ),
                 ),
                 OkHttpClient(),
                 mockStorage,
@@ -1357,13 +1367,15 @@ class ExperimentClientTest {
     }
 
     @Test
-    fun `test config custom request headers added, http call includes headers`() {
+    fun `test config custom request headers added, http call on fetch includes headers`() {
         val mockHttpClient = mockk<OkHttpClient>()
+        val testServerUrlHost = "api.test-server-url.com"
         val testCountry = "South Africa"
         val client =
             DefaultExperimentClient(
                 API_KEY,
                 ExperimentConfig(
+                    serverUrl = "https://$testServerUrlHost",
                     customRequestHeaders = { user ->
                         mapOf("country" to user.country!!)
                     }
@@ -1375,9 +1387,39 @@ class ExperimentClientTest {
 
         client.fetch(ExperimentUser(country = testCountry))
 
-        verify {
+        verify(exactly = 1) {
             mockHttpClient.newCall(match {
-                it.headers["country"] == testCountry
+                it.url.host == testServerUrlHost &&
+                        it.headers["country"] == testCountry
+            })
+        }
+    }
+
+    @Test
+    fun `test config custom request headers added, http call on start for flags for flags includes headers`() {
+        val mockHttpClient = mockk<OkHttpClient>()
+        val testFlagsHost = "api.test-flags-server-url.com"
+        val testCountry = "South Africa"
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    flagsServerUrl = "https://$testFlagsHost",
+                    customRequestHeaders = { user ->
+                        mapOf("country" to user.country!!)
+                    }
+                ),
+                mockHttpClient,
+                mockStorage,
+                Experiment.executorService,
+            )
+
+        client.start(ExperimentUser(country = testCountry))
+
+        verify(exactly = 1) {
+            mockHttpClient.newCall(match {
+                it.url.host == testFlagsHost &&
+                        it.headers["country"] == testCountry
             })
         }
     }
