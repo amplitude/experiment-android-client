@@ -373,12 +373,18 @@ internal class DefaultExperimentClient internal constructor(
             serverUrl.newBuilder()
                 .addPathSegments("sdk/v2/vardata")
                 .build()
+        val customRequestHeaders = config.customRequestHeaders?.invoke(user)
         val builder =
             Request.Builder()
                 .get()
                 .url(url)
                 .addHeader("Authorization", "Api-Key $apiKey")
                 .addHeader("X-Amp-Exp-User", userBase64)
+                .apply {
+                    customRequestHeaders?.forEach { (name, value) ->
+                        addHeader(name, value)
+                    }
+                }
         if (!options?.flagKeys.isNullOrEmpty()) {
             val flagKeysBase64 =
                 JSONArray(options?.flagKeys)

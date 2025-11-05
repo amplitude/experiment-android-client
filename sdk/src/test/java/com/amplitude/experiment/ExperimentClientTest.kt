@@ -1355,4 +1355,30 @@ class ExperimentClientTest {
             )
         Assert.assertEquals(900000, client.flagConfigPollingIntervalMillis)
     }
+
+    @Test
+    fun `test config custom request headers added, http call includes headers`() {
+        val mockHttpClient = mockk<OkHttpClient>()
+        val testCountry = "South Africa"
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    customRequestHeaders = { user ->
+                        mapOf("country" to user.country!!)
+                    }
+                ),
+                mockHttpClient,
+                mockStorage,
+                Experiment.executorService,
+            )
+
+        client.fetch(ExperimentUser(country = testCountry))
+
+        verify {
+            mockHttpClient.newCall(match {
+                it.headers["country"] == testCountry
+            })
+        }
+    }
 }
