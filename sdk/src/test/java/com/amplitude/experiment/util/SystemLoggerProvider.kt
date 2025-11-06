@@ -30,15 +30,11 @@ internal class SystemLoggerProvider(private val debug: Boolean) : LoggerProvider
         }
     }
 
-    override fun warn(
-        msg: String,
-    ) {
+    override fun warn(msg: String) {
         println("[${timestamp()}] WARN: $msg")
     }
 
-    override fun error(
-        msg: String,
-    ) {
+    override fun error(msg: String) {
         println("[${timestamp()}] ERROR: $msg")
     }
 }
