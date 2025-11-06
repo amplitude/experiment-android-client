@@ -3,8 +3,8 @@ package com.amplitude.experiment
 import android.app.Application
 import com.amplitude.analytics.connector.AnalyticsConnector
 import com.amplitude.experiment.storage.SharedPrefsStorage
-import com.amplitude.experiment.util.AndroidLogger
-import com.amplitude.experiment.util.Logger
+import com.amplitude.experiment.util.AndroidLoggerProvider
+import com.amplitude.experiment.util.AmpLogger
 import okhttp3.OkHttpClient
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledThreadPoolExecutor
@@ -42,7 +42,7 @@ object Experiment {
             val instanceKey = "$instanceName.$apiKey"
             return when (val instance = instances[instanceKey]) {
                 null -> {
-                    Logger.implementation = AndroidLogger(config.debug)
+                    AmpLogger.configure(config.logLevel, config.loggerProvider)
                     var mergedConfig = config
                     if (config.userProvider == null) {
                         mergedConfig =
@@ -92,7 +92,7 @@ object Experiment {
             val instance =
                 when (val instance = instances[instanceKey]) {
                     null -> {
-                        Logger.implementation = AndroidLogger(config.debug)
+                        AmpLogger.configure(config.logLevel, config.loggerProvider)
                         val configBuilder = config.copyToBuilder()
                         if (config.userProvider == null) {
                             configBuilder.userProvider(

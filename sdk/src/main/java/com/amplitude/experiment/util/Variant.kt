@@ -22,7 +22,7 @@ internal fun Variant.toJson(): String {
             jsonObject.put("metadata", metadata.toJSONObject())
         }
     } catch (e: JSONException) {
-        Logger.w("Error converting Variant to json string", e)
+        AmpLogger.warn("Error converting Variant to json string\n${e.stackTraceToString()}")
     }
     return jsonObject.toString()
 }
@@ -86,7 +86,7 @@ internal fun JSONObject?.toVariant(): Variant? {
             Variant(value, payload, expKey, key, metadata)
         } catch (e: JSONException) {
             e.printStackTrace()
-            Logger.w("Error parsing Variant from json string $this, $e")
+            AmpLogger.warn("Error parsing Variant from json string $this, $e")
             null
         }
     }
