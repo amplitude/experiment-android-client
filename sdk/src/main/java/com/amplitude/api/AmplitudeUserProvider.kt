@@ -7,7 +7,7 @@ import android.os.Build
 import android.telephony.TelephonyManager
 import com.amplitude.experiment.ExperimentUser
 import com.amplitude.experiment.ExperimentUserProvider
-import com.amplitude.experiment.util.Logger
+import com.amplitude.experiment.util.AmpLogger
 import java.util.Locale
 
 @Deprecated(
@@ -35,7 +35,7 @@ class AmplitudeUserProvider(private val amplitudeClient: AmplitudeClient) : Expe
         cacheCarrier()
         initialized = true
         val end = System.nanoTime()
-        Logger.d(
+        AmpLogger.debug(
             String.format(
                 "Waited %.3f ms for Amplitude SDK initialization",
                 (end - start) / 1000000.0,

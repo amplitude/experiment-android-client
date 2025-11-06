@@ -1,7 +1,7 @@
 package com.amplitude.experiment
 
-import com.amplitude.experiment.util.Logger
-import com.amplitude.experiment.util.SystemLogger
+import com.amplitude.experiment.util.AmpLogger
+import com.amplitude.experiment.util.SystemLoggerProvider
 import com.amplitude.experiment.util.toJson
 import com.amplitude.experiment.util.toVariant
 import org.json.JSONObject
@@ -10,7 +10,7 @@ import org.junit.Test
 
 class VariantTest {
     init {
-        Logger.implementation = SystemLogger(true)
+        AmpLogger.loggerProvider = SystemLoggerProvider(true)
     }
 
     @Test
