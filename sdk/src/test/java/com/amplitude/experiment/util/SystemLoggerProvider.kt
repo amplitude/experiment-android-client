@@ -11,44 +11,34 @@ internal fun timestamp(): String {
 }
 
 // For Testing
-internal class SystemLogger(private val debug: Boolean) : ILogger {
-    override fun v(msg: String) {
+internal class SystemLoggerProvider(private val debug: Boolean) : LoggerProvider {
+    override fun verbose(msg: String) {
         if (debug) {
             println("[${timestamp()}] VERBOSE: $msg")
         }
     }
 
-    override fun d(msg: String) {
+    override fun debug(msg: String) {
         if (debug) {
             println("[${timestamp()}] DEBUG: $msg")
         }
     }
 
-    override fun i(msg: String) {
+    override fun info(msg: String) {
         if (debug) {
             println("[${timestamp()}] INFO: $msg")
         }
     }
 
-    override fun w(
+    override fun warn(
         msg: String,
-        e: Throwable?,
     ) {
-        if (e == null) {
-            println("[${timestamp()}] WARN: $msg")
-        } else {
-            println("[${timestamp()}] WARN: $msg\n${e.printStackTrace()}")
-        }
+        println("[${timestamp()}] WARN: $msg")
     }
 
-    override fun e(
+    override fun error(
         msg: String,
-        e: Throwable?,
     ) {
-        if (e == null) {
-            println("[${timestamp()}] ERROR: $msg")
-        } else {
-            println("[${timestamp()}] ERROR: $msg\n$e")
-        }
+        println("[${timestamp()}] ERROR: $msg")
     }
 }

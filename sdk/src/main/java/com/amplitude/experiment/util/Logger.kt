@@ -2,86 +2,87 @@ package com.amplitude.experiment.util
 
 import android.util.Log
 
-internal interface ILogger {
-    fun v(msg: String)
-
-    fun d(msg: String)
-
-    fun i(msg: String)
-
-    fun w(
-        msg: String,
-        e: Throwable? = null,
-    )
-
-    fun e(
-        msg: String,
-        e: Throwable? = null,
-    )
+enum class LogLevel(val priority: Int) {
+    DISABLE(0),
+    ERROR(1),
+    WARN(2),
+    INFO(3),
+    DEBUG(4),
+    VERBOSE(5),
 }
 
-internal object Logger : ILogger {
-    internal var implementation: ILogger? = null
+interface LoggerProvider {
+    fun verbose(msg: String)
+    fun debug(msg: String)
+    fun info(msg: String)
+    fun warn(msg: String)
+    fun error(msg: String)
+}
 
-    override fun v(msg: String) {
-        implementation?.v(msg)
+internal object AmpLogger : LoggerProvider {
+    internal var logLevel: LogLevel = LogLevel.ERROR;
+    internal var loggerProvider: LoggerProvider? = null
+
+    internal fun configure(logLevel: LogLevel, provider: LoggerProvider?) {
+        this.logLevel = logLevel
+        this.loggerProvider = provider
     }
 
-    override fun d(msg: String) {
-        implementation?.d(msg)
+    override fun verbose(msg: String) {
+        if (shouldLog(LogLevel.VERBOSE)) {
+            this.loggerProvider?.verbose(msg)
+        }
     }
 
-    override fun i(msg: String) {
-        implementation?.i(msg)
+    override fun debug(msg: String) {
+        if (shouldLog(LogLevel.DEBUG)) {
+            this.loggerProvider?.debug(msg)
+        }
     }
 
-    override fun w(
-        msg: String,
-        e: Throwable?,
-    ) {
-        implementation?.w(msg)
+    override fun info(msg: String) {
+        if (shouldLog(LogLevel.INFO)) {
+            this.loggerProvider?.info(msg)
+        }
     }
 
-    override fun e(
-        msg: String,
-        e: Throwable?,
-    ) {
-        implementation?.e(msg, e)
+    override fun warn(msg: String) {
+        if (shouldLog(LogLevel.WARN)) {
+            this.loggerProvider?.warn(msg)
+        }
+    }
+
+    override fun error(msg: String) {
+        if (shouldLog(LogLevel.ERROR)) {
+            loggerProvider?.error(msg)
+        }
+    }
+
+    private fun shouldLog(logLevel: LogLevel): Boolean {
+        return logLevel.priority <= this.logLevel.priority
     }
 }
 
-internal class AndroidLogger(private val debug: Boolean) : ILogger {
+class AndroidLoggerProvider() : LoggerProvider {
     private val tag = "Experiment"
 
-    override fun v(msg: String) {
-        if (debug) {
-            Log.v(tag, msg)
-        }
+    override fun verbose(msg: String) {
+        Log.v(tag, msg)
     }
 
-    override fun d(msg: String) {
-        if (debug) {
-            Log.d(tag, msg)
-        }
+    override fun debug(msg: String) {
+        Log.d(tag, msg)
     }
 
-    override fun i(msg: String) {
-        if (debug) {
-            Log.i(tag, msg)
-        }
+    override fun info(msg: String) {
+        Log.i(tag, msg)
     }
 
-    override fun w(
-        msg: String,
-        e: Throwable?,
-    ) {
+    override fun warn(msg: String) {
         Log.w(tag, msg)
     }
 
-    override fun e(
-        msg: String,
-        e: Throwable?,
-    ) {
-        Log.e(tag, msg, e)
+    override fun error(msg: String) {
+        Log.e(tag, msg)
     }
 }
