@@ -13,17 +13,24 @@ enum class LogLevel(val priority: Int) {
 
 interface LoggerProvider {
     fun verbose(msg: String)
+
     fun debug(msg: String)
+
     fun info(msg: String)
+
     fun warn(msg: String)
+
     fun error(msg: String)
 }
 
 internal object AmpLogger : LoggerProvider {
-    internal var logLevel: LogLevel = LogLevel.ERROR;
+    internal var logLevel: LogLevel = LogLevel.ERROR
     internal var loggerProvider: LoggerProvider? = null
 
-    internal fun configure(logLevel: LogLevel, provider: LoggerProvider?) {
+    internal fun configure(
+        logLevel: LogLevel,
+        provider: LoggerProvider?,
+    ) {
         this.logLevel = logLevel
         this.loggerProvider = provider
     }

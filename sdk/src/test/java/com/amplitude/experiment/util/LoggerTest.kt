@@ -5,7 +5,6 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -28,11 +27,12 @@ class LoggerTest {
 
     @Test
     fun `test configure sets log level and provider`() {
-        val configs = listOf(
-            LogLevel.DEBUG to mockProvider,
-            LogLevel.INFO to null,
-            LogLevel.VERBOSE to mockProvider
-        )
+        val configs =
+            listOf(
+                LogLevel.DEBUG to mockProvider,
+                LogLevel.INFO to null,
+                LogLevel.VERBOSE to mockProvider,
+            )
 
         configs.forEach { (level, provider) ->
             AmpLogger.configure(level, provider)
@@ -44,14 +44,15 @@ class LoggerTest {
     @Test
     fun `test log level filtering behavior`() {
         // Define expected behavior: for each log level, which methods should be called
-        val testCases = mapOf(
-            LogLevel.DISABLE to LogCallExpectations(0, 0, 0, 0, 0),
-            LogLevel.ERROR to LogCallExpectations(0, 0, 0, 0, 1),
-            LogLevel.WARN to LogCallExpectations(0, 0, 0, 1, 1),
-            LogLevel.INFO to LogCallExpectations(0, 0, 1, 1, 1),
-            LogLevel.DEBUG to LogCallExpectations(0, 1, 1, 1, 1),
-            LogLevel.VERBOSE to LogCallExpectations(1, 1, 1, 1, 1)
-        )
+        val testCases =
+            mapOf(
+                LogLevel.DISABLE to LogCallExpectations(0, 0, 0, 0, 0),
+                LogLevel.ERROR to LogCallExpectations(0, 0, 0, 0, 1),
+                LogLevel.WARN to LogCallExpectations(0, 0, 0, 1, 1),
+                LogLevel.INFO to LogCallExpectations(0, 0, 1, 1, 1),
+                LogLevel.DEBUG to LogCallExpectations(0, 1, 1, 1, 1),
+                LogLevel.VERBOSE to LogCallExpectations(1, 1, 1, 1, 1),
+            )
 
         testCases.forEach { (level, expectations) ->
             clearMocks(mockProvider, answers = false)
@@ -83,13 +84,14 @@ class LoggerTest {
     fun `test log messages are preserved correctly`() {
         AmpLogger.configure(LogLevel.INFO, mockProvider)
 
-        val messages = listOf(
-            "simple message",
-            "message with numbers: 123",
-            "message with special chars: !@#$%",
-            "message with unicode: 你好",
-            ""
-        )
+        val messages =
+            listOf(
+                "simple message",
+                "message with numbers: 123",
+                "message with special chars: !@#$%",
+                "message with unicode: 你好",
+                "",
+            )
 
         messages.forEach { msg ->
             clearMocks(mockProvider, answers = false)
@@ -107,7 +109,7 @@ class LoggerTest {
             AmpLogger::verbose,
             AmpLogger::debug,
             AmpLogger::info,
-            AmpLogger::warn
+            AmpLogger::warn,
         ).forEach { it("msg") }
 
         AmpLogger.error("error msg")
@@ -129,7 +131,10 @@ class LoggerTest {
         AmpLogger.error(message)
     }
 
-    private fun verifyLogCalls(msg: String, expectations: LogCallExpectations) {
+    private fun verifyLogCalls(
+        msg: String,
+        expectations: LogCallExpectations,
+    ) {
         verify(exactly = expectations.verbose) { mockProvider.verbose(msg) }
         verify(exactly = expectations.debug) { mockProvider.debug(msg) }
         verify(exactly = expectations.info) { mockProvider.info(msg) }
@@ -142,6 +147,6 @@ class LoggerTest {
         val debug: Int,
         val info: Int,
         val warn: Int,
-        val error: Int
+        val error: Int,
     )
 }

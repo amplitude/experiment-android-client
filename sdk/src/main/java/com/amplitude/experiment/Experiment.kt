@@ -3,7 +3,6 @@ package com.amplitude.experiment
 import android.app.Application
 import com.amplitude.analytics.connector.AnalyticsConnector
 import com.amplitude.experiment.storage.SharedPrefsStorage
-import com.amplitude.experiment.util.AndroidLoggerProvider
 import com.amplitude.experiment.util.AmpLogger
 import okhttp3.OkHttpClient
 import java.util.concurrent.Executors

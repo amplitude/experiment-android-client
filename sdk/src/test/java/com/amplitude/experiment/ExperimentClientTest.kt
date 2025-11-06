@@ -3,8 +3,8 @@ package com.amplitude.experiment
 import com.amplitude.experiment.analytics.ExperimentAnalyticsEvent
 import com.amplitude.experiment.analytics.ExperimentAnalyticsProvider
 import com.amplitude.experiment.storage.getTrackAssignmentEventStorage
-import com.amplitude.experiment.util.FetchException
 import com.amplitude.experiment.util.AmpLogger
+import com.amplitude.experiment.util.FetchException
 import com.amplitude.experiment.util.MockStorage
 import com.amplitude.experiment.util.SystemLoggerProvider
 import com.amplitude.experiment.util.TestExposureTrackingProvider
