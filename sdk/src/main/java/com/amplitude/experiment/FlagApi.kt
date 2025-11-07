@@ -26,6 +26,7 @@ internal data class GetFlagsOptions(
 internal interface FlagApi {
     fun getFlags(
         options: GetFlagsOptions? = null,
+        customRequestHeaders: Map<String, String> = mapOf(),
         callback: ((Map<String, EvaluationFlag>) -> Unit)? = null,
     ): Future<Map<String, EvaluationFlag>>
 }
@@ -37,6 +38,7 @@ internal class SdkFlagApi(
 ) : FlagApi {
     override fun getFlags(
         options: GetFlagsOptions?,
+        customRequestHeaders: Map<String, String>,
         callback: ((Map<String, EvaluationFlag>) -> Unit)?,
     ): Future<Map<String, EvaluationFlag>> {
         val url =
@@ -49,6 +51,11 @@ internal class SdkFlagApi(
             Request.Builder()
                 .get()
                 .url(url).addHeader("Authorization", "Api-Key $deploymentKey")
+                .apply {
+                    customRequestHeaders.forEach { (name, value) ->
+                        addHeader(name, value)
+                    }
+                }
 
         options?.let {
             if (it.libraryName.isNotEmpty() && it.libraryVersion.isNotEmpty()) {
