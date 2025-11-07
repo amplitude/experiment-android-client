@@ -323,6 +323,7 @@ class ExperimentConfig internal constructor(
                 userProvider = userProvider,
                 analyticsProvider = analyticsProvider,
                 exposureTrackingProvider = exposureTrackingProvider,
+                customRequestHeaders = customRequestHeaders
             )
         }
     }
