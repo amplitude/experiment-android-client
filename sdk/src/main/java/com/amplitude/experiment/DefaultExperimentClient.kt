@@ -6,6 +6,7 @@ import com.amplitude.experiment.evaluation.json
 import com.amplitude.experiment.evaluation.topologicalSort
 import com.amplitude.experiment.storage.Storage
 import com.amplitude.experiment.storage.getFlagStorage
+import com.amplitude.experiment.storage.getTrackAssignmentEventStorage
 import com.amplitude.experiment.storage.getVariantStorage
 import com.amplitude.experiment.util.AsyncFuture
 import com.amplitude.experiment.util.Backoff
@@ -71,6 +72,12 @@ internal class DefaultExperimentClient internal constructor(
             storage,
             ::mergeInitialFlagsWithStorage,
         )
+    private val trackAssignmentEvent =
+        getTrackAssignmentEventStorage(
+            this.apiKey,
+            this.config.instanceName,
+            storage,
+        )
 
     init {
         executorService.execute {
@@ -81,6 +88,11 @@ internal class DefaultExperimentClient internal constructor(
         executorService.execute {
             synchronized(flags) {
                 this.flags.load()
+            }
+        }
+        executorService.execute {
+            synchronized(trackAssignmentEvent) {
+                this.trackAssignmentEvent.load()
             }
         }
     }
@@ -266,6 +278,14 @@ internal class DefaultExperimentClient internal constructor(
         return this
     }
 
+    override fun setTracksAssignment(trackAssignmentEvent: Boolean): ExperimentClient {
+        synchronized(this.trackAssignmentEvent) {
+            this.trackAssignmentEvent.put(trackAssignmentEvent)
+            this.trackAssignmentEvent.store()
+        }
+        return this
+    }
+
     internal fun allFlags(): Map<String, EvaluationFlag> {
         return synchronized(flags) { this.flags.getAll() }
     }
@@ -393,6 +413,16 @@ internal class DefaultExperimentClient internal constructor(
                     .toByteString()
                     .base64()
             builder.addHeader("X-Amp-Exp-Flag-Keys", flagKeysBase64)
+        }
+
+        // Add tracking option header
+        val trackingOption =
+            synchronized(trackAssignmentEvent) {
+                trackAssignmentEvent.get()
+            }
+        if (trackingOption != null) {
+            val trackingOptionValue = if (trackingOption) "track" else "no-track"
+            builder.addHeader("X-Amp-Exp-Track", trackingOptionValue)
         }
         val request = builder.build()
         val call = httpClient.newCall(request)

@@ -4,6 +4,7 @@ import com.amplitude.experiment.storage.Storage
 
 internal class MockStorage() : Storage {
     private val store: MutableMap<String, Map<String, String>> = mutableMapOf()
+    private val singleStore: MutableMap<String, String> = mutableMapOf()
 
     override fun get(key: String): Map<String, String> =
         synchronized(this) {
@@ -21,5 +22,18 @@ internal class MockStorage() : Storage {
     override fun delete(key: String): Unit =
         synchronized(this) {
             store.remove(key)
+        }
+
+    override fun getSingle(key: String): String? =
+        synchronized(this) {
+            return singleStore[key]
+        }
+
+    override fun putSingle(
+        key: String,
+        value: String,
+    ): Unit =
+        synchronized(this) {
+            singleStore[key] = value
         }
 }

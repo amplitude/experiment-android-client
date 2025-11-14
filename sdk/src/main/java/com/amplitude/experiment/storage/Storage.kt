@@ -9,4 +9,11 @@ internal interface Storage {
     )
 
     fun delete(key: String)
+
+    fun getSingle(key: String): String?
+
+    fun putSingle(
+        key: String,
+        value: String,
+    )
 }
