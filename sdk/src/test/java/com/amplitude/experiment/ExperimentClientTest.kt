@@ -1369,12 +1369,12 @@ class ExperimentClientTest {
                 Experiment.executorService,
             )
 
-        // Test that setTrackAssignmentEvent returns the client for chaining
-        val result = testClient.setTrackAssignmentEvent(true)
+        // Test that setTracksAssignment returns the client for chaining
+        val result = testClient.setTracksAssignment(true)
         Assert.assertSame(testClient, result)
 
-        // Test that setTrackAssignmentEvent(false) also works
-        val result2 = testClient.setTrackAssignmentEvent(false)
+        // Test that setTracksAssignment(false) also works
+        val result2 = testClient.setTracksAssignment(false)
         Assert.assertSame(testClient, result2)
     }
 
@@ -1403,7 +1403,7 @@ class ExperimentClientTest {
             )
 
         // Set track assignment event on first client
-        client1.setTrackAssignmentEvent(true)
+        client1.setTracksAssignment(true)
 
         // Verify the setting was persisted by checking storage directly
         val trackAssignmentStorage = getTrackAssignmentEventStorage(API_KEY, "\$default_instance", storage)
@@ -1424,8 +1424,8 @@ class ExperimentClientTest {
             )
 
         // Set track assignment event to true, then false
-        testClient.setTrackAssignmentEvent(true)
-        testClient.setTrackAssignmentEvent(false)
+        testClient.setTracksAssignment(true)
+        testClient.setTracksAssignment(false)
 
         // Verify the latest setting is stored
         val trackAssignmentStorage = getTrackAssignmentEventStorage(API_KEY, "\$default_instance", storage)
@@ -1446,7 +1446,7 @@ class ExperimentClientTest {
             )
 
         // Set track assignment event to true
-        testClient.setTrackAssignmentEvent(true)
+        testClient.setTracksAssignment(true)
 
         // Verify the setting is stored
         val trackAssignmentStorage = getTrackAssignmentEventStorage(API_KEY, "\$default_instance", storage)

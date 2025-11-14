@@ -278,7 +278,7 @@ internal class DefaultExperimentClient internal constructor(
         return this
     }
 
-    override fun setTrackAssignmentEvent(trackAssignmentEvent: Boolean): ExperimentClient {
+    override fun setTracksAssignment(trackAssignmentEvent: Boolean): ExperimentClient {
         synchronized(this.trackAssignmentEvent) {
             this.trackAssignmentEvent.put(trackAssignmentEvent)
             this.trackAssignmentEvent.store()

@@ -176,5 +176,5 @@ interface ExperimentClient {
      *
      * @param trackAssignmentEvent Whether to track assignment events
      */
-    fun setTrackAssignmentEvent(trackAssignmentEvent: Boolean): ExperimentClient
+    fun setTracksAssignment(trackAssignmentEvent: Boolean): ExperimentClient
 }
