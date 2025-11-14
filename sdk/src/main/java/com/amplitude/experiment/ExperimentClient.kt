@@ -168,4 +168,13 @@ interface ExperimentClient {
      */
     @Deprecated("Use ExperimentConfig.userProvider instead")
     fun setUserProvider(provider: ExperimentUserProvider?): ExperimentClient
+
+    /**
+     * Set whether assignment events should be tracked when fetching variants.
+     * When set to true, assignment events will be tracked. When set to false,
+     * assignment events will not be tracked.
+     *
+     * @param trackAssignmentEvent Whether to track assignment events
+     */
+    fun setTracksAssignment(trackAssignmentEvent: Boolean): ExperimentClient
 }

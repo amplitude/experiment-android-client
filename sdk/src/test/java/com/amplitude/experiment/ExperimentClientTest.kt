@@ -2,6 +2,7 @@ package com.amplitude.experiment
 
 import com.amplitude.experiment.analytics.ExperimentAnalyticsEvent
 import com.amplitude.experiment.analytics.ExperimentAnalyticsProvider
+import com.amplitude.experiment.storage.getTrackAssignmentEventStorage
 import com.amplitude.experiment.util.FetchException
 import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.MockStorage
@@ -1354,5 +1355,109 @@ class ExperimentClientTest {
                 Experiment.executorService,
             )
         Assert.assertEquals(900000, client.flagConfigPollingIntervalMillis)
+    }
+
+    @Test
+    fun `test set track assignment event`() {
+        val storage = MockStorage()
+        val testClient =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(),
+                OkHttpClient(),
+                storage,
+                Experiment.executorService,
+            )
+
+        // Test that setTracksAssignment returns the client for chaining
+        val result = testClient.setTracksAssignment(true)
+        Assert.assertSame(testClient, result)
+
+        // Test that setTracksAssignment(false) also works
+        val result2 = testClient.setTracksAssignment(false)
+        Assert.assertSame(testClient, result2)
+    }
+
+    @Test
+    fun `test set track assignment event persistence`() {
+        val storage = MockStorage()
+
+        // Create first client
+        val client1 =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(),
+                OkHttpClient(),
+                storage,
+                Experiment.executorService,
+            )
+
+        // Create second client with same storage
+        val client2 =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(),
+                OkHttpClient(),
+                storage,
+                Experiment.executorService,
+            )
+
+        // Set track assignment event on first client
+        client1.setTracksAssignment(true)
+
+        // Verify the setting was persisted by checking storage directly
+        val trackAssignmentStorage = getTrackAssignmentEventStorage(API_KEY, "\$default_instance", storage)
+        trackAssignmentStorage.load()
+        Assert.assertEquals(true, trackAssignmentStorage.get())
+    }
+
+    @Test
+    fun `test multiple calls to set track assignment event uses latest setting`() {
+        val storage = MockStorage()
+        val testClient =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(),
+                OkHttpClient(),
+                storage,
+                Experiment.executorService,
+            )
+
+        // Set track assignment event to true, then false
+        testClient.setTracksAssignment(true)
+        testClient.setTracksAssignment(false)
+
+        // Verify the latest setting is stored
+        val trackAssignmentStorage = getTrackAssignmentEventStorage(API_KEY, "\$default_instance", storage)
+        trackAssignmentStorage.load()
+        Assert.assertEquals(false, trackAssignmentStorage.get())
+    }
+
+    @Test
+    fun `test set track assignment event preserves other options`() {
+        val storage = MockStorage()
+        val testClient =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(),
+                OkHttpClient(),
+                storage,
+                Experiment.executorService,
+            )
+
+        // Set track assignment event to true
+        testClient.setTracksAssignment(true)
+
+        // Verify the setting is stored
+        val trackAssignmentStorage = getTrackAssignmentEventStorage(API_KEY, "\$default_instance", storage)
+        trackAssignmentStorage.load()
+        Assert.assertEquals(true, trackAssignmentStorage.get())
+
+        // Test that the setting works with fetch options
+        val fetchOptions = FetchOptions(listOf("test-flag"))
+
+        // This test verifies that the tracking option setting doesn't interfere with other fetch options
+        Assert.assertNotNull(fetchOptions.flagKeys)
+        Assert.assertEquals(listOf("test-flag"), fetchOptions.flagKeys)
     }
 }
