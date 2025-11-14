@@ -59,7 +59,7 @@ class ExperimentConfig internal constructor(
     @JvmField
     val exposureTrackingProvider: ExposureTrackingProvider? = Defaults.EXPOSURE_TRACKING_PROVIDER,
     @JvmField
-    val customRequestHeaders: ((ExperimentUser) -> Map<String, String>)? = Defaults.CUSTOM_REQUEST_HEADERS
+    val customRequestHeaders: (() -> Map<String, String>)? = Defaults.CUSTOM_REQUEST_HEADERS
 ) {
     /**
      * Construct the default [ExperimentConfig].
@@ -169,7 +169,7 @@ class ExperimentConfig internal constructor(
         /**
          * null
          */
-        val CUSTOM_REQUEST_HEADERS: ((ExperimentUser) -> Map<String, String>)? = null
+        val CUSTOM_REQUEST_HEADERS: (() -> Map<String, String>)? = null
     }
 
     companion object {
@@ -297,7 +297,7 @@ class ExperimentConfig internal constructor(
                 this.exposureTrackingProvider = exposureTrackingProvider
             }
 
-        fun customRequestHeaders(customRequestHeaders: ((ExperimentUser) -> Map<String, String>)?) =
+        fun customRequestHeaders(customRequestHeaders: (() -> Map<String, String>)?) =
             apply {
                 this.customRequestHeaders = customRequestHeaders
             }

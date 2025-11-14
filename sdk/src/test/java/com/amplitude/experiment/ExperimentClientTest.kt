@@ -13,6 +13,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
+import io.mockk.verifyOrder
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import org.json.JSONArray
@@ -1369,15 +1370,18 @@ class ExperimentClientTest {
     @Test
     fun `test config custom request headers added, http call on fetch includes headers`() {
         val mockHttpClient = mockk<OkHttpClient>()
+        var counter = 1
+        fun getVariableHeaderValue(): String {
+            return counter.toString().also { counter++ }
+        }
         val testServerUrlHost = "api.test-server-url.com"
-        val testCountry = "South Africa"
         val client =
             DefaultExperimentClient(
                 API_KEY,
                 ExperimentConfig(
                     serverUrl = "https://$testServerUrlHost",
-                    customRequestHeaders = { user ->
-                        mapOf("country" to user.country!!)
+                    customRequestHeaders = {
+                        mapOf("counter" to getVariableHeaderValue())
                     }
                 ),
                 mockHttpClient,
@@ -1385,12 +1389,17 @@ class ExperimentClientTest {
                 Experiment.executorService,
             )
 
-        client.fetch(ExperimentUser(country = testCountry))
+        client.fetch()
+        client.fetch()
 
-        verify(exactly = 1) {
+        verifyOrder {
             mockHttpClient.newCall(match {
                 it.url.host == testServerUrlHost &&
-                        it.headers["country"] == testCountry
+                        it.headers["counter"] == "1"
+            })
+            mockHttpClient.newCall(match {
+                it.url.host == testServerUrlHost &&
+                        it.headers["counter"] == "2"
             })
         }
     }
@@ -1399,14 +1408,14 @@ class ExperimentClientTest {
     fun `test config custom request headers added, http call on start for flags for flags includes headers`() {
         val mockHttpClient = mockk<OkHttpClient>()
         val testFlagsHost = "api.test-flags-server-url.com"
-        val testCountry = "South Africa"
+        val testHeader = "testKey" to "testValue"
         val client =
             DefaultExperimentClient(
                 API_KEY,
                 ExperimentConfig(
                     flagsServerUrl = "https://$testFlagsHost",
-                    customRequestHeaders = { user ->
-                        mapOf("country" to user.country!!)
+                    customRequestHeaders = {
+                        mapOf(testHeader)
                     }
                 ),
                 mockHttpClient,
@@ -1414,12 +1423,12 @@ class ExperimentClientTest {
                 Experiment.executorService,
             )
 
-        client.start(ExperimentUser(country = testCountry))
+        client.start()
 
         verify(exactly = 1) {
             mockHttpClient.newCall(match {
                 it.url.host == testFlagsHost &&
-                        it.headers["country"] == testCountry
+                        it.headers["testKey"] == "testValue"
             })
         }
     }

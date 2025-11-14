@@ -373,7 +373,7 @@ internal class DefaultExperimentClient internal constructor(
             serverUrl.newBuilder()
                 .addPathSegments("sdk/v2/vardata")
                 .build()
-        val customRequestHeaders = config.customRequestHeaders?.invoke(user)
+        val customRequestHeaders = config.customRequestHeaders?.invoke()
         val builder =
             Request.Builder()
                 .get()
@@ -435,9 +435,7 @@ internal class DefaultExperimentClient internal constructor(
                 libraryVersion = BuildConfig.VERSION_NAME,
                 timeoutMillis = config.fetchTimeoutMillis,
             ),
-            customRequestHeaders = user?.let {
-                config.customRequestHeaders?.invoke(it)
-            } ?: mapOf()
+            customRequestHeaders = config.customRequestHeaders?.invoke() ?: mapOf()
         ) { flags ->
             synchronized(this.flags) {
                 this.flags.clear()
