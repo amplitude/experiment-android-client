@@ -59,7 +59,7 @@ class ExperimentConfig internal constructor(
     @JvmField
     val exposureTrackingProvider: ExposureTrackingProvider? = Defaults.EXPOSURE_TRACKING_PROVIDER,
     @JvmField
-    val customRequestHeaders: (() -> Map<String, String>)? = Defaults.CUSTOM_REQUEST_HEADERS
+    val customRequestHeaders: (() -> Map<String, String>)? = Defaults.CUSTOM_REQUEST_HEADERS,
 ) {
     /**
      * Construct the default [ExperimentConfig].
@@ -174,9 +174,7 @@ class ExperimentConfig internal constructor(
 
     companion object {
         @JvmStatic
-        fun builder(): Builder {
-            return Builder()
-        }
+        fun builder(): Builder = Builder()
     }
 
     class Builder {
@@ -302,8 +300,8 @@ class ExperimentConfig internal constructor(
                 this.customRequestHeaders = customRequestHeaders
             }
 
-        fun build(): ExperimentConfig {
-            return ExperimentConfig(
+        fun build(): ExperimentConfig =
+            ExperimentConfig(
                 debug = debug,
                 instanceName = instanceName,
                 fallbackVariant = fallbackVariant,
@@ -323,13 +321,12 @@ class ExperimentConfig internal constructor(
                 userProvider = userProvider,
                 analyticsProvider = analyticsProvider,
                 exposureTrackingProvider = exposureTrackingProvider,
-                customRequestHeaders = customRequestHeaders
+                customRequestHeaders = customRequestHeaders,
             )
-        }
     }
 
-    internal fun copyToBuilder(): Builder {
-        return builder()
+    internal fun copyToBuilder(): Builder =
+        builder()
             .debug(debug)
             .instanceName(instanceName)
             .fallbackVariant(fallbackVariant)
@@ -350,5 +347,4 @@ class ExperimentConfig internal constructor(
             .analyticsProvider(analyticsProvider)
             .exposureTrackingProvider(exposureTrackingProvider)
             .customRequestHeaders(customRequestHeaders)
-    }
 }

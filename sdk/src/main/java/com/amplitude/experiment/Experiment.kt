@@ -46,7 +46,8 @@ object Experiment {
                     var mergedConfig = config
                     if (config.userProvider == null) {
                         mergedConfig =
-                            config.copyToBuilder()
+                            config
+                                .copyToBuilder()
                                 .userProvider(DefaultUserProvider(application))
                                 .build()
                     }
