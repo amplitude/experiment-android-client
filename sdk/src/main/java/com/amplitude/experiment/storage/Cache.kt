@@ -3,6 +3,7 @@ package com.amplitude.experiment.storage
 import com.amplitude.experiment.Variant
 import com.amplitude.experiment.evaluation.EvaluationFlag
 import com.amplitude.experiment.evaluation.json
+import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.toJson
 import com.amplitude.experiment.util.toVariant
 import kotlinx.serialization.decodeFromString
@@ -86,6 +87,42 @@ internal class LoadStoreCache<V>(
     }
 }
 
+internal class SingleValueStoreCache<V>(
+    private val namespace: String,
+    private val storage: Storage,
+    private val decoder: ((value: String) -> V?),
+    private val encoder: ((value: V) -> String),
+) {
+    private var cachedValue: V? = null
+    private var isLoaded = false
+
+    fun get(): V? {
+        if (!isLoaded) load()
+        return cachedValue
+    }
+
+    fun put(value: V) {
+        cachedValue = value
+    }
+
+    fun load() {
+        val rawValue = storage.getSingle(namespace)
+        cachedValue = rawValue?.let { decoder.invoke(it) }
+        isLoaded = true
+    }
+
+    fun store() {
+        cachedValue?.let { value ->
+            try {
+                val stringValue = encoder(value)
+                storage.putSingle(namespace, stringValue)
+            } catch (e: Exception) {
+                Logger.d("Error encoding boolean value: $e")
+            }
+        }
+    }
+}
+
 internal fun getVariantStorage(
     deploymentKey: String,
     instanceName: String,
@@ -107,6 +144,16 @@ internal fun getFlagStorage(
     return LoadStoreCache(namespace, storage, ::decodeFlagFromStorage, ::encodeFlagToStorage, merger)
 }
 
+internal fun getTrackAssignmentEventStorage(
+    deploymentKey: String,
+    instanceName: String,
+    storage: Storage,
+): SingleValueStoreCache<Boolean> {
+    val truncatedDeployment = deploymentKey.takeLast(6)
+    val namespace = "amp-exp-$instanceName-$truncatedDeployment-track-assignment"
+    return SingleValueStoreCache(namespace, storage, ::decodeBooleanFromStorage, ::encodeBooleanToStorage)
+}
+
 internal fun decodeVariantFromStorage(storageValue: String): Variant? {
     return storageValue.toVariant()
 }
@@ -121,4 +168,12 @@ internal fun encodeVariantToStorage(value: Variant): String {
 
 internal fun encodeFlagToStorage(value: EvaluationFlag): String {
     return json.encodeToString(value)
+}
+
+internal fun decodeBooleanFromStorage(storageValue: String): Boolean? {
+    return storageValue.toBooleanStrictOrNull()
+}
+
+internal fun encodeBooleanToStorage(value: Boolean): String {
+    return value.toString()
 }
