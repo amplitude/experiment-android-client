@@ -14,6 +14,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
+import io.mockk.verifyOrder
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import org.json.JSONArray
@@ -55,7 +56,13 @@ class ExperimentClientTest {
     private var mockStorage = MockStorage()
     private val testUser = ExperimentUser(userId = "test_user")
 
-    private val serverVariant = Variant(key = "on", value = "on", payload = "payload", metadata = mapOf("evaluationId" to ""))
+    private val serverVariant =
+        Variant(
+            key = "on",
+            value = "on",
+            payload = "payload",
+            metadata = mapOf("evaluationId" to ""),
+        )
     private val fallbackVariant = Variant(key = "fallback", value = "fallback")
     private val initialVariant = Variant(key = "initial", value = "initial")
     private val inlineVariant = Variant(key = "inline", value = "inline")
@@ -453,7 +460,14 @@ class ExperimentClientTest {
                     debug = true,
                     exposureTrackingProvider = exposureTrackingProvider,
                     source = Source.INITIAL_VARIANTS,
-                    initialVariants = mapOf("flagKey" to Variant(key = "variant", expKey = "experimentKey")),
+                    initialVariants =
+                        mapOf(
+                            "flagKey" to
+                                Variant(
+                                    key = "variant",
+                                    expKey = "experimentKey",
+                                ),
+                        ),
                 ),
                 OkHttpClient(),
                 mockStorage,
@@ -1079,7 +1093,11 @@ class ExperimentClientTest {
                     exposureTrackingProvider = exposureTrackingProvider,
                     fetchOnStart = true,
                     source = Source.LOCAL_STORAGE,
-                    initialVariants = mapOf("sdk-ci-test" to initialVariant, "sdk-ci-test-local" to initialVariant),
+                    initialVariants =
+                        mapOf(
+                            "sdk-ci-test" to initialVariant,
+                            "sdk-ci-test-local" to initialVariant,
+                        ),
                 ),
                 OkHttpClient(),
                 mockStorage,
@@ -1107,7 +1125,11 @@ class ExperimentClientTest {
                     exposureTrackingProvider = exposureTrackingProvider,
                     fetchOnStart = true,
                     source = Source.INITIAL_VARIANTS,
-                    initialVariants = mapOf("sdk-ci-test" to initialVariant, "sdk-ci-test-local" to initialVariant),
+                    initialVariants =
+                        mapOf(
+                            "sdk-ci-test" to initialVariant,
+                            "sdk-ci-test-local" to initialVariant,
+                        ),
                 ),
                 OkHttpClient(),
                 mockStorage,
@@ -1207,7 +1229,8 @@ class ExperimentClientTest {
         client.start(user).get()
         var variant = client.variant("sdk-payload-ci-test")
         val obj = JSONObject().put("key1", "val1").put("key2", "val2")
-        val array = JSONArray().put(JSONObject().put("key1", "obj1")).put(JSONObject().put("key2", "obj2"))
+        val array =
+            JSONArray().put(JSONObject().put("key1", "obj1")).put(JSONObject().put("key2", "obj2"))
         Assert.assertEquals(obj::class, variant.payload!!::class)
         Assert.assertEquals(obj.toString(), variant.payload.toString())
         // set null user to get array variant
@@ -1294,7 +1317,13 @@ class ExperimentClientTest {
                     recordPrivateCalls = true,
                 )
             // Mock the private method to throw FetchException or other exceptions
-            every { client["doFetch"](any<ExperimentUser>(), any<Long>(), any<FetchOptions>()) } answers {
+            every {
+                client["doFetch"](
+                    any<ExperimentUser>(),
+                    any<Long>(),
+                    any<FetchOptions>(),
+                )
+            } answers {
                 val future = CompletableFuture<Map<String, Variant>>()
                 if (responseCode == 0) {
                     future.completeExceptionally(Exception(errorMessage))
@@ -1310,7 +1339,12 @@ class ExperimentClientTest {
                 // Ignore exception
             }
 
-            verify(exactly = retryCalled) { client["startRetries"](any<ExperimentUser>(), any<FetchOptions>()) }
+            verify(exactly = retryCalled) {
+                client["startRetries"](
+                    any<ExperimentUser>(),
+                    any<FetchOptions>(),
+                )
+            }
         }
     }
 
@@ -1356,7 +1390,7 @@ class ExperimentClientTest {
             )
         Assert.assertEquals(900000, client.flagConfigPollingIntervalMillis)
     }
-
+    
     @Test
     fun `test set track assignment event`() {
         val storage = MockStorage()
@@ -1459,5 +1493,77 @@ class ExperimentClientTest {
         // This test verifies that the tracking option setting doesn't interfere with other fetch options
         Assert.assertNotNull(fetchOptions.flagKeys)
         Assert.assertEquals(listOf("test-flag"), fetchOptions.flagKeys)
+    }
+
+    @Test
+    fun `test config custom request headers added, http call on fetch includes headers`() {
+        val mockHttpClient = mockk<OkHttpClient>()
+        var counter = 1
+
+        fun getVariableHeaderValue(): String = counter.toString().also { counter++ }
+
+        val testServerUrlHost = "api.test-server-url.com"
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    serverUrl = "https://$testServerUrlHost",
+                    customRequestHeaders = {
+                        mapOf("counter" to getVariableHeaderValue())
+                    },
+                ),
+                mockHttpClient,
+                mockStorage,
+                Experiment.executorService,
+            )
+
+        client.fetch().get()
+        client.fetch().get()
+
+        verifyOrder {
+            mockHttpClient.newCall(
+                match {
+                    it.url.host == testServerUrlHost &&
+                        it.headers["counter"] == "1"
+                },
+            )
+            mockHttpClient.newCall(
+                match {
+                    it.url.host == testServerUrlHost &&
+                        it.headers["counter"] == "2"
+                },
+            )
+        }
+    }
+
+    @Test
+    fun `test config custom request headers added, http call on start includes headers`() {
+        val mockHttpClient = mockk<OkHttpClient>()
+        val testFlagsHost = "api.test-flags-server-url.com"
+        val testHeader = "testKey" to "testValue"
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    flagsServerUrl = "https://$testFlagsHost",
+                    customRequestHeaders = {
+                        mapOf(testHeader)
+                    },
+                ),
+                mockHttpClient,
+                mockStorage,
+                Experiment.executorService,
+            )
+
+        client.start().get()
+
+        verify(exactly = 1) {
+            mockHttpClient.newCall(
+                match {
+                    it.url.host == testFlagsHost &&
+                        it.headers["testKey"] == "testValue"
+                },
+            )
+        }
     }
 }

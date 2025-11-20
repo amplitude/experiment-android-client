@@ -26,6 +26,7 @@ internal data class GetFlagsOptions(
 internal interface FlagApi {
     fun getFlags(
         options: GetFlagsOptions? = null,
+        customRequestHeaders: Map<String, String> = mapOf(),
         callback: ((Map<String, EvaluationFlag>) -> Unit)? = null,
     ): Future<Map<String, EvaluationFlag>>
 }
@@ -37,18 +38,27 @@ internal class SdkFlagApi(
 ) : FlagApi {
     override fun getFlags(
         options: GetFlagsOptions?,
+        customRequestHeaders: Map<String, String>,
         callback: ((Map<String, EvaluationFlag>) -> Unit)?,
     ): Future<Map<String, EvaluationFlag>> {
         val url =
-            serverUrl.newBuilder()
+            serverUrl
+                .newBuilder()
                 .addPathSegments("sdk/v2/flags")
                 .addQueryParameter("v", "0")
                 .build()
 
         val builder =
-            Request.Builder()
+            Request
+                .Builder()
                 .get()
-                .url(url).addHeader("Authorization", "Api-Key $deploymentKey")
+                .url(url)
+                .addHeader("Authorization", "Api-Key $deploymentKey")
+                .apply {
+                    customRequestHeaders.forEach { (name, value) ->
+                        addHeader(name, value)
+                    }
+                }
 
         options?.let {
             if (it.libraryName.isNotEmpty() && it.libraryVersion.isNotEmpty()) {
@@ -74,7 +84,8 @@ internal class SdkFlagApi(
                             val body = response.body?.string() ?: ""
                             try {
                                 val flags =
-                                    json.decodeFromString<List<EvaluationFlag>>(body)
+                                    json
+                                        .decodeFromString<List<EvaluationFlag>>(body)
                                         .associateBy { it.key }
                                 future.complete(flags)
                             } catch (e: SerializationException) {

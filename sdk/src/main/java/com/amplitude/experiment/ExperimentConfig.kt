@@ -58,6 +58,8 @@ class ExperimentConfig internal constructor(
     val analyticsProvider: ExperimentAnalyticsProvider? = Defaults.ANALYTICS_PROVIDER,
     @JvmField
     val exposureTrackingProvider: ExposureTrackingProvider? = Defaults.EXPOSURE_TRACKING_PROVIDER,
+    @JvmField
+    val customRequestHeaders: (() -> Map<String, String>)? = Defaults.CUSTOM_REQUEST_HEADERS,
 ) {
     /**
      * Construct the default [ExperimentConfig].
@@ -163,13 +165,16 @@ class ExperimentConfig internal constructor(
          * null
          */
         val EXPOSURE_TRACKING_PROVIDER: ExposureTrackingProvider? = null
+
+        /**
+         * null
+         */
+        val CUSTOM_REQUEST_HEADERS: (() -> Map<String, String>)? = null
     }
 
     companion object {
         @JvmStatic
-        fun builder(): Builder {
-            return Builder()
-        }
+        fun builder(): Builder = Builder()
     }
 
     class Builder {
@@ -192,6 +197,7 @@ class ExperimentConfig internal constructor(
         private var userProvider = Defaults.USER_PROVIDER
         private var analyticsProvider = Defaults.ANALYTICS_PROVIDER
         private var exposureTrackingProvider = Defaults.EXPOSURE_TRACKING_PROVIDER
+        private var customRequestHeaders = Defaults.CUSTOM_REQUEST_HEADERS
 
         fun debug(debug: Boolean) =
             apply {
@@ -289,8 +295,13 @@ class ExperimentConfig internal constructor(
                 this.exposureTrackingProvider = exposureTrackingProvider
             }
 
-        fun build(): ExperimentConfig {
-            return ExperimentConfig(
+        fun customRequestHeaders(customRequestHeaders: (() -> Map<String, String>)?) =
+            apply {
+                this.customRequestHeaders = customRequestHeaders
+            }
+
+        fun build(): ExperimentConfig =
+            ExperimentConfig(
                 debug = debug,
                 instanceName = instanceName,
                 fallbackVariant = fallbackVariant,
@@ -310,12 +321,12 @@ class ExperimentConfig internal constructor(
                 userProvider = userProvider,
                 analyticsProvider = analyticsProvider,
                 exposureTrackingProvider = exposureTrackingProvider,
+                customRequestHeaders = customRequestHeaders,
             )
-        }
     }
 
-    internal fun copyToBuilder(): Builder {
-        return builder()
+    internal fun copyToBuilder(): Builder =
+        builder()
             .debug(debug)
             .instanceName(instanceName)
             .fallbackVariant(fallbackVariant)
@@ -335,5 +346,5 @@ class ExperimentConfig internal constructor(
             .userProvider(userProvider)
             .analyticsProvider(analyticsProvider)
             .exposureTrackingProvider(exposureTrackingProvider)
-    }
+            .customRequestHeaders(customRequestHeaders)
 }

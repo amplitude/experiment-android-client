@@ -205,9 +205,7 @@ internal class DefaultExperimentClient internal constructor(
         }
     }
 
-    override fun fetch(user: ExperimentUser?): Future<ExperimentClient> {
-        return fetch(user, null)
-    }
+    override fun fetch(user: ExperimentUser?): Future<ExperimentClient> = fetch(user, null)
 
     override fun fetch(
         user: ExperimentUser?,
@@ -223,9 +221,7 @@ internal class DefaultExperimentClient internal constructor(
         )
     }
 
-    override fun variant(key: String): Variant {
-        return variant(key, null)
-    }
+    override fun variant(key: String): Variant = variant(key, null)
 
     override fun variant(
         key: String,
@@ -261,17 +257,13 @@ internal class DefaultExperimentClient internal constructor(
         }
     }
 
-    override fun getUser(): ExperimentUser? {
-        return user
-    }
+    override fun getUser(): ExperimentUser? = user
 
     override fun setUser(user: ExperimentUser) {
         this.user = user
     }
 
-    override fun getUserProvider(): ExperimentUserProvider? {
-        return this.userProvider
-    }
+    override fun getUserProvider(): ExperimentUserProvider? = this.userProvider
 
     override fun setUserProvider(provider: ExperimentUserProvider?): ExperimentClient {
         this.userProvider = provider
@@ -286,9 +278,7 @@ internal class DefaultExperimentClient internal constructor(
         return this
     }
 
-    internal fun allFlags(): Map<String, EvaluationFlag> {
-        return synchronized(flags) { this.flags.getAll() }
-    }
+    internal fun allFlags(): Map<String, EvaluationFlag> = synchronized(flags) { this.flags.getAll() }
 
     private fun exposureInternal(
         key: String,
@@ -332,9 +322,7 @@ internal class DefaultExperimentClient internal constructor(
         }
     }
 
-    private fun isFallback(source: VariantSource?): Boolean {
-        return source == null || source.isFallback()
-    }
+    private fun isFallback(source: VariantSource?): Boolean = source == null || source.isFallback()
 
     private fun resolveVariantAndSource(
         key: String,
@@ -385,20 +373,29 @@ internal class DefaultExperimentClient internal constructor(
         Logger.d("Fetch variants for user: $user")
         // Build request to fetch variants for the user
         val userBase64 =
-            user.toJson()
+            user
+                .toJson()
                 .toByteArray(Charsets.UTF_8)
                 .toByteString()
                 .base64Url()
         val url =
-            serverUrl.newBuilder()
+            serverUrl
+                .newBuilder()
                 .addPathSegments("sdk/v2/vardata")
                 .build()
+        val customRequestHeaders = config.customRequestHeaders?.invoke()
         val builder =
-            Request.Builder()
+            Request
+                .Builder()
                 .get()
                 .url(url)
                 .addHeader("Authorization", "Api-Key $apiKey")
                 .addHeader("X-Amp-Exp-User", userBase64)
+                .apply {
+                    customRequestHeaders?.forEach { (name, value) ->
+                        addHeader(name, value)
+                    }
+                }
         if (!options?.flagKeys.isNullOrEmpty()) {
             val flagKeysBase64 =
                 JSONArray(options?.flagKeys)
@@ -452,13 +449,14 @@ internal class DefaultExperimentClient internal constructor(
         return future
     }
 
-    private fun doFlags(): Future<Map<String, EvaluationFlag>> {
-        return flagApi.getFlags(
+    private fun doFlags(): Future<Map<String, EvaluationFlag>> =
+        flagApi.getFlags(
             GetFlagsOptions(
                 libraryName = "experiment-android-client",
                 libraryVersion = BuildConfig.VERSION_NAME,
                 timeoutMillis = config.fetchTimeoutMillis,
             ),
+            customRequestHeaders = config.customRequestHeaders?.invoke() ?: mapOf(),
         ) { flags ->
             synchronized(this.flags) {
                 this.flags.clear()
@@ -467,7 +465,6 @@ internal class DefaultExperimentClient internal constructor(
                 mergeInitialFlagsWithStorage()
             }
         }
-    }
 
     private fun startRetries(
         user: ExperimentUser,
@@ -524,25 +521,25 @@ internal class DefaultExperimentClient internal constructor(
         }
     }
 
-    private fun sourceVariants(): Map<String, Variant> {
-        return when (config.source) {
+    private fun sourceVariants(): Map<String, Variant> =
+        when (config.source) {
             Source.LOCAL_STORAGE -> synchronized(variants) { this.variants.getAll() }
             Source.INITIAL_VARIANTS -> config.initialVariants
         }
-    }
 
-    private fun secondaryVariants(): Map<String, Variant> {
-        return when (config.source) {
+    private fun secondaryVariants(): Map<String, Variant> =
+        when (config.source) {
             Source.LOCAL_STORAGE -> config.initialVariants
             Source.INITIAL_VARIANTS -> synchronized(variants) { this.variants.getAll() }
         }
-    }
 
     private fun getUserMergedWithProvider(): ExperimentUser {
         val user = this.user ?: ExperimentUser()
-        return user.copyToBuilder()
+        return user
+            .copyToBuilder()
             .library("experiment-android-client/${BuildConfig.VERSION_NAME}")
-            .build().merge(config.userProvider?.getUser())
+            .build()
+            .merge(config.userProvider?.getUser())
     }
 
     @Throws(IllegalStateException::class)
@@ -559,9 +556,11 @@ internal class DefaultExperimentClient internal constructor(
                 safeUserProvider?.getUser()
             }
         val user = this.user ?: ExperimentUser()
-        return user.copyToBuilder()
+        return user
+            .copyToBuilder()
             .library("experiment-android-client/${BuildConfig.VERSION_NAME}")
-            .build().merge(providedUser)
+            .build()
+            .merge(providedUser)
     }
 
     private fun evaluate(flagKeys: Set<String> = emptySet()): Map<String, Variant> {
@@ -796,7 +795,9 @@ data class VariantAndSource(
     val hasDefaultVariant: Boolean = false,
 )
 
-enum class VariantSource(val type: String) {
+enum class VariantSource(
+    val type: String,
+) {
     LOCAL_STORAGE("storage"),
     INITIAL_VARIANTS("initial"),
     SECONDARY_LOCAL_STORAGE("secondary-storage"),
@@ -806,11 +807,7 @@ enum class VariantSource(val type: String) {
     LOCAL_EVALUATION("local-evaluation"),
     ;
 
-    override fun toString(): String {
-        return type
-    }
+    override fun toString(): String = type
 
-    fun isFallback(): Boolean {
-        return this == FALLBACK_INLINE || this == FALLBACK_CONFIG || this == SECONDARY_INITIAL_VARIANTS
-    }
+    fun isFallback(): Boolean = this == FALLBACK_INLINE || this == FALLBACK_CONFIG || this == SECONDARY_INITIAL_VARIANTS
 }
