@@ -3,7 +3,7 @@ package com.amplitude.experiment.storage
 import com.amplitude.experiment.Variant
 import com.amplitude.experiment.evaluation.EvaluationFlag
 import com.amplitude.experiment.evaluation.json
-import com.amplitude.experiment.util.Logger
+import com.amplitude.experiment.util.AmpLogger
 import com.amplitude.experiment.util.toJson
 import com.amplitude.experiment.util.toVariant
 import kotlinx.serialization.decodeFromString
@@ -117,7 +117,7 @@ internal class SingleValueStoreCache<V>(
                 val stringValue = encoder(value)
                 storage.putSingle(namespace, stringValue)
             } catch (e: Exception) {
-                Logger.d("Error encoding boolean value: $e")
+                AmpLogger.debug("Error encoding boolean value: $e")
             }
         }
     }
