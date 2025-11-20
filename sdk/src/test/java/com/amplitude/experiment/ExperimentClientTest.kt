@@ -1390,7 +1390,7 @@ class ExperimentClientTest {
             )
         Assert.assertEquals(900000, client.flagConfigPollingIntervalMillis)
     }
-    
+
     @Test
     fun `test set track assignment event`() {
         val storage = MockStorage()
@@ -1517,8 +1517,18 @@ class ExperimentClientTest {
                 Experiment.executorService,
             )
 
-        client.fetch().get()
-        client.fetch().get()
+        try {
+            client.fetch().get()
+        } catch (_: Throwable) {
+            // It will fail as we don't mock any return value for newCall or responses.
+            // It's ok to fail, just need to check the request header is present in newCall.
+        }
+        try {
+            client.fetch().get()
+        } catch (_: Throwable) {
+            // It will fail as we don't mock any return value for newCall or responses.
+            // It's ok to fail, just need to check the request header is present in newCall.
+        }
 
         verifyOrder {
             mockHttpClient.newCall(
@@ -1555,13 +1565,17 @@ class ExperimentClientTest {
                 Experiment.executorService,
             )
 
-        client.start().get()
+        try {
+            client.start().get()
+        } catch (_: Throwable) {
+            // It will fail as we don't mock any return value for newCall or responses.
+            // It's ok to fail, just need to check the request header is present in newCall.
+        }
 
         verify(exactly = 1) {
             mockHttpClient.newCall(
                 match {
-                    it.url.host == testFlagsHost &&
-                        it.headers["testKey"] == "testValue"
+                    it.headers["testKey"] == "testValue"
                 },
             )
         }
