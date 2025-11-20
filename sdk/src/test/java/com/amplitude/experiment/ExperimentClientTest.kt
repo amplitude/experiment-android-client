@@ -1575,7 +1575,8 @@ class ExperimentClientTest {
         verify(exactly = 1) {
             mockHttpClient.newCall(
                 match {
-                    it.headers["testKey"] == "testValue"
+                    it.url.host == testFlagsHost &&
+                        it.headers["testKey"] == "testValue"
                 },
             )
         }
