@@ -1,3 +1,17 @@
+# [1.14.0](https://github.com/amplitude/experiment-android-client/compare/1.13.1...1.14.0) (2025-11-21)
+
+
+### Bug Fixes
+
+* tests assertion ignore evaluationId ([#63](https://github.com/amplitude/experiment-android-client/issues/63)) ([755b419](https://github.com/amplitude/experiment-android-client/commit/755b41925c7859bb9ca02781f5e9c4afd207f8eb))
+
+
+### Features
+
+* add user control for assignment event tracking ([#64](https://github.com/amplitude/experiment-android-client/issues/64)) ([3296203](https://github.com/amplitude/experiment-android-client/commit/3296203886e66e6b97fcdb9824b610e95097a428))
+* allow for better user defined logging behavior with logLevel and loggerProvider config fields ([#66](https://github.com/amplitude/experiment-android-client/issues/66)) ([38e4751](https://github.com/amplitude/experiment-android-client/commit/38e475172ee992c845f0b4fbd0076a3f9d3a6450))
+* support for custom headers - no user parameter ([#67](https://github.com/amplitude/experiment-android-client/issues/67)) ([0c69050](https://github.com/amplitude/experiment-android-client/commit/0c69050cc07b2221d13652d315751bf9f522247f))
+
 ## [1.13.1](https://github.com/amplitude/experiment-android-client/compare/1.13.0...1.13.1) (2025-04-17)
 
 
