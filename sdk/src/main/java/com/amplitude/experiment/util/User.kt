@@ -36,7 +36,7 @@ internal fun ExperimentUser.toJson(): String {
             groupProperties?.toJSONObject(),
         )
     } catch (e: JSONException) {
-        Logger.w("Error converting SkylabUser to JSONObject", e)
+        AmpLogger.warn("Error converting SkylabUser to JSONObject\n${e.stackTraceToString()}")
     }
     return json.toString()
 }

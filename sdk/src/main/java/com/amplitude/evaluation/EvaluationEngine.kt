@@ -1,5 +1,6 @@
 package com.amplitude.experiment.evaluation
 
+import com.amplitude.experiment.util.AmpLogger
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -12,7 +13,7 @@ internal interface EvaluationEngine {
     ): Map<String, EvaluationVariant>
 }
 
-internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) : EvaluationEngine {
+internal class EvaluationEngineImpl(private val log: AmpLogger?) : EvaluationEngine {
     data class EvaluationTarget(
         val context: EvaluationContext,
         val result: MutableMap<String, EvaluationVariant>,
@@ -30,7 +31,7 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
         context: EvaluationContext,
         flags: List<EvaluationFlag>,
     ): Map<String, EvaluationVariant> {
-        log?.debug { "Evaluating flags ${flags.map { it.key }} with context $context." }
+        log?.debug("Evaluating flags ${flags.map { it.key }} with context $context.")
         val results: MutableMap<String, EvaluationVariant> = mutableMapOf()
         val target = EvaluationTarget(context, results)
         for (flag in flags) {
@@ -39,10 +40,10 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
             if (variant != null) {
                 results[flag.key] = variant
             } else {
-                log?.debug { "Flag ${flag.key} evaluation returned a null result." }
+                log?.debug("Flag ${flag.key} evaluation returned a null result.")
             }
         }
-        log?.debug { "Evaluation completed. $results" }
+        log?.debug("Evaluation completed. $results")
         return results
     }
 
@@ -50,7 +51,7 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
         target: EvaluationTarget,
         flag: EvaluationFlag,
     ): EvaluationVariant? {
-        log?.verbose { "Evaluating flag $flag with target $target." }
+        log?.verbose("Evaluating flag $flag with target $target.")
         var result: EvaluationVariant? = null
         for (segment in flag.segments) {
             result = evaluateSegment(target, flag, segment)
@@ -58,7 +59,7 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
                 // Merge all metadata into the result
                 val metadata = mergeMetadata(flag.metadata, segment.metadata, result.metadata)
                 result = EvaluationVariant(result.key, result.value, result.payload, metadata)
-                log?.verbose { "Flag evaluation returned result $result on segment $segment." }
+                log?.verbose("Flag evaluation returned result $result on segment $segment.")
                 break
             }
         }
@@ -70,9 +71,9 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
         flag: EvaluationFlag,
         segment: EvaluationSegment,
     ): EvaluationVariant? {
-        log?.verbose { "Evaluating segment $segment with target $target." }
+        log?.verbose("Evaluating segment $segment with target $target.")
         if (segment.conditions == null) {
-            log?.verbose { "Segment conditions are null, bucketing target." }
+            log?.verbose("Segment conditions are null, bucketing target.")
             // Null conditions always match
             val variantKey = bucket(target, segment)
             return flag.variants[variantKey]
@@ -84,15 +85,15 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
             for (condition in conditions) {
                 match = matchCondition(target, condition)
                 if (!match) {
-                    log?.verbose { "Segment condition $condition did not match target." }
+                    log?.verbose("Segment condition $condition did not match target.")
                     break
                 } else {
-                    log?.verbose { "Segment condition $condition matched target." }
+                    log?.verbose("Segment condition $condition matched target.")
                 }
             }
             // On match bucket the user.
             if (match) {
-                log?.verbose { "Segment conditions matched, bucketing target." }
+                log?.verbose("Segment conditions matched, bucketing target.")
                 val variantKey = bucket(target, segment)
                 return flag.variants[variantKey]
             }
@@ -131,18 +132,18 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
         target: EvaluationTarget,
         segment: EvaluationSegment,
     ): String? {
-        log?.verbose { "Bucketing segment $segment with target $target" }
+        log?.verbose("Bucketing segment $segment with target $target")
         if (segment.bucket == null) {
             // A null bucket means the segment is fully rolled out. Select the default variant.
-            log?.verbose { "Segment bucket is null, returning default variant ${segment.variant}." }
+            log?.verbose("Segment bucket is null, returning default variant ${segment.variant}.")
             return segment.variant
         }
         // Select the bucketing value.
         val bucketingValue = coerceString(target.select(segment.bucket.selector))
-        log?.verbose { "Selected bucketing value $bucketingValue from target." }
+        log?.verbose("Selected bucketing value $bucketingValue from target.")
         if (bucketingValue == null || bucketingValue.isEmpty()) {
             // A null or empty bucketing value cannot be bucketed. Select the default variant.
-            log?.verbose { "Selected bucketing value is null or empty." }
+            log?.verbose("Selected bucketing value is null or empty.")
             return segment.variant
         }
         // Salt and hash the value, and compute the allocation and distribution values.
@@ -159,7 +160,7 @@ internal class EvaluationEngineImpl(private val log: Logger? = DefaultLogger()) 
                     val distributionStart = distribution.range[0]
                     val distributionEnd = distribution.range[1]
                     if (distributionValue in distributionStart until distributionEnd) {
-                        log?.verbose { "Bucketing hit allocation and distribution, returning variant ${distribution.variant}." }
+                        log?.verbose("Bucketing hit allocation and distribution, returning variant ${distribution.variant}.")
                         return distribution.variant
                     }
                 }

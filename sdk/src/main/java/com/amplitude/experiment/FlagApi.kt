@@ -2,8 +2,8 @@ package com.amplitude.experiment
 
 import com.amplitude.experiment.evaluation.EvaluationFlag
 import com.amplitude.experiment.evaluation.json
+import com.amplitude.experiment.util.AmpLogger
 import com.amplitude.experiment.util.AsyncFuture
-import com.amplitude.experiment.util.Logger
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import okhttp3.Call
@@ -79,7 +79,7 @@ internal class SdkFlagApi(
                     response: Response,
                 ) {
                     try {
-                        Logger.d("Received fetch flags response: $response")
+                        AmpLogger.debug("Received fetch flags response: $response")
                         if (response.isSuccessful) {
                             val body = response.body?.string() ?: ""
                             try {
@@ -89,11 +89,11 @@ internal class SdkFlagApi(
                                         .associateBy { it.key }
                                 future.complete(flags)
                             } catch (e: SerializationException) {
-                                Logger.e("Error decoding JSON: ${e.message}")
+                                AmpLogger.error("Error decoding JSON: ${e.message}")
                                 future.completeExceptionally(e)
                             }
                         } else {
-                            Logger.e("Non-successful response: ${response.code}")
+                            AmpLogger.error("Non-successful response: ${response.code}")
                             future.completeExceptionally(IOException("Non-successful response: ${response.code}"))
                         }
                     } catch (e: IOException) {

@@ -3,10 +3,10 @@ package com.amplitude.experiment
 import com.amplitude.experiment.analytics.ExperimentAnalyticsEvent
 import com.amplitude.experiment.analytics.ExperimentAnalyticsProvider
 import com.amplitude.experiment.storage.getTrackAssignmentEventStorage
+import com.amplitude.experiment.util.AmpLogger
 import com.amplitude.experiment.util.FetchException
-import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.MockStorage
-import com.amplitude.experiment.util.SystemLogger
+import com.amplitude.experiment.util.SystemLoggerProvider
 import com.amplitude.experiment.util.TestExposureTrackingProvider
 import io.mockk.Runs
 import io.mockk.every
@@ -50,7 +50,7 @@ fun assertVariantEquals(
 
 class ExperimentClientTest {
     init {
-        Logger.implementation = SystemLogger(true)
+        AmpLogger.loggerProvider = SystemLoggerProvider(true)
     }
 
     private var mockStorage = MockStorage()

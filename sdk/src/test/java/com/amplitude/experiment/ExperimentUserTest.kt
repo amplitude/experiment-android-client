@@ -1,8 +1,8 @@
 package com.amplitude.experiment
 
 import com.amplitude.experiment.ExperimentUser.Companion.builder
-import com.amplitude.experiment.util.Logger
-import com.amplitude.experiment.util.SystemLogger
+import com.amplitude.experiment.util.AmpLogger
+import com.amplitude.experiment.util.SystemLoggerProvider
 import com.amplitude.experiment.util.merge
 import com.amplitude.experiment.util.toEvaluationContext
 import com.amplitude.experiment.util.toJson
@@ -13,7 +13,7 @@ import org.junit.Test
 
 class ExperimentUserTest {
     init {
-        Logger.implementation = SystemLogger(true)
+        AmpLogger.loggerProvider = SystemLoggerProvider(true)
     }
 
     @Test

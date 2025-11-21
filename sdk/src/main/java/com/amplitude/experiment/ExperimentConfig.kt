@@ -1,6 +1,9 @@
 package com.amplitude.experiment
 
 import com.amplitude.experiment.analytics.ExperimentAnalyticsProvider
+import com.amplitude.experiment.util.AndroidLoggerProvider
+import com.amplitude.experiment.util.LogLevel
+import com.amplitude.experiment.util.LoggerProvider
 
 enum class Source {
     LOCAL_STORAGE,
@@ -21,6 +24,10 @@ enum class ServerZone {
 class ExperimentConfig internal constructor(
     @JvmField
     val debug: Boolean = Defaults.DEBUG,
+    @JvmField
+    val logLevel: LogLevel = Defaults.LOG_LEVEL,
+    @JvmField
+    val loggerProvider: LoggerProvider = Defaults.LOGGER_PROVIDER,
     @JvmField
     val instanceName: String = Defaults.INSTANCE_NAME,
     @JvmField
@@ -74,6 +81,16 @@ class ExperimentConfig internal constructor(
          * false
          */
         const val DEBUG = false
+
+        /**
+         * LogLevel.ERROR
+         */
+        val LOG_LEVEL = LogLevel.ERROR
+
+        /**
+         * false
+         */
+        val LOGGER_PROVIDER: LoggerProvider = AndroidLoggerProvider()
 
         /**
          * $default_instance
@@ -179,6 +196,8 @@ class ExperimentConfig internal constructor(
 
     class Builder {
         private var debug = Defaults.DEBUG
+        private var logLevel = Defaults.LOG_LEVEL
+        private var loggerProvider = Defaults.LOGGER_PROVIDER
         private var instanceName = Defaults.INSTANCE_NAME
         private var fallbackVariant = Defaults.FALLBACK_VARIANT
         private var initialFlags = Defaults.INITIAL_FLAGS
@@ -202,6 +221,24 @@ class ExperimentConfig internal constructor(
         fun debug(debug: Boolean) =
             apply {
                 this.debug = debug
+                if (debug) {
+                    this.logLevel = LogLevel.DEBUG
+                } else {
+                    this.logLevel = LogLevel.ERROR
+                }
+            }
+
+        fun logLevel(logLevel: LogLevel) =
+            apply {
+                this.logLevel = logLevel
+                if (logLevel != LogLevel.DEBUG) {
+                    this.debug = false
+                }
+            }
+
+        fun loggerProvider(loggerProvider: LoggerProvider) =
+            apply {
+                this.loggerProvider = loggerProvider
             }
 
         fun instanceName(instanceName: String) =
@@ -303,6 +340,8 @@ class ExperimentConfig internal constructor(
         fun build(): ExperimentConfig =
             ExperimentConfig(
                 debug = debug,
+                logLevel = logLevel,
+                loggerProvider = loggerProvider,
                 instanceName = instanceName,
                 fallbackVariant = fallbackVariant,
                 initialFlags = initialFlags,
@@ -328,6 +367,8 @@ class ExperimentConfig internal constructor(
     internal fun copyToBuilder(): Builder =
         builder()
             .debug(debug)
+            .logLevel(logLevel)
+            .loggerProvider(loggerProvider)
             .instanceName(instanceName)
             .fallbackVariant(fallbackVariant)
             .initialFlags(initialFlags)

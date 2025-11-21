@@ -8,11 +8,11 @@ import com.amplitude.experiment.storage.Storage
 import com.amplitude.experiment.storage.getFlagStorage
 import com.amplitude.experiment.storage.getTrackAssignmentEventStorage
 import com.amplitude.experiment.storage.getVariantStorage
+import com.amplitude.experiment.util.AmpLogger
 import com.amplitude.experiment.util.AsyncFuture
 import com.amplitude.experiment.util.Backoff
 import com.amplitude.experiment.util.BackoffConfig
 import com.amplitude.experiment.util.FetchException
-import com.amplitude.experiment.util.Logger
 import com.amplitude.experiment.util.Poller
 import com.amplitude.experiment.util.SessionAnalyticsProvider
 import com.amplitude.experiment.util.UserSessionExposureTracker
@@ -57,7 +57,7 @@ internal class DefaultExperimentClient internal constructor(
     private val executorService: ScheduledExecutorService,
 ) : ExperimentClient {
     private var user: ExperimentUser? = null
-    private val engine = EvaluationEngineImpl()
+    private val engine = EvaluationEngineImpl(AmpLogger)
 
     private val variants =
         getVariantStorage(
@@ -368,9 +368,9 @@ internal class DefaultExperimentClient internal constructor(
         options: FetchOptions?,
     ): Future<Map<String, Variant>> {
         if (user.userId == null && user.deviceId == null) {
-            Logger.w("user id and device id are null; amplitude may not resolve identity")
+            AmpLogger.warn("user id and device id are null; amplitude may not resolve identity")
         }
-        Logger.d("Fetch variants for user: $user")
+        AmpLogger.debug("Fetch variants for user: $user")
         // Build request to fetch variants for the user
         val userBase64 =
             user
@@ -427,7 +427,7 @@ internal class DefaultExperimentClient internal constructor(
                     response: Response,
                 ) {
                     try {
-                        Logger.d("Received fetch variants response: $response")
+                        AmpLogger.debug("Received fetch variants response: $response")
                         if (!response.isSuccessful) {
                             throw FetchException(response.code, "fetch error response: $response")
                         }
@@ -517,7 +517,7 @@ internal class DefaultExperimentClient internal constructor(
                 this.variants.remove(key)
             }
             this.variants.store()
-            Logger.d("Stored variants: $variants")
+            AmpLogger.debug("Stored variants: $variants")
         }
     }
 
@@ -569,7 +569,7 @@ internal class DefaultExperimentClient internal constructor(
             try {
                 topologicalSort(synchronized(flags) { this.flags.getAll() }, flagKeys)
             } catch (e: Exception) {
-                Logger.w("Error during topological sort of flags", e)
+                AmpLogger.warn("Error during topological sort of flags\n${e.stackTraceToString()}")
                 return emptyMap()
             }
         val context = user.toEvaluationContext()
