@@ -1,5 +1,8 @@
+import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
+
 plugins {
     id 'com.android.library'
+    id 'com.vanniktech.maven.publish' version '0.34.0'
     id 'kotlin-android'
 }
 
@@ -10,8 +13,6 @@ ext {
     PUBLISH_VERSION = '1.0.0'
     PUBLISH_ARTIFACT_ID = 'analytics-connector'
 }
-
-apply from: "${rootDir}/gradle/publish-module.gradle"
 
 android {
     compileSdkVersion 30
@@ -37,6 +38,17 @@ android {
         jvmTarget = '1.8'
     }
     namespace 'com.amplitude.analytics.connector'
+}
+
+mavenPublishing {
+    coordinates(PUBLISH_GROUP_ID, PUBLISH_ARTIFACT_ID, PUBLISH_VERSION)
+
+    pom {
+        name.set(PUBLISH_NAME)
+        description.set(PUBLISH_DESCRIPTION)
+    }
+
+    configure(new AndroidSingleVariantLibrary("release", false, false))
 }
 
 dependencies {

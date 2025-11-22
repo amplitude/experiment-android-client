@@ -1,5 +1,8 @@
+import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
+
 plugins {
     id 'com.android.library'
+    id 'com.vanniktech.maven.publish' version '0.34.0'
     id 'kotlin-android'
     id 'org.jetbrains.dokka'
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.6.0'
@@ -12,8 +15,6 @@ ext {
     PUBLISH_VERSION = '1.14.0'
     PUBLISH_ARTIFACT_ID = 'experiment-android-client'
 }
-
-apply from: "${rootDir}/gradle/publish-module.gradle"
 
 android {
     compileSdkVersion 30
@@ -43,6 +44,20 @@ android {
     namespace 'com.amplitude.experiment'
 }
 
+mavenPublishing {
+    coordinates(PUBLISH_GROUP_ID, PUBLISH_ARTIFACT_ID, PUBLISH_VERSION)
+
+    pom {
+        name.set(PUBLISH_NAME)
+        description.set(PUBLISH_DESCRIPTION)
+    }
+
+    configure(new AndroidSingleVariantLibrary("release", false, true))
+
+    publishToMavenCentral()
+    signAllPublications()
+}
+
 dependencies {
     implementation 'com.amplitude:analytics-connector:1.0.0'
     implementation 'com.squareup.okhttp3:okhttp:4.9.1'
@@ -55,23 +70,3 @@ dependencies {
     testImplementation project(path: ':sdk')
     testImplementation "io.mockk:mockk:1.12.0"
 }
-
-task docs(dependsOn: dokkaHtml) {
-    dokkaHtml {
-        outputDirectory.set(new File(rootDir, "docs"))
-        moduleName.set("experiment-android-client")
-        dokkaSourceSets {
-            named("main") {
-                includeNonPublic.set(false)
-                skipEmptyPackages.set(true)
-                skipDeprecated.set(true)
-                reportUndocumented.set(true)
-            }
-        }
-    }
-}
-afterEvaluate {
-    generateMetadataFileForReleasePublication.dependsOn androidSourcesJar
-}
-
-
