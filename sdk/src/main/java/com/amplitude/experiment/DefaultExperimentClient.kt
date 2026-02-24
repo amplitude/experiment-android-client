@@ -535,9 +535,10 @@ internal class DefaultExperimentClient internal constructor(
 
     private fun getUserMergedWithProvider(): ExperimentUser {
         val user = this.user ?: ExperimentUser()
+        val library = user.library ?: "experiment-android-client/${BuildConfig.VERSION_NAME}"
         return user
             .copyToBuilder()
-            .library("experiment-android-client/${BuildConfig.VERSION_NAME}")
+            .library(library)
             .build()
             .merge(config.userProvider?.getUser())
     }
@@ -556,9 +557,10 @@ internal class DefaultExperimentClient internal constructor(
                 safeUserProvider?.getUser()
             }
         val user = this.user ?: ExperimentUser()
+        val library = user.library ?: "experiment-android-client/${BuildConfig.VERSION_NAME}"
         return user
             .copyToBuilder()
-            .library("experiment-android-client/${BuildConfig.VERSION_NAME}")
+            .library(library)
             .build()
             .merge(providedUser)
     }
