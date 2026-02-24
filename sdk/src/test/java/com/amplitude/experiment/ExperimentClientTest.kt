@@ -1581,4 +1581,59 @@ class ExperimentClientTest {
             )
         }
     }
+
+    private fun fetchLibraryFromRequest(mockHttpClient: OkHttpClient): String? {
+        val slot = mutableListOf<okhttp3.Request>()
+        verify { mockHttpClient.newCall(capture(slot)) }
+        val request = slot.firstOrNull { it.url.encodedPath.contains("vardata") } ?: return null
+        val userHeader = request.headers["X-Amp-Exp-User"] ?: return null
+        val decoded = String(java.util.Base64.getUrlDecoder().decode(userHeader), Charsets.UTF_8)
+        return JSONObject(decoded).optString("library", null)
+    }
+
+    private fun createClientWithMockHttp(
+        mockHttpClient: OkHttpClient = mockk<OkHttpClient>(),
+        userProvider: ExperimentUserProvider? = null,
+    ): Pair<DefaultExperimentClient, OkHttpClient> {
+        val client = DefaultExperimentClient(
+            API_KEY,
+            ExperimentConfig(
+                debug = true,
+                userProvider = userProvider,
+            ),
+            mockHttpClient,
+            mockStorage,
+            Experiment.executorService,
+        )
+        return client to mockHttpClient
+    }
+
+    @Test
+    fun `test default library is set when user library is null`() {
+        val (client, mockHttp) = createClientWithMockHttp()
+        client.setUser(ExperimentUser(userId = "test_user"))
+        try { client.fetch().get() } catch (_: Throwable) {}
+        val library = fetchLibraryFromRequest(mockHttp)
+        Assert.assertTrue(library?.startsWith("experiment-android-client/") == true)
+    }
+
+    @Test
+    fun `test custom library is preserved when set on user`() {
+        val (client, mockHttp) = createClientWithMockHttp()
+        client.setUser(ExperimentUser(userId = "test_user", library = "custom-wrapper/1.0.0"))
+        try { client.fetch().get() } catch (_: Throwable) {}
+        val library = fetchLibraryFromRequest(mockHttp)
+        Assert.assertEquals("custom-wrapper/1.0.0", library)
+    }
+
+    @Test
+    fun `test custom library is not overridden by user provider`() {
+        val mockProvider = mockk<ExperimentUserProvider>()
+        every { mockProvider.getUser() } returns ExperimentUser(library = "provider-lib/2.0")
+        val (client, mockHttp) = createClientWithMockHttp(userProvider = mockProvider)
+        client.setUser(ExperimentUser(userId = "test_user", library = "custom-wrapper/1.0.0"))
+        try { client.fetch().get() } catch (_: Throwable) {}
+        val library = fetchLibraryFromRequest(mockHttp)
+        Assert.assertEquals("custom-wrapper/1.0.0", library)
+    }
 }
