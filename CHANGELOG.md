@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/amplitude/experiment-android-client/compare/1.14.0...1.15.0) (2026-02-25)
+
+
+### Features
+
+* allow library ExperimentUser field to be set ([#70](https://github.com/amplitude/experiment-android-client/issues/70)) ([3889da8](https://github.com/amplitude/experiment-android-client/commit/3889da8389bbdd662f1c88782ada70d4d9ae0ac9))
+
 # [1.14.0](https://github.com/amplitude/experiment-android-client/compare/1.13.1...1.14.0) (2025-11-21)
 
 
