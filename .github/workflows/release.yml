@@ -38,7 +38,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Build
         run: ./gradlew build
@@ -61,14 +61,8 @@ jobs:
           GIT_COMMITTER_NAME: amplitude-sdk-bot
           GIT_COMMITTER_EMAIL: amplitude-sdk-bot@users.noreply.github.com
         run: |
-          npx \
-          -p lodash \
-          -p semantic-release \
-          -p @semantic-release/changelog \
-          -p @semantic-release/git \
-          -p @google/semantic-release-replace-plugin \
-          -p @semantic-release/exec \
-          semantic-release --dry-run
+          npm ci
+          npm exec semantic-release -- --dry-run
 
       - name: Semantic Release
         if: ${{ github.event.inputs.dryRun == 'false'}}
@@ -85,11 +79,5 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYID }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD }}
         run: |
-          npx \
-          -p lodash \
-          -p semantic-release \
-          -p @semantic-release/changelog \
-          -p @semantic-release/git \
-          -p @google/semantic-release-replace-plugin \
-          -p @semantic-release/exec \
-          semantic-release
+          npm ci
+          npm exec semantic-release
