@@ -1,9 +1,9 @@
 package com.amplitude.experiment
 
 import com.amplitude.experiment.evaluation.EvaluationFlag
-import com.amplitude.experiment.evaluation.json
 import com.amplitude.experiment.util.AmpLogger
 import com.amplitude.experiment.util.AsyncFuture
+import com.amplitude.experiment.util.json
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import okhttp3.Call

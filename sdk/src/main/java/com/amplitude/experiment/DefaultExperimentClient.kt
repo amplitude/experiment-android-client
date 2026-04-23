@@ -2,7 +2,6 @@ package com.amplitude.experiment
 
 import com.amplitude.experiment.evaluation.EvaluationEngineImpl
 import com.amplitude.experiment.evaluation.EvaluationFlag
-import com.amplitude.experiment.evaluation.json
 import com.amplitude.experiment.evaluation.topologicalSort
 import com.amplitude.experiment.storage.Storage
 import com.amplitude.experiment.storage.getFlagStorage
@@ -19,6 +18,7 @@ import com.amplitude.experiment.util.UserSessionExposureTracker
 import com.amplitude.experiment.util.backoff
 import com.amplitude.experiment.util.convertToVariant
 import com.amplitude.experiment.util.isLocalEvaluationMode
+import com.amplitude.experiment.util.json
 import com.amplitude.experiment.util.merge
 import com.amplitude.experiment.util.toEvaluationContext
 import com.amplitude.experiment.util.toJson
@@ -57,7 +57,7 @@ internal class DefaultExperimentClient internal constructor(
     private val executorService: ScheduledExecutorService,
 ) : ExperimentClient {
     private var user: ExperimentUser? = null
-    private val engine = EvaluationEngineImpl(AmpLogger)
+    private val engine = EvaluationEngineImpl()
 
     private val variants =
         getVariantStorage(
