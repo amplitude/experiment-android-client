@@ -70,12 +70,10 @@ class EvaluationIntegrationTest {
     // Basic Tests
 
     @Test
-    fun `test off`() =
-        assertVariant("test-off", userContext(userId = "user_id", deviceId = "device_id"), "off")
+    fun `test off`() = assertVariant("test-off", userContext(userId = "user_id", deviceId = "device_id"), "off")
 
     @Test
-    fun `test on`() =
-        assertVariant("test-on", userContext(userId = "user_id", deviceId = "device_id"), "on")
+    fun `test on`() = assertVariant("test-on", userContext(userId = "user_id", deviceId = "device_id"), "on")
 
     // Opinionated Segment Tests
 
@@ -165,8 +163,7 @@ class EvaluationIntegrationTest {
     // Condition Property Targeting Tests
 
     @Test
-    fun `test amplitude property targeting`() =
-        assertVariant("test-amplitude-property-targeting", userContext(userId = "user_id"), "on")
+    fun `test amplitude property targeting`() = assertVariant("test-amplitude-property-targeting", userContext(userId = "user_id"), "on")
 
     @Test
     fun `test cohort targeting`() {
@@ -175,8 +172,7 @@ class EvaluationIntegrationTest {
     }
 
     @Test
-    fun `test group name targeting`() =
-        assertVariant("test-group-name-targeting", groupContext("org name", "amplitude"), "on")
+    fun `test group name targeting`() = assertVariant("test-group-name-targeting", groupContext("org name", "amplitude"), "on")
 
     @Test
     fun `test group property targeting`() =
@@ -189,24 +185,20 @@ class EvaluationIntegrationTest {
     // Bucketing Tests
 
     @Test
-    fun `test amplitude id bucketing`() =
-        assertVariant("test-amplitude-id-bucketing", userContext(amplitudeId = "1234567890"), "on")
+    fun `test amplitude id bucketing`() = assertVariant("test-amplitude-id-bucketing", userContext(amplitudeId = "1234567890"), "on")
 
     @Test
-    fun `test user id bucketing`() =
-        assertVariant("test-user-id-bucketing", userContext(userId = "user_id"), "on")
+    fun `test user id bucketing`() = assertVariant("test-user-id-bucketing", userContext(userId = "user_id"), "on")
 
     @Test
-    fun `test device id bucketing`() =
-        assertVariant("test-device-id-bucketing", userContext(deviceId = "device_id"), "on")
+    fun `test device id bucketing`() = assertVariant("test-device-id-bucketing", userContext(deviceId = "device_id"), "on")
 
     @Test
     fun `test custom user property bucketing`() =
         assertVariant("test-custom-user-property-bucketing", userContext(userProperties = mapOf("key" to "value")), "on")
 
     @Test
-    fun `test group name bucketing`() =
-        assertVariant("test-group-name-bucketing", groupContext("org name", "amplitude"), "on")
+    fun `test group name bucketing`() = assertVariant("test-group-name-bucketing", groupContext("org name", "amplitude"), "on")
 
     @Test
     fun `test group property bucketing`() =
@@ -303,36 +295,28 @@ class EvaluationIntegrationTest {
     // Operator Tests
 
     @Test
-    fun `test is`() =
-        assertVariant("test-is", userContext(userProperties = mapOf("key" to "value")), "on")
+    fun `test is`() = assertVariant("test-is", userContext(userProperties = mapOf("key" to "value")), "on")
 
     @Test
-    fun `test is not`() =
-        assertVariant("test-is-not", userContext(userProperties = mapOf("key" to "value")), "on")
+    fun `test is not`() = assertVariant("test-is-not", userContext(userProperties = mapOf("key" to "value")), "on")
 
     @Test
-    fun `test contains`() =
-        assertVariant("test-contains", userContext(userProperties = mapOf("key" to "value")), "on")
+    fun `test contains`() = assertVariant("test-contains", userContext(userProperties = mapOf("key" to "value")), "on")
 
     @Test
-    fun `test does not contain`() =
-        assertVariant("test-does-not-contain", userContext(userProperties = mapOf("key" to "value")), "on")
+    fun `test does not contain`() = assertVariant("test-does-not-contain", userContext(userProperties = mapOf("key" to "value")), "on")
 
     @Test
-    fun `test less`() =
-        assertVariant("test-less", userContext(userProperties = mapOf("key" to "-1")), "on")
+    fun `test less`() = assertVariant("test-less", userContext(userProperties = mapOf("key" to "-1")), "on")
 
     @Test
-    fun `test less or equal`() =
-        assertVariant("test-less-or-equal", userContext(userProperties = mapOf("key" to "0")), "on")
+    fun `test less or equal`() = assertVariant("test-less-or-equal", userContext(userProperties = mapOf("key" to "0")), "on")
 
     @Test
-    fun `test greater`() =
-        assertVariant("test-greater", userContext(userProperties = mapOf("key" to "1")), "on")
+    fun `test greater`() = assertVariant("test-greater", userContext(userProperties = mapOf("key" to "1")), "on")
 
     @Test
-    fun `test greater or equal`() =
-        assertVariant("test-greater-or-equal", userContext(userProperties = mapOf("key" to "0")), "on")
+    fun `test greater or equal`() = assertVariant("test-greater-or-equal", userContext(userProperties = mapOf("key" to "0")), "on")
 
     @Test
     fun `test version less`() =
@@ -348,24 +332,20 @@ class EvaluationIntegrationTest {
         assertVariant("test-version-less-or-equal", freeformUserContext(mapOf("version" to "1.10.0")), "on")
 
     @Test
-    fun `test version greater`() =
-        assertVariant("test-version-greater", freeformUserContext(mapOf("version" to "1.10.0")), "on")
+    fun `test version greater`() = assertVariant("test-version-greater", freeformUserContext(mapOf("version" to "1.10.0")), "on")
 
     @Test
     fun `test version greater or equal`() =
         assertVariant("test-version-greater-or-equal", freeformUserContext(mapOf("version" to "1.9.0")), "on")
 
     @Test
-    fun `test set is`() =
-        assertVariant("test-set-is", userContext(userProperties = mapOf("key" to listOf("1", "2", "3"))), "on")
+    fun `test set is`() = assertVariant("test-set-is", userContext(userProperties = mapOf("key" to listOf("1", "2", "3"))), "on")
 
     @Test
-    fun `test set is json array`() =
-        assertVariant("test-set-is", userContext(userProperties = mapOf("key" to """["1", "2", "3"]""")), "on")
+    fun `test set is json array`() = assertVariant("test-set-is", userContext(userProperties = mapOf("key" to """["1", "2", "3"]""")), "on")
 
     @Test
-    fun `test set is not`() =
-        assertVariant("test-set-is-not", userContext(userProperties = mapOf("key" to listOf("1", "2"))), "on")
+    fun `test set is not`() = assertVariant("test-set-is-not", userContext(userProperties = mapOf("key" to listOf("1", "2"))), "on")
 
     @Test
     fun `test set contains`() =
@@ -376,16 +356,14 @@ class EvaluationIntegrationTest {
         assertVariant("test-set-does-not-contain", userContext(userProperties = mapOf("key" to listOf("1", "2", "4"))), "on")
 
     @Test
-    fun `test set contains any`() =
-        assertVariant("test-set-contains-any", userContext(cohortIds = setOf("u0qtvwla", "12345678")), "on")
+    fun `test set contains any`() = assertVariant("test-set-contains-any", userContext(cohortIds = setOf("u0qtvwla", "12345678")), "on")
 
     @Test
     fun `test set does not contain any`() =
         assertVariant("test-set-does-not-contain-any", userContext(cohortIds = setOf("12345678", "87654321")), "on")
 
     @Test
-    fun `test glob match`() =
-        assertVariant("test-glob-match", userContext(userProperties = mapOf("key" to "/path/1/2/3/end")), "on")
+    fun `test glob match`() = assertVariant("test-glob-match", userContext(userProperties = mapOf("key" to "/path/1/2/3/end")), "on")
 
     @Test
     fun `test glob does not match`() =
