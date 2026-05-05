@@ -65,7 +65,7 @@ internal object AmpLogger : LoggerProvider {
         }
     }
 
-    private fun shouldLog(logLevel: LogLevel): Boolean {
+    internal fun shouldLog(logLevel: LogLevel): Boolean {
         return logLevel.priority <= this.logLevel.priority
     }
 }

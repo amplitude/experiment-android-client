@@ -1,10 +1,19 @@
 package com.amplitude.experiment.evaluation
 
 import com.amplitude.experiment.util.AmpLogger
+import com.amplitude.experiment.util.LogLevel
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonArray
+
+private inline fun AmpLogger.verboseLazy(msg: () -> String) {
+    if (shouldLog(LogLevel.VERBOSE)) verbose(msg())
+}
+
+private inline fun AmpLogger.debugLazy(msg: () -> String) {
+    if (shouldLog(LogLevel.DEBUG)) debug(msg())
+}
 
 internal interface EvaluationEngine {
     fun evaluate(
@@ -31,7 +40,7 @@ internal class EvaluationEngineImpl(private val log: AmpLogger?) : EvaluationEng
         context: EvaluationContext,
         flags: List<EvaluationFlag>,
     ): Map<String, EvaluationVariant> {
-        log?.debug("Evaluating flags ${flags.map { it.key }} with context $context.")
+        log?.debugLazy { "Evaluating flags ${flags.map { it.key }} with context $context." }
         val results: MutableMap<String, EvaluationVariant> = mutableMapOf()
         val target = EvaluationTarget(context, results)
         for (flag in flags) {
@@ -40,10 +49,10 @@ internal class EvaluationEngineImpl(private val log: AmpLogger?) : EvaluationEng
             if (variant != null) {
                 results[flag.key] = variant
             } else {
-                log?.debug("Flag ${flag.key} evaluation returned a null result.")
+                log?.debugLazy { "Flag ${flag.key} evaluation returned a null result." }
             }
         }
-        log?.debug("Evaluation completed. $results")
+        log?.debugLazy { "Evaluation completed. $results" }
         return results
     }
 
@@ -51,7 +60,7 @@ internal class EvaluationEngineImpl(private val log: AmpLogger?) : EvaluationEng
         target: EvaluationTarget,
         flag: EvaluationFlag,
     ): EvaluationVariant? {
-        log?.verbose("Evaluating flag $flag with target $target.")
+        log?.verboseLazy { "Evaluating flag $flag with target $target." }
         var result: EvaluationVariant? = null
         for (segment in flag.segments) {
             result = evaluateSegment(target, flag, segment)
@@ -59,7 +68,7 @@ internal class EvaluationEngineImpl(private val log: AmpLogger?) : EvaluationEng
                 // Merge all metadata into the result
                 val metadata = mergeMetadata(flag.metadata, segment.metadata, result.metadata)
                 result = EvaluationVariant(result.key, result.value, result.payload, metadata)
-                log?.verbose("Flag evaluation returned result $result on segment $segment.")
+                log?.verboseLazy { "Flag evaluation returned result $result on segment $segment." }
                 break
             }
         }
@@ -71,9 +80,9 @@ internal class EvaluationEngineImpl(private val log: AmpLogger?) : EvaluationEng
         flag: EvaluationFlag,
         segment: EvaluationSegment,
     ): EvaluationVariant? {
-        log?.verbose("Evaluating segment $segment with target $target.")
+        log?.verboseLazy { "Evaluating segment $segment with target $target." }
         if (segment.conditions == null) {
-            log?.verbose("Segment conditions are null, bucketing target.")
+            log?.verboseLazy { "Segment conditions are null, bucketing target." }
             // Null conditions always match
             val variantKey = bucket(target, segment)
             return flag.variants[variantKey]
@@ -85,15 +94,15 @@ internal class EvaluationEngineImpl(private val log: AmpLogger?) : EvaluationEng
             for (condition in conditions) {
                 match = matchCondition(target, condition)
                 if (!match) {
-                    log?.verbose("Segment condition $condition did not match target.")
+                    log?.verboseLazy { "Segment condition $condition did not match target." }
                     break
                 } else {
-                    log?.verbose("Segment condition $condition matched target.")
+                    log?.verboseLazy { "Segment condition $condition matched target." }
                 }
             }
             // On match bucket the user.
             if (match) {
-                log?.verbose("Segment conditions matched, bucketing target.")
+                log?.verboseLazy { "Segment conditions matched, bucketing target." }
                 val variantKey = bucket(target, segment)
                 return flag.variants[variantKey]
             }
@@ -132,18 +141,18 @@ internal class EvaluationEngineImpl(private val log: AmpLogger?) : EvaluationEng
         target: EvaluationTarget,
         segment: EvaluationSegment,
     ): String? {
-        log?.verbose("Bucketing segment $segment with target $target")
+        log?.verboseLazy { "Bucketing segment $segment with target $target" }
         if (segment.bucket == null) {
             // A null bucket means the segment is fully rolled out. Select the default variant.
-            log?.verbose("Segment bucket is null, returning default variant ${segment.variant}.")
+            log?.verboseLazy { "Segment bucket is null, returning default variant ${segment.variant}." }
             return segment.variant
         }
         // Select the bucketing value.
         val bucketingValue = coerceString(target.select(segment.bucket.selector))
-        log?.verbose("Selected bucketing value $bucketingValue from target.")
+        log?.verboseLazy { "Selected bucketing value $bucketingValue from target." }
         if (bucketingValue == null || bucketingValue.isEmpty()) {
             // A null or empty bucketing value cannot be bucketed. Select the default variant.
-            log?.verbose("Selected bucketing value is null or empty.")
+            log?.verboseLazy { "Selected bucketing value is null or empty." }
             return segment.variant
         }
         // Salt and hash the value, and compute the allocation and distribution values.
@@ -160,7 +169,7 @@ internal class EvaluationEngineImpl(private val log: AmpLogger?) : EvaluationEng
                     val distributionStart = distribution.range[0]
                     val distributionEnd = distribution.range[1]
                     if (distributionValue in distributionStart until distributionEnd) {
-                        log?.verbose("Bucketing hit allocation and distribution, returning variant ${distribution.variant}.")
+                        log?.verboseLazy { "Bucketing hit allocation and distribution, returning variant ${distribution.variant}." }
                         return distribution.variant
                     }
                 }
