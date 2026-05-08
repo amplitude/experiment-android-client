@@ -1,3 +1,10 @@
+# [1.16.0](https://github.com/amplitude/experiment-android-client/compare/1.15.0...1.16.0) (2026-05-08)
+
+
+### Features
+
+* replace in-tree evaluation package with evaluation-core 2.3.0 ([#75](https://github.com/amplitude/experiment-android-client/issues/75)) ([1f5c203](https://github.com/amplitude/experiment-android-client/commit/1f5c2030ff6d55e43bb90fe0691a6fd00d120a35))
+
 # [1.15.0](https://github.com/amplitude/experiment-android-client/compare/1.14.0...1.15.0) (2026-02-25)
 
 
