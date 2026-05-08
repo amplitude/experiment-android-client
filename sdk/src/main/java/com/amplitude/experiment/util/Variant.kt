@@ -105,17 +105,11 @@ internal fun EvaluationVariant.convertToVariant(): Variant {
             else -> null
         }
     val payload =
-        when {
-            this.payload != null -> {
-                if (this.payload is Map<*, *>) {
-                    this.payload.toJSONObject()
-                } else if (this.payload is Collection<*>) {
-                    this.payload.toJSONArray()
-                } else {
-                    this.payload
-                }
-            }
-            else -> null
+        when (val p = this.payload) {
+            null -> null
+            is Map<*, *> -> p.toJSONObject()
+            is Collection<*> -> p.toJSONArray()
+            else -> p
         }
     val metadata =
         when {
