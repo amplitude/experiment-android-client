@@ -1646,4 +1646,44 @@ class ExperimentClientTest {
         val library = fetchLibraryFromRequest(mockHttp)
         Assert.assertEquals("custom-wrapper/1.0.0", library)
     }
+
+    @Test
+    fun `exposure dedup resets on user identity change - same flag same variant re-tracks for new user`() {
+        val provider = TestExposureTrackingProvider()
+        val flagKey = "test-flag"
+        val flagVariant = Variant(key = "on", value = "on")
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = provider,
+                    fetchOnStart = false,
+                    source = Source.LOCAL_STORAGE,
+                    initialVariants = mapOf(flagKey to flagVariant),
+                ),
+                OkHttpClient(),
+                MockStorage(),
+                Experiment.executorService,
+            )
+
+        // User A sees flag -> variant "on"
+        client.setUser(ExperimentUser(userId = "user-a"))
+        client.variant(flagKey)
+        Assert.assertEquals(1, provider.trackCount)
+
+        // Repeat calls for User A are deduped
+        client.variant(flagKey)
+        client.variant(flagKey)
+        Assert.assertEquals(1, provider.trackCount)
+
+        // User B logs in on the same device/session with the same flag -> variant "on"
+        // Exposure must fire again because the identity changed
+        client.setUser(ExperimentUser(userId = "user-b"))
+        client.variant(flagKey)
+        Assert.assertEquals(2, provider.trackCount)
+
+        // Repeat calls for User B are deduped
+        client.variant(flagKey)
+        Assert.assertEquals(2, provider.trackCount)
+    }
 }
