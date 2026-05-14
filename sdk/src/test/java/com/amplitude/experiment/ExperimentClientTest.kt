@@ -1657,7 +1657,7 @@ class ExperimentClientTest {
                 ExperimentConfig(
                     exposureTrackingProvider = provider,
                     fetchOnStart = false,
-                    source = Source.LOCAL_STORAGE,
+                    source = Source.INITIAL_VARIANTS,
                     initialVariants = mapOf(flagKey to Variant(key = "on", value = "on")),
                 ),
                 OkHttpClient(),
@@ -1693,7 +1693,7 @@ class ExperimentClientTest {
                 ExperimentConfig(
                     exposureTrackingProvider = provider,
                     fetchOnStart = false,
-                    source = Source.LOCAL_STORAGE,
+                    source = Source.INITIAL_VARIANTS,
                     initialVariants = mapOf(flagKey to Variant(key = "on", value = "on")),
                 ),
                 OkHttpClient(),
@@ -1720,7 +1720,7 @@ class ExperimentClientTest {
                 ExperimentConfig(
                     exposureTrackingProvider = provider,
                     fetchOnStart = false,
-                    source = Source.LOCAL_STORAGE,
+                    source = Source.INITIAL_VARIANTS,
                     initialVariants = mapOf(flagKey to Variant(key = "on", value = "on")),
                 ),
                 OkHttpClient(),
