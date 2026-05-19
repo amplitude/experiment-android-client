@@ -66,6 +66,8 @@ class ExperimentConfig internal constructor(
     @JvmField
     val exposureTrackingProvider: ExposureTrackingProvider? = Defaults.EXPOSURE_TRACKING_PROVIDER,
     @JvmField
+    val exposureDedupCacheTtlMillis: Long = Defaults.EXPOSURE_DEDUP_CACHE_TTL_MILLIS,
+    @JvmField
     val customRequestHeaders: (() -> Map<String, String>)? = Defaults.CUSTOM_REQUEST_HEADERS,
 ) {
     /**
@@ -184,6 +186,11 @@ class ExperimentConfig internal constructor(
         val EXPOSURE_TRACKING_PROVIDER: ExposureTrackingProvider? = null
 
         /**
+         * 1800000 (30 minutes). Set to Long.MAX_VALUE to disable TTL.
+         */
+        const val EXPOSURE_DEDUP_CACHE_TTL_MILLIS = 1_800_000L
+
+        /**
          * null
          */
         val CUSTOM_REQUEST_HEADERS: (() -> Map<String, String>)? = null
@@ -216,6 +223,7 @@ class ExperimentConfig internal constructor(
         private var userProvider = Defaults.USER_PROVIDER
         private var analyticsProvider = Defaults.ANALYTICS_PROVIDER
         private var exposureTrackingProvider = Defaults.EXPOSURE_TRACKING_PROVIDER
+        private var exposureDedupCacheTtlMillis = Defaults.EXPOSURE_DEDUP_CACHE_TTL_MILLIS
         private var customRequestHeaders = Defaults.CUSTOM_REQUEST_HEADERS
 
         fun debug(debug: Boolean) =
@@ -332,6 +340,11 @@ class ExperimentConfig internal constructor(
                 this.exposureTrackingProvider = exposureTrackingProvider
             }
 
+        fun exposureDedupCacheTtlMillis(exposureDedupCacheTtlMillis: Long) =
+            apply {
+                this.exposureDedupCacheTtlMillis = exposureDedupCacheTtlMillis
+            }
+
         fun customRequestHeaders(customRequestHeaders: (() -> Map<String, String>)?) =
             apply {
                 this.customRequestHeaders = customRequestHeaders
@@ -360,6 +373,7 @@ class ExperimentConfig internal constructor(
                 userProvider = userProvider,
                 analyticsProvider = analyticsProvider,
                 exposureTrackingProvider = exposureTrackingProvider,
+                exposureDedupCacheTtlMillis = exposureDedupCacheTtlMillis,
                 customRequestHeaders = customRequestHeaders,
             )
     }
@@ -387,5 +401,6 @@ class ExperimentConfig internal constructor(
             .userProvider(userProvider)
             .analyticsProvider(analyticsProvider)
             .exposureTrackingProvider(exposureTrackingProvider)
+            .exposureDedupCacheTtlMillis(exposureDedupCacheTtlMillis)
             .customRequestHeaders(customRequestHeaders)
 }
