@@ -303,7 +303,7 @@ internal class DefaultExperimentClient internal constructor(
 
         val exposure = Exposure(key, variant, experimentKey, metadata)
 
-        userSessionExposureTracker?.track(exposure)
+        userSessionExposureTracker?.track(exposure, getUserMergedWithProvider())
     }
 
     private fun legacyExposureInternal(

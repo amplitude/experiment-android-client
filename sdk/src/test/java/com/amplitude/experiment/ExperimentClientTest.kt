@@ -1646,4 +1646,146 @@ class ExperimentClientTest {
         val library = fetchLibraryFromRequest(mockHttp)
         Assert.assertEquals("custom-wrapper/1.0.0", library)
     }
+
+    @Test
+    fun `exposure dedup resets on user id change`() {
+        val provider = TestExposureTrackingProvider()
+        val flagKey = "test-flag"
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = provider,
+                    fetchOnStart = false,
+                    source = Source.INITIAL_VARIANTS,
+                    initialVariants = mapOf(flagKey to Variant(key = "on", value = "on")),
+                ),
+                OkHttpClient(),
+                MockStorage(),
+                Experiment.executorService,
+            )
+
+        client.setUser(ExperimentUser(userId = "user-a"))
+        client.variant(flagKey)
+        Assert.assertEquals(1, provider.trackCount)
+
+        // repeated calls for same user are deduped
+        client.variant(flagKey)
+        Assert.assertEquals(1, provider.trackCount)
+
+        // new user — cache must reset and exposure must fire again
+        client.setUser(ExperimentUser(userId = "user-b"))
+        client.variant(flagKey)
+        Assert.assertEquals(2, provider.trackCount)
+
+        // repeated calls for new user are deduped
+        client.variant(flagKey)
+        Assert.assertEquals(2, provider.trackCount)
+    }
+
+    @Test
+    fun `exposure dedup resets on device id change`() {
+        val provider = TestExposureTrackingProvider()
+        val flagKey = "test-flag"
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = provider,
+                    fetchOnStart = false,
+                    source = Source.INITIAL_VARIANTS,
+                    initialVariants = mapOf(flagKey to Variant(key = "on", value = "on")),
+                ),
+                OkHttpClient(),
+                MockStorage(),
+                Experiment.executorService,
+            )
+
+        client.setUser(ExperimentUser(deviceId = "device-a"))
+        client.variant(flagKey)
+        Assert.assertEquals(1, provider.trackCount)
+
+        client.setUser(ExperimentUser(deviceId = "device-b"))
+        client.variant(flagKey)
+        Assert.assertEquals(2, provider.trackCount)
+    }
+
+    @Test
+    fun `exposure dedup does not reset when user identity is unchanged`() {
+        val provider = TestExposureTrackingProvider()
+        val flagKey = "test-flag"
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = provider,
+                    fetchOnStart = false,
+                    source = Source.INITIAL_VARIANTS,
+                    initialVariants = mapOf(flagKey to Variant(key = "on", value = "on")),
+                ),
+                OkHttpClient(),
+                MockStorage(),
+                Experiment.executorService,
+            )
+
+        client.setUser(ExperimentUser(userId = "user-a"))
+        repeat(5) { client.variant(flagKey) }
+        Assert.assertEquals(1, provider.trackCount)
+    }
+
+    @Test
+    fun `exposure dedup resets on user id and device id change`() {
+        val provider = TestExposureTrackingProvider()
+        val flagKey = "test-flag"
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = provider,
+                    fetchOnStart = false,
+                    source = Source.INITIAL_VARIANTS,
+                    initialVariants = mapOf(flagKey to Variant(key = "on", value = "on")),
+                ),
+                OkHttpClient(),
+                MockStorage(),
+                Experiment.executorService,
+            )
+
+        client.setUser(ExperimentUser(userId = "user-a", deviceId = "device-a"))
+        client.variant(flagKey)
+        Assert.assertEquals(1, provider.trackCount)
+
+        client.setUser(ExperimentUser(userId = "user-b", deviceId = "device-b"))
+        client.variant(flagKey)
+        Assert.assertEquals(2, provider.trackCount)
+    }
+
+    @Test
+    fun `exposure dedup resets on anonymous to identified transition`() {
+        val provider = TestExposureTrackingProvider()
+        val flagKey = "test-flag"
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = provider,
+                    fetchOnStart = false,
+                    source = Source.INITIAL_VARIANTS,
+                    initialVariants = mapOf(flagKey to Variant(key = "on", value = "on")),
+                ),
+                OkHttpClient(),
+                MockStorage(),
+                Experiment.executorService,
+            )
+
+        // anonymous user — device id only, no user id yet
+        client.setUser(ExperimentUser(deviceId = "device-a"))
+        client.variant(flagKey)
+        Assert.assertEquals(1, provider.trackCount)
+
+        // user signs up and gains a userId — identity changed, exposure must re-fire
+        client.setUser(ExperimentUser(userId = "user-b", deviceId = "device-a"))
+        client.variant(flagKey)
+        Assert.assertEquals(2, provider.trackCount)
+    }
 }
