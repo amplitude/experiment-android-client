@@ -1732,4 +1732,60 @@ class ExperimentClientTest {
         repeat(5) { client.variant(flagKey) }
         Assert.assertEquals(1, provider.trackCount)
     }
+
+    @Test
+    fun `exposure dedup resets on user id and device id change`() {
+        val provider = TestExposureTrackingProvider()
+        val flagKey = "test-flag"
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = provider,
+                    fetchOnStart = false,
+                    source = Source.INITIAL_VARIANTS,
+                    initialVariants = mapOf(flagKey to Variant(key = "on", value = "on")),
+                ),
+                OkHttpClient(),
+                MockStorage(),
+                Experiment.executorService,
+            )
+
+        client.setUser(ExperimentUser(userId = "user-a", deviceId = "device-a"))
+        client.variant(flagKey)
+        Assert.assertEquals(1, provider.trackCount)
+
+        client.setUser(ExperimentUser(userId = "user-b", deviceId = "device-b"))
+        client.variant(flagKey)
+        Assert.assertEquals(2, provider.trackCount)
+    }
+
+    @Test
+    fun `exposure dedup resets on anonymous to identified transition`() {
+        val provider = TestExposureTrackingProvider()
+        val flagKey = "test-flag"
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = provider,
+                    fetchOnStart = false,
+                    source = Source.INITIAL_VARIANTS,
+                    initialVariants = mapOf(flagKey to Variant(key = "on", value = "on")),
+                ),
+                OkHttpClient(),
+                MockStorage(),
+                Experiment.executorService,
+            )
+
+        // anonymous user — device id only, no user id yet
+        client.setUser(ExperimentUser(deviceId = "device-a"))
+        client.variant(flagKey)
+        Assert.assertEquals(1, provider.trackCount)
+
+        // user signs up and gains a userId — identity changed, exposure must re-fire
+        client.setUser(ExperimentUser(userId = "user-b", deviceId = "device-a"))
+        client.variant(flagKey)
+        Assert.assertEquals(2, provider.trackCount)
+    }
 }
