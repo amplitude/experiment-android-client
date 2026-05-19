@@ -1,3 +1,10 @@
+## [1.16.1](https://github.com/amplitude/experiment-android-client/compare/1.16.0...1.16.1) (2026-05-19)
+
+
+### Bug Fixes
+
+* SKY-32 pass current user to exposure tracker to reset dedup on identity change ([#77](https://github.com/amplitude/experiment-android-client/issues/77)) ([f9a3d42](https://github.com/amplitude/experiment-android-client/commit/f9a3d42b5cfb8688d800425e82a898956ee4a4e6)), closes [#38](https://github.com/amplitude/experiment-android-client/issues/38)
+
 # [1.16.0](https://github.com/amplitude/experiment-android-client/compare/1.15.0...1.16.0) (2026-05-08)
 
 
