@@ -1,13 +1,14 @@
 package com.amplitude.experiment.util
 
 import com.amplitude.analytics.connector.Identity
+import com.amplitude.experiment.ExperimentConfig
 import com.amplitude.experiment.ExperimentUser
 import com.amplitude.experiment.Exposure
 import com.amplitude.experiment.ExposureTrackingProvider
 
 internal class UserSessionExposureTracker(
     private val trackingProvider: ExposureTrackingProvider,
-    private val ttlMillis: Long,
+    private val ttlMillis: Long = ExperimentConfig.Defaults.EXPOSURE_DEDUP_CACHE_TTL_MILLIS,
     private val clock: () -> Long = { System.currentTimeMillis() },
 ) {
     private val lock = Any()
