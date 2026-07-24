@@ -3,9 +3,10 @@ package com.amplitude.experiment
 import com.amplitude.core.AnalyticsClient
 
 internal class AnalyticsClientExposureTrackingProvider(
-    private val client: AnalyticsClient,
+    private val clientProvider: () -> AnalyticsClient?,
 ) : ExposureTrackingProvider {
     override fun track(exposure: Exposure) {
+        val client = clientProvider() ?: return
         client.track(
             "\$exposure",
             mapOf(

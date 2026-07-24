@@ -30,9 +30,11 @@ class AmplitudeExperimentPlugin
         private val deploymentKey: String? = null,
         private val remoteConfigWaitTimeoutMs: Long = DEFAULT_REMOTE_CONFIG_WAIT_TIMEOUT_MS,
     ) : UniversalPlugin {
-        override val name: String = PLUGIN_NAME
+        override val name: String =
+            deploymentKey?.let { "${PLUGIN_NAME}_$it" } ?: PLUGIN_NAME
 
-        private val applicationContext: Context = context.applicationContext
+        private val applicationContext: Context = context.applicationContext ?: context
+        private val lifecycleLock = Any()
 
         @Volatile
         var experimentClient: ExperimentClient? = null
@@ -63,84 +65,98 @@ class AmplitudeExperimentPlugin
             client: AnalyticsClient,
             context: AmplitudeContext,
         ) {
-            invalidateCurrentGeneration()
-            val generation = setupGeneration
-            analyticsClient = client
-            stoppedDueToOptOut = client.optOut
-            val provider =
-                AnalyticsClientUserProvider(applicationContext) { analyticsClient }.also {
-                    it.sessionId = client.sessionId
-                    userProvider = it
-                }
-            val apiKey = deploymentKey ?: context.apiKey
-            AmpLogger.configure(config.logLevel, config.loggerProvider)
-            val experimentConfig =
-                config
-                    .copyToBuilder()
-                    .instanceName(context.instanceName)
-                    .serverZone(context.serverZone.toExperimentServerZone())
-                    .userProvider(provider)
-                    .exposureTrackingProvider(AnalyticsClientExposureTrackingProvider(client))
-                    .automaticFetchOnAmplitudeIdentityChange(false)
-                    .build()
-            val experiment =
-                DefaultExperimentClient(
-                    apiKey,
-                    experimentConfig,
-                    httpClient,
-                    SharedPrefsStorage(applicationContext),
-                    Experiment.executorService,
-                )
-            experimentClient = experiment
-            subscribeForRemoteConfigAndStart(context, generation, experiment, provider, client)
+            synchronized(lifecycleLock) {
+                invalidateCurrentGeneration()
+                val generation = setupGeneration
+                analyticsClient = client
+                stoppedDueToOptOut = client.optOut
+                val provider =
+                    AnalyticsClientUserProvider(applicationContext) { analyticsClient }.also {
+                        it.sessionId = client.sessionId
+                        userProvider = it
+                    }
+                val apiKey = deploymentKey ?: context.apiKey
+                AmpLogger.configure(config.logLevel, config.loggerProvider)
+                val experimentConfig =
+                    config
+                        .copyToBuilder()
+                        .instanceName(context.instanceName)
+                        .serverZone(context.serverZone.toExperimentServerZone())
+                        .userProvider(provider)
+                        .exposureTrackingProvider(AnalyticsClientExposureTrackingProvider { analyticsClient })
+                        .automaticFetchOnAmplitudeIdentityChange(false)
+                        .build()
+                val experiment =
+                    DefaultExperimentClient(
+                        apiKey,
+                        experimentConfig,
+                        httpClient,
+                        SharedPrefsStorage(applicationContext),
+                        Experiment.executorService,
+                    )
+                experimentClient = experiment
+                subscribeForRemoteConfigAndStart(context, generation, experiment, provider, client)
+            }
         }
 
         override fun onIdentityChanged(identity: AnalyticsIdentity) {
-            val client = experimentClient ?: return
-            val user = buildUser(identity, analyticsClient?.sessionId)
-            client.setUser(user)
-            if (config.automaticFetchOnAmplitudeIdentityChange) {
-                client.fetch(user)
+            synchronized(lifecycleLock) {
+                val client = experimentClient ?: return
+                val user = buildUser(identity, analyticsClient?.sessionId)
+                client.setUser(user)
+                if (config.automaticFetchOnAmplitudeIdentityChange &&
+                    startedGeneration == setupGeneration &&
+                    !stoppedDueToOptOut
+                ) {
+                    client.fetch(user)
+                }
             }
         }
 
         override fun onSessionIdChanged(sessionId: Long) {
-            userProvider?.sessionId = sessionId
-            val client = experimentClient ?: return
-            val user = buildUser(analyticsClient?.identity, sessionId)
-            client.setUser(user)
+            synchronized(lifecycleLock) {
+                userProvider?.sessionId = sessionId
+                val client = experimentClient ?: return
+                val user = buildUser(analyticsClient?.identity, sessionId)
+                client.setUser(user)
+            }
         }
 
         override fun onOptOutChanged(optOut: Boolean) {
-            if (optOut) {
-                experimentClient?.stop()
-                stoppedDueToOptOut = true
-                return
+            synchronized(lifecycleLock) {
+                if (optOut) {
+                    experimentClient?.stop()
+                    stoppedDueToOptOut = true
+                    return
+                }
+                if (!stoppedDueToOptOut) {
+                    return
+                }
+                stoppedDueToOptOut = false
+                val experiment = experimentClient ?: return
+                val analytics = analyticsClient ?: return
+                if (startedGeneration != setupGeneration) {
+                    return
+                }
+                val provider = userProvider ?: return
+                provider.sessionId = analytics.sessionId
+                val user = buildUser(analytics.identity, analytics.sessionId)
+                experiment.setUser(user)
+                experiment.start(user)
             }
-            if (!stoppedDueToOptOut) {
-                return
-            }
-            stoppedDueToOptOut = false
-            val experiment = experimentClient ?: return
-            val analytics = analyticsClient ?: return
-            if (startedGeneration != setupGeneration) {
-                return
-            }
-            val provider = userProvider ?: return
-            provider.sessionId = analytics.sessionId
-            val user = buildUser(analytics.identity, analytics.sessionId)
-            experiment.setUser(user)
-            experiment.start(user)
         }
 
         override fun onReset() {
-            experimentClient?.clear()
-            experimentClient?.setUser(buildUser(analyticsClient?.identity, analyticsClient?.sessionId))
+            synchronized(lifecycleLock) {
+                experimentClient?.clear()
+                experimentClient?.setUser(buildUser(analyticsClient?.identity, analyticsClient?.sessionId))
+            }
         }
 
         override fun teardown() {
-            invalidateCurrentGeneration()
-            analyticsClient = null
+            synchronized(lifecycleLock) {
+                invalidateCurrentGeneration()
+            }
         }
 
         @OptIn(RestrictedAmplitudeFeature::class)
@@ -149,6 +165,7 @@ class AmplitudeExperimentPlugin
             remoteConfigCallback = null
             experimentClient?.stop()
             experimentClient = null
+            analyticsClient = null
             userProvider = null
             startedGeneration = -1
             stoppedDueToOptOut = false
@@ -185,23 +202,20 @@ class AmplitudeExperimentPlugin
             provider: AnalyticsClientUserProvider,
             client: AnalyticsClient,
         ) {
-            if (generation != setupGeneration) {
-                return
-            }
-            synchronized(this) {
+            synchronized(lifecycleLock) {
                 if (generation != setupGeneration || startedGeneration == generation) {
                     return
                 }
                 startedGeneration = generation
+                if (client.optOut) {
+                    stoppedDueToOptOut = true
+                    return
+                }
+                provider.sessionId = client.sessionId
+                val user = buildUser(client.identity, client.sessionId)
+                experiment.setUser(user)
+                experiment.start(user)
             }
-            if (client.optOut) {
-                stoppedDueToOptOut = true
-                return
-            }
-            provider.sessionId = client.sessionId
-            val user = buildUser(client.identity, client.sessionId)
-            experiment.setUser(user)
-            experiment.start(user)
         }
 
         private fun buildUser(

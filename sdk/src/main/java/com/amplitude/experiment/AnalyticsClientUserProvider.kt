@@ -10,7 +10,7 @@ internal class AnalyticsClientUserProvider(
     private val baseUserProvider: ExperimentUserProvider? =
         try {
             DefaultUserProvider(context)
-        } catch (e: Throwable) {
+        } catch (e: Exception) {
             null
         }
 

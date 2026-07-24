@@ -53,7 +53,7 @@ class AmplitudeExperimentPluginTest {
 
     @Test
     fun `exposure tracking routes through analytics client track`() {
-        val provider = AnalyticsClientExposureTrackingProvider(analyticsClient)
+        val provider = AnalyticsClientExposureTrackingProvider { analyticsClient }
         val exposure =
             Exposure(
                 flagKey = "flag-key",
@@ -112,6 +112,60 @@ class AmplitudeExperimentPluginTest {
         Assert.assertEquals("user-2", spyClient.getUser()?.userId)
         Assert.assertEquals("device-2", spyClient.getUser()?.deviceId)
         verify { spyClient.fetch(any()) }
+    }
+
+    @Test
+    fun `onIdentityChanged waits for remote config before fetch`() {
+        val plugin =
+            AmplitudeExperimentPlugin(
+                applicationContext,
+                ExperimentConfig(
+                    debug = true,
+                    automaticFetchOnAmplitudeIdentityChange = true,
+                    fetchOnStart = false,
+                    pollOnStart = false,
+                ),
+            )
+        val callbackSlot = slot<RemoteConfigClient.RemoteConfigCallback>()
+        every {
+            remoteConfigClient.subscribe(any(), any(), capture(callbackSlot))
+        } just Runs
+
+        plugin.setup(analyticsClient, createContext())
+        val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
+        setExperimentClient(plugin, spyClient)
+
+        plugin.onIdentityChanged(identity)
+
+        verify(exactly = 0) { spyClient.fetch(any()) }
+    }
+
+    @Test
+    fun `onIdentityChanged does not fetch while opted out`() {
+        val plugin =
+            AmplitudeExperimentPlugin(
+                applicationContext,
+                ExperimentConfig(
+                    debug = true,
+                    automaticFetchOnAmplitudeIdentityChange = true,
+                    fetchOnStart = false,
+                    pollOnStart = false,
+                ),
+            )
+        val callbackSlot = slot<RemoteConfigClient.RemoteConfigCallback>()
+        every {
+            remoteConfigClient.subscribe(any(), any(), capture(callbackSlot))
+        } just Runs
+
+        plugin.setup(analyticsClient, createContext())
+        callbackSlot.captured.onUpdate(null, RemoteConfigClient.Source.CACHE, 1L)
+        val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
+        setExperimentClient(plugin, spyClient)
+
+        plugin.onOptOutChanged(true)
+        plugin.onIdentityChanged(identity)
+
+        verify(exactly = 0) { spyClient.fetch(any()) }
     }
 
     @Test
@@ -193,6 +247,34 @@ class AmplitudeExperimentPluginTest {
     }
 
     @Test
+    fun `setup waits for experiment remote config with configured timeout`() {
+        val plugin =
+            AmplitudeExperimentPlugin(
+                context = applicationContext,
+                config =
+                    ExperimentConfig(
+                        debug = true,
+                        fetchOnStart = false,
+                        pollOnStart = false,
+                    ),
+                remoteConfigWaitTimeoutMs = 1_234L,
+            )
+
+        plugin.setup(analyticsClient, createContext())
+
+        verify {
+            remoteConfigClient.subscribe(
+                RemoteConfigClient.Key.Custom("experiment.androidSDK"),
+                match {
+                    it is RemoteConfigClient.DeliveryMode.WaitForRemote &&
+                        it.timeoutMs == 1_234L
+                },
+                any(),
+            )
+        }
+    }
+
+    @Test
     fun `onReset clears cached variants and rebuilds user`() {
         val plugin =
             AmplitudeExperimentPlugin(
@@ -224,6 +306,44 @@ class AmplitudeExperimentPluginTest {
     fun `plugin exposes stable name`() {
         val plugin = AmplitudeExperimentPlugin(applicationContext)
         Assert.assertEquals(AmplitudeExperimentPlugin.PLUGIN_NAME, plugin.name)
+    }
+
+    @Test
+    fun `plugin name includes deployment key`() {
+        val plugin =
+            AmplitudeExperimentPlugin(
+                context = applicationContext,
+                deploymentKey = "deployment-key",
+            )
+
+        Assert.assertEquals("${AmplitudeExperimentPlugin.PLUGIN_NAME}_deployment-key", plugin.name)
+    }
+
+    @Test
+    fun `plugin falls back to provided context when application context is unavailable`() {
+        val context = mockk<android.content.Context>()
+        every { context.applicationContext } returns null
+
+        val plugin = AmplitudeExperimentPlugin(context)
+
+        Assert.assertEquals(AmplitudeExperimentPlugin.PLUGIN_NAME, plugin.name)
+    }
+
+    @Test
+    fun `exposure tracking ignores disconnected analytics client`() {
+        var client: AnalyticsClient? = analyticsClient
+        val provider = AnalyticsClientExposureTrackingProvider { client }
+        client = null
+
+        provider.track(
+            Exposure(
+                flagKey = "flag-key",
+                variant = "treatment",
+                experimentKey = null,
+            ),
+        )
+
+        verify(exactly = 0) { analyticsClient.track(any(), any()) }
     }
 
     private fun createContext(): AmplitudeContext {
