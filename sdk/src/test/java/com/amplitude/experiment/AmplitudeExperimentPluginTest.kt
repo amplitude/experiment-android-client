@@ -1,5 +1,6 @@
 package com.amplitude.experiment
 
+import com.amplitude.analytics.connector.AnalyticsConnector
 import com.amplitude.common.Logger
 import com.amplitude.core.AmplitudeContext
 import com.amplitude.core.AnalyticsClient
@@ -49,6 +50,55 @@ class AmplitudeExperimentPluginTest {
     }
 
     @Test
+    fun `user provider falls back to connector user properties when identity map is empty`() {
+        val instanceName = "connector-props-instance"
+        val emptyIdentity =
+            object : AnalyticsIdentity {
+                override val userId: String? = "user-1"
+                override val deviceId: String? = "device-1"
+            }
+        every { analyticsClient.identity } returns emptyIdentity
+
+        AnalyticsConnector.getInstance(instanceName).identityStore
+            .editIdentity()
+            .setUserId("user-1")
+            .setDeviceId("device-1")
+            .setUserProperties(mapOf("plan" to "enterprise"))
+            .commit()
+
+        val provider =
+            AnalyticsClientUserProvider(
+                applicationContext,
+                { analyticsClient },
+                instanceName,
+            )
+
+        val user = provider.getUser()
+
+        Assert.assertEquals("enterprise", user.userProperties?.get("plan"))
+    }
+
+    @Test
+    fun `user provider prefers identity user properties over connector`() {
+        val instanceName = "identity-props-instance"
+        AnalyticsConnector.getInstance(instanceName).identityStore
+            .editIdentity()
+            .setUserProperties(mapOf("plan" to "connector"))
+            .commit()
+
+        val provider =
+            AnalyticsClientUserProvider(
+                applicationContext,
+                { analyticsClient },
+                instanceName,
+            )
+
+        val user = provider.getUser()
+
+        Assert.assertEquals("pro", user.userProperties?.get("plan"))
+    }
+
+    @Test
     fun `exposure tracking routes through analytics client track`() {
         val provider = AnalyticsClientExposureTrackingProvider { analyticsClient }
         val exposure =
@@ -72,6 +122,56 @@ class AmplitudeExperimentPluginTest {
                 ),
             )
         }
+    }
+
+    @Test
+    fun `automatic fetch registers connector identity listener for property updates`() {
+        val instanceName = "auto-fetch-instance"
+        val plugin =
+            AmplitudeExperimentPlugin(
+                applicationContext,
+                ExperimentConfig(
+                    debug = true,
+                    automaticFetchOnAmplitudeIdentityChange = true,
+                    fetchOnStart = false,
+                    pollOnStart = false,
+                ),
+            )
+
+        plugin.setup(analyticsClient, createContext(instanceName = instanceName))
+        val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
+        setExperimentClient(plugin, spyClient)
+
+        AnalyticsConnector.getInstance(instanceName).identityStore
+            .editIdentity()
+            .setUserProperties(mapOf("plan" to "enterprise"))
+            .commit()
+
+        verify(timeout = 1_000) { spyClient.setUser(any()) }
+        verify(timeout = 1_000) { spyClient.fetch(any()) }
+    }
+
+    @Test
+    fun `teardown removes connector identity listener`() {
+        val instanceName = "teardown-listener-instance"
+        val plugin =
+            AmplitudeExperimentPlugin(
+                applicationContext,
+                ExperimentConfig(
+                    debug = true,
+                    automaticFetchOnAmplitudeIdentityChange = true,
+                    fetchOnStart = false,
+                    pollOnStart = false,
+                ),
+            )
+
+        plugin.setup(analyticsClient, createContext(instanceName = instanceName))
+        Assert.assertNotNull(getPrivateField(plugin, "connectorIdentityListener"))
+
+        plugin.teardown()
+
+        Assert.assertNull(plugin.experimentClient)
+        Assert.assertNull(getPrivateField(plugin, "connectorIdentityListener"))
     }
 
     @Test
@@ -212,7 +312,7 @@ class AmplitudeExperimentPluginTest {
     }
 
     @Test
-    fun `onReset clears cached variants and rebuilds user`() {
+    fun `onReset clears cached variants rebuilds user and fetches`() {
         val plugin =
             AmplitudeExperimentPlugin(
                 applicationContext,
@@ -232,6 +332,30 @@ class AmplitudeExperimentPluginTest {
 
         verify { spyClient.clear() }
         verify { spyClient.setUser(match { it.userId == "user-1" && it.deviceId == "device-1" }) }
+        verify { spyClient.fetch(any()) }
+    }
+
+    @Test
+    fun `onReset does not fetch while opted out`() {
+        val plugin =
+            AmplitudeExperimentPlugin(
+                applicationContext,
+                ExperimentConfig(
+                    debug = true,
+                    fetchOnStart = false,
+                    pollOnStart = false,
+                ),
+            )
+
+        plugin.setup(analyticsClient, createContext())
+        val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
+        setExperimentClient(plugin, spyClient)
+
+        plugin.onOptOutChanged(true)
+        plugin.onReset()
+
+        verify { spyClient.clear() }
+        verify(exactly = 0) { spyClient.fetch(any()) }
     }
 
     @Test
@@ -298,10 +422,10 @@ class AmplitudeExperimentPluginTest {
         verify(exactly = 0) { analyticsClient.track(any(), any()) }
     }
 
-    private fun createContext(): AmplitudeContext {
+    private fun createContext(instanceName: String = ExperimentConfig.Defaults.INSTANCE_NAME): AmplitudeContext {
         return AmplitudeContext(
             apiKey = API_KEY,
-            instanceName = ExperimentConfig.Defaults.INSTANCE_NAME,
+            instanceName = instanceName,
             serverZone = CoreServerZone.US,
             logger = logger,
             remoteConfigClient = remoteConfigClient,
@@ -316,5 +440,14 @@ class AmplitudeExperimentPluginTest {
         val field = AmplitudeExperimentPlugin::class.java.getDeclaredField("experimentClient")
         field.isAccessible = true
         field.set(plugin, client)
+    }
+
+    private fun getPrivateField(
+        plugin: AmplitudeExperimentPlugin,
+        name: String,
+    ): Any? {
+        val field = AmplitudeExperimentPlugin::class.java.getDeclaredField(name)
+        field.isAccessible = true
+        return field.get(plugin)
     }
 }

@@ -1,6 +1,9 @@
 package com.amplitude.experiment
 
 import android.content.Context
+import com.amplitude.analytics.connector.AnalyticsConnector
+import com.amplitude.analytics.connector.Identity
+import com.amplitude.analytics.connector.IdentityListener
 import com.amplitude.core.AmplitudeContext
 import com.amplitude.core.AnalyticsClient
 import com.amplitude.core.AnalyticsIdentity
@@ -47,6 +50,12 @@ class AmplitudeExperimentPlugin
         @Volatile
         private var stoppedDueToOptOut: Boolean = false
 
+        @Volatile
+        private var connectorInstanceName: String? = null
+
+        @Volatile
+        private var connectorIdentityListener: IdentityListener? = null
+
         private val httpClient = OkHttpClient()
 
         override fun setup(
@@ -57,8 +66,13 @@ class AmplitudeExperimentPlugin
                 teardownLocked()
                 analyticsClient = client
                 stoppedDueToOptOut = client.optOut
+                connectorInstanceName = context.instanceName
                 val provider =
-                    AnalyticsClientUserProvider(applicationContext) { analyticsClient }.also {
+                    AnalyticsClientUserProvider(
+                        applicationContext,
+                        { analyticsClient },
+                        context.instanceName,
+                    ).also {
                         it.sessionId = client.sessionId
                         userProvider = it
                     }
@@ -71,6 +85,7 @@ class AmplitudeExperimentPlugin
                         .serverZone(context.serverZone.toExperimentServerZone())
                         .userProvider(provider)
                         .exposureTrackingProvider(AnalyticsClientExposureTrackingProvider { analyticsClient })
+                        // Plugin owns identity-driven fetches via UniversalPlugin + connector.
                         .automaticFetchOnAmplitudeIdentityChange(false)
                         .build()
                 val experiment =
@@ -82,6 +97,25 @@ class AmplitudeExperimentPlugin
                         Experiment.executorService,
                     )
                 experimentClient = experiment
+                if (config.automaticFetchOnAmplitudeIdentityChange) {
+                    // Match initializeWithAmplitudeAnalytics: connector commits include identify
+                    // $set updates that UniversalPlugin onIdentityChanged does not receive.
+                    val listener: IdentityListener = { _: Identity ->
+                        synchronized(lifecycleLock) {
+                            if (stoppedDueToOptOut) return@synchronized
+                            val client = experimentClient ?: return@synchronized
+                            // Refresh the cached user from the provider before fetch so identify
+                            // $set updates (connector-only) are not masked by a stale setUser snapshot.
+                            val user = buildUser(analyticsClient?.identity, analyticsClient?.sessionId)
+                            client.setUser(user)
+                            client.fetch(user)
+                        }
+                    }
+                    connectorIdentityListener = listener
+                    AnalyticsConnector.getInstance(context.instanceName)
+                        .identityStore
+                        .addIdentityListener(listener)
+                }
                 if (!client.optOut) {
                     val user = buildUser(client.identity, client.sessionId)
                     experiment.setUser(user)
@@ -133,8 +167,16 @@ class AmplitudeExperimentPlugin
 
         override fun onReset() {
             synchronized(lifecycleLock) {
-                experimentClient?.clear()
-                experimentClient?.setUser(buildUser(analyticsClient?.identity, analyticsClient?.sessionId))
+                val experiment = experimentClient ?: return
+                // Host reset notifies onIdentityChanged then onReset. Identity change may not
+                // fetch (automaticFetch defaults false), and clear() would wipe any prior fetch,
+                // so always clear + setUser + fetch for the post-reset identity when not opted out.
+                experiment.clear()
+                val user = buildUser(analyticsClient?.identity, analyticsClient?.sessionId)
+                experiment.setUser(user)
+                if (!stoppedDueToOptOut) {
+                    experiment.fetch(user)
+                }
             }
         }
 
@@ -145,6 +187,15 @@ class AmplitudeExperimentPlugin
         }
 
         private fun teardownLocked() {
+            val listener = connectorIdentityListener
+            val instanceName = connectorInstanceName
+            if (listener != null && instanceName != null) {
+                AnalyticsConnector.getInstance(instanceName)
+                    .identityStore
+                    .removeIdentityListener(listener)
+            }
+            connectorIdentityListener = null
+            connectorInstanceName = null
             experimentClient?.stop()
             experimentClient = null
             analyticsClient = null
@@ -158,18 +209,13 @@ class AmplitudeExperimentPlugin
         ): ExperimentUser {
             val resolvedSessionId = sessionId ?: analyticsClient?.sessionId
             resolvedSessionId?.let { userProvider?.sessionId = it }
-            val builder = (userProvider?.deviceUser() ?: ExperimentUser()).copyToBuilder()
+            // Prefer the user provider so connector-backed user properties are preserved when
+            // AnalyticsIdentity.userProperties is empty (Amplitude-Kotlin today).
+            val builder = (userProvider?.getUser() ?: ExperimentUser()).copyToBuilder()
             if (identity != null) {
-                builder
-                    .userId(identity.userId)
-                    .deviceId(identity.deviceId)
-                    .userProperties(identity.userProperties)
-            } else {
-                analyticsClient?.identity?.let { analyticsIdentity ->
-                    builder
-                        .userId(analyticsIdentity.userId)
-                        .deviceId(analyticsIdentity.deviceId)
-                        .userProperties(analyticsIdentity.userProperties)
+                builder.userId(identity.userId).deviceId(identity.deviceId)
+                if (identity.userProperties.isNotEmpty()) {
+                    builder.userProperties(identity.userProperties)
                 }
             }
             resolvedSessionId?.let {
