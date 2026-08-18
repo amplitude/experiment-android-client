@@ -9,11 +9,8 @@ import com.amplitude.core.diagnostics.DiagnosticsClient
 import com.amplitude.core.remoteconfig.RemoteConfigClient
 import com.amplitude.experiment.util.AmpLogger
 import com.amplitude.experiment.util.SystemLoggerProvider
-import io.mockk.Runs
 import io.mockk.every
-import io.mockk.just
 import io.mockk.mockk
-import io.mockk.slot
 import io.mockk.spyk
 import io.mockk.verify
 import org.junit.Assert
@@ -78,6 +75,45 @@ class AmplitudeExperimentPluginTest {
     }
 
     @Test
+    fun `setup starts experiment client without remote config`() {
+        val plugin =
+            AmplitudeExperimentPlugin(
+                applicationContext,
+                ExperimentConfig(
+                    debug = true,
+                    fetchOnStart = false,
+                    pollOnStart = false,
+                ),
+            )
+
+        plugin.setup(analyticsClient, createContext())
+
+        Assert.assertNotNull(plugin.experimentClient?.getUser())
+        Assert.assertEquals("user-1", plugin.experimentClient?.getUser()?.userId)
+        Assert.assertEquals("device-1", plugin.experimentClient?.getUser()?.deviceId)
+        verify(exactly = 0) { remoteConfigClient.subscribe(any(), any(), any()) }
+    }
+
+    @Test
+    fun `setup does not start when opted out`() {
+        every { analyticsClient.optOut } returns true
+        val plugin =
+            AmplitudeExperimentPlugin(
+                applicationContext,
+                ExperimentConfig(
+                    debug = true,
+                    fetchOnStart = false,
+                    pollOnStart = false,
+                ),
+            )
+
+        plugin.setup(analyticsClient, createContext())
+
+        Assert.assertNotNull(plugin.experimentClient)
+        Assert.assertNull(plugin.experimentClient?.getUser())
+    }
+
+    @Test
     fun `onIdentityChanged rebuilds user and triggers fetch`() {
         val plugin =
             AmplitudeExperimentPlugin(
@@ -89,13 +125,8 @@ class AmplitudeExperimentPluginTest {
                     pollOnStart = false,
                 ),
             )
-        val callbackSlot = slot<RemoteConfigClient.RemoteConfigCallback>()
-        every {
-            remoteConfigClient.subscribe(any(), any(), capture(callbackSlot))
-        } just Runs
 
         plugin.setup(analyticsClient, createContext())
-        callbackSlot.captured.onUpdate(null, RemoteConfigClient.Source.CACHE, 1L)
 
         val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
         setExperimentClient(plugin, spyClient)
@@ -115,32 +146,6 @@ class AmplitudeExperimentPluginTest {
     }
 
     @Test
-    fun `onIdentityChanged waits for remote config before fetch`() {
-        val plugin =
-            AmplitudeExperimentPlugin(
-                applicationContext,
-                ExperimentConfig(
-                    debug = true,
-                    automaticFetchOnAmplitudeIdentityChange = true,
-                    fetchOnStart = false,
-                    pollOnStart = false,
-                ),
-            )
-        val callbackSlot = slot<RemoteConfigClient.RemoteConfigCallback>()
-        every {
-            remoteConfigClient.subscribe(any(), any(), capture(callbackSlot))
-        } just Runs
-
-        plugin.setup(analyticsClient, createContext())
-        val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
-        setExperimentClient(plugin, spyClient)
-
-        plugin.onIdentityChanged(identity)
-
-        verify(exactly = 0) { spyClient.fetch(any()) }
-    }
-
-    @Test
     fun `onIdentityChanged does not fetch while opted out`() {
         val plugin =
             AmplitudeExperimentPlugin(
@@ -152,13 +157,8 @@ class AmplitudeExperimentPluginTest {
                     pollOnStart = false,
                 ),
             )
-        val callbackSlot = slot<RemoteConfigClient.RemoteConfigCallback>()
-        every {
-            remoteConfigClient.subscribe(any(), any(), capture(callbackSlot))
-        } just Runs
 
         plugin.setup(analyticsClient, createContext())
-        callbackSlot.captured.onUpdate(null, RemoteConfigClient.Source.CACHE, 1L)
         val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
         setExperimentClient(plugin, spyClient)
 
@@ -179,13 +179,8 @@ class AmplitudeExperimentPluginTest {
                     pollOnStart = false,
                 ),
             )
-        val callbackSlot = slot<RemoteConfigClient.RemoteConfigCallback>()
-        every {
-            remoteConfigClient.subscribe(any(), any(), capture(callbackSlot))
-        } just Runs
 
         plugin.setup(analyticsClient, createContext())
-        callbackSlot.captured.onUpdate(null, RemoteConfigClient.Source.CACHE, 1L)
 
         plugin.onSessionIdChanged(99L)
 
@@ -194,7 +189,7 @@ class AmplitudeExperimentPluginTest {
     }
 
     @Test
-    fun `wait for remote delivery starts experiment client`() {
+    fun `onOptOutChanged resumes start after opting back in`() {
         val plugin =
             AmplitudeExperimentPlugin(
                 applicationContext,
@@ -204,74 +199,16 @@ class AmplitudeExperimentPluginTest {
                     pollOnStart = false,
                 ),
             )
-        val callbackSlot = slot<RemoteConfigClient.RemoteConfigCallback>()
-        every {
-            remoteConfigClient.subscribe(any(), any(), capture(callbackSlot))
-        } just Runs
 
         plugin.setup(analyticsClient, createContext())
-        Assert.assertNull(plugin.experimentClient?.getUser())
+        val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
+        setExperimentClient(plugin, spyClient)
 
-        callbackSlot.captured.onUpdate(
-            mapOf("enabled" to true),
-            RemoteConfigClient.Source.REMOTE,
-            123L,
-        )
+        plugin.onOptOutChanged(true)
+        verify { spyClient.stop() }
 
-        Assert.assertNotNull(plugin.experimentClient?.getUser())
-        Assert.assertEquals("user-1", plugin.experimentClient?.getUser()?.userId)
-    }
-
-    @Test
-    fun `wait for remote timeout fallback still starts experiment client`() {
-        val plugin =
-            AmplitudeExperimentPlugin(
-                applicationContext,
-                ExperimentConfig(
-                    debug = true,
-                    fetchOnStart = false,
-                    pollOnStart = false,
-                ),
-            )
-        val callbackSlot = slot<RemoteConfigClient.RemoteConfigCallback>()
-        every {
-            remoteConfigClient.subscribe(any(), any(), capture(callbackSlot))
-        } just Runs
-
-        plugin.setup(analyticsClient, createContext())
-        Assert.assertNull(plugin.experimentClient?.getUser())
-
-        callbackSlot.captured.onUpdate(null, RemoteConfigClient.Source.REMOTE, null)
-
-        Assert.assertNotNull(plugin.experimentClient?.getUser())
-    }
-
-    @Test
-    fun `setup waits for experiment remote config with configured timeout`() {
-        val plugin =
-            AmplitudeExperimentPlugin(
-                context = applicationContext,
-                config =
-                    ExperimentConfig(
-                        debug = true,
-                        fetchOnStart = false,
-                        pollOnStart = false,
-                    ),
-                remoteConfigWaitTimeoutMs = 1_234L,
-            )
-
-        plugin.setup(analyticsClient, createContext())
-
-        verify {
-            remoteConfigClient.subscribe(
-                RemoteConfigClient.Key.Custom("experiment.androidSDK"),
-                match {
-                    it is RemoteConfigClient.DeliveryMode.WaitForRemote &&
-                        it.timeoutMs == 1_234L
-                },
-                any(),
-            )
-        }
+        plugin.onOptOutChanged(false)
+        verify { spyClient.start(any()) }
     }
 
     @Test
@@ -285,13 +222,8 @@ class AmplitudeExperimentPluginTest {
                     pollOnStart = false,
                 ),
             )
-        val callbackSlot = slot<RemoteConfigClient.RemoteConfigCallback>()
-        every {
-            remoteConfigClient.subscribe(any(), any(), capture(callbackSlot))
-        } just Runs
 
         plugin.setup(analyticsClient, createContext())
-        callbackSlot.captured.onUpdate(null, RemoteConfigClient.Source.CACHE, 1L)
 
         val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
         setExperimentClient(plugin, spyClient)
@@ -300,6 +232,26 @@ class AmplitudeExperimentPluginTest {
 
         verify { spyClient.clear() }
         verify { spyClient.setUser(match { it.userId == "user-1" && it.deviceId == "device-1" }) }
+    }
+
+    @Test
+    fun `teardown stops and clears the experiment client`() {
+        val plugin =
+            AmplitudeExperimentPlugin(
+                applicationContext,
+                ExperimentConfig(
+                    debug = true,
+                    fetchOnStart = false,
+                    pollOnStart = false,
+                ),
+            )
+
+        plugin.setup(analyticsClient, createContext())
+        Assert.assertNotNull(plugin.experimentClient)
+
+        plugin.teardown()
+
+        Assert.assertNull(plugin.experimentClient)
     }
 
     @Test
