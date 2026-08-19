@@ -153,6 +153,44 @@ class AmplitudeExperimentPluginTest {
     }
 
     @Test
+    fun `connector property update does not fetch before experiment starts`() {
+        val instanceName = "connector-before-start-instance"
+        every { analyticsClient.sessionId } returns -1L
+        every { analyticsClient.identity } returns
+            object : AnalyticsIdentity {
+                override val userId: String? = "user-1"
+                override val deviceId: String? = "device-1"
+            }
+        val plugin =
+            AmplitudeExperimentPlugin(
+                applicationContext,
+                ExperimentConfig(
+                    debug = true,
+                    automaticFetchOnAmplitudeIdentityChange = true,
+                    fetchOnStart = false,
+                    pollOnStart = false,
+                ),
+            )
+
+        plugin.setup(analyticsClient, createContext(instanceName = instanceName))
+        val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
+        setExperimentClient(plugin, spyClient)
+
+        AnalyticsConnector.getInstance(instanceName).identityStore
+            .editIdentity()
+            .setUserProperties(mapOf("plan" to "enterprise"))
+            .commit()
+
+        verify(exactly = 0) { spyClient.fetch(any()) }
+
+        every { analyticsClient.sessionId } returns 42L
+        plugin.onSessionIdChanged(42L)
+
+        Assert.assertEquals("enterprise", spyClient.getUser()?.userProperties?.get("plan"))
+        verify { spyClient.start(any()) }
+    }
+
+    @Test
     fun `teardown removes connector identity listener`() {
         val instanceName = "teardown-listener-instance"
         val plugin =
@@ -530,6 +568,44 @@ class AmplitudeExperimentPluginTest {
 
         plugin.teardown()
         Assert.assertNull(plugin.experimentClient)
+    }
+
+    @Test
+    fun `plugins with the same instance own separate clients`() {
+        val context = createContext(instanceName = "separate-plugin-clients")
+        val firstPlugin =
+            AmplitudeExperimentPlugin(
+                applicationContext,
+                ExperimentConfig(
+                    debug = true,
+                    fetchOnStart = false,
+                    pollOnStart = false,
+                ),
+            )
+        val secondPlugin =
+            AmplitudeExperimentPlugin(
+                applicationContext,
+                ExperimentConfig(
+                    debug = true,
+                    fetchOnStart = false,
+                    pollOnStart = false,
+                ),
+            )
+
+        firstPlugin.setup(analyticsClient, context)
+        secondPlugin.setup(analyticsClient, context)
+
+        val firstClient = firstPlugin.experimentClient
+        val secondClient = secondPlugin.experimentClient
+        Assert.assertNotNull(firstClient)
+        Assert.assertNotNull(secondClient)
+        Assert.assertNotSame(firstClient, secondClient)
+
+        firstPlugin.teardown()
+
+        Assert.assertNull(firstPlugin.experimentClient)
+        Assert.assertSame(secondClient, secondPlugin.experimentClient)
+        Assert.assertEquals("user-1", secondPlugin.experimentClient?.getUser()?.userId)
     }
 
     @Test

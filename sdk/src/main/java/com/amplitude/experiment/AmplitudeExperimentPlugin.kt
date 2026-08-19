@@ -1,6 +1,5 @@
 package com.amplitude.experiment
 
-import android.app.Application
 import android.content.Context
 import com.amplitude.analytics.connector.AnalyticsConnector
 import com.amplitude.analytics.connector.Identity
@@ -188,20 +187,14 @@ class AmplitudeExperimentPlugin
         private fun createExperimentClient(
             apiKey: String,
             experimentConfig: ExperimentConfig,
-        ): ExperimentClient {
-            val application = applicationContext as? Application
-            return if (application != null) {
-                Experiment.initialize(application, apiKey, experimentConfig)
-            } else {
-                DefaultExperimentClient(
-                    apiKey,
-                    experimentConfig,
-                    Experiment.httpClient,
-                    SharedPrefsStorage(applicationContext),
-                    Experiment.executorService,
-                )
-            }
-        }
+        ): ExperimentClient =
+            DefaultExperimentClient(
+                apiKey,
+                experimentConfig,
+                Experiment.httpClient,
+                SharedPrefsStorage(applicationContext),
+                Experiment.executorService,
+            )
 
         private fun maybeStartLocked(): Boolean {
             if (started || stoppedDueToOptOut) {
@@ -239,7 +232,7 @@ class AmplitudeExperimentPlugin
         }
 
         private fun handleConnectorIdentity(identity: Identity) {
-            if (stoppedDueToOptOut) return
+            if (!started || stoppedDueToOptOut) return
             val client = experimentClient ?: return
             val userIdChanged = identity.userId != lastConnectorUserId
             val deviceIdChanged = identity.deviceId != lastConnectorDeviceId
