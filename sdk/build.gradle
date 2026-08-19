@@ -40,6 +40,8 @@ android {
     }
     kotlinOptions {
         jvmTarget = '1.8'
+        // Match analytics-core so UniversalPlugin default methods dispatch on ART.
+        freeCompilerArgs += ['-Xjvm-default=all']
     }
     namespace 'com.amplitude.experiment'
 }
@@ -55,7 +57,9 @@ mavenPublishing {
     configure(new AndroidSingleVariantLibrary("release", false, true))
 
     publishToMavenCentral()
-    signAllPublications()
+    if (findProperty("release.signing.enabled") != "false") {
+        signAllPublications()
+    }
 }
 
 dependencies {

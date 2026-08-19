@@ -14,6 +14,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
+import io.mockk.verifyOrder
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -175,7 +176,7 @@ class AmplitudeExperimentPluginTest {
     }
 
     @Test
-    fun `setup starts experiment client without remote config`() {
+    fun `setup starts experiment client when host identity is ready`() {
         val plugin =
             AmplitudeExperimentPlugin(
                 applicationContext,
@@ -195,6 +196,75 @@ class AmplitudeExperimentPluginTest {
     }
 
     @Test
+    fun `setup does not start when host session is uninitialized`() {
+        every { analyticsClient.sessionId } returns -1L
+        val plugin =
+            AmplitudeExperimentPlugin(
+                applicationContext,
+                ExperimentConfig(
+                    debug = true,
+                    fetchOnStart = false,
+                    pollOnStart = false,
+                ),
+            )
+
+        plugin.setup(analyticsClient, createContext())
+
+        Assert.assertNotNull(plugin.experimentClient)
+        Assert.assertNull(plugin.experimentClient?.getUser())
+    }
+
+    @Test
+    fun `setup does not start when host device id is missing`() {
+        every { analyticsClient.identity } returns
+            object : AnalyticsIdentity {
+                override val userId: String? = "user-1"
+                override val deviceId: String? = null
+            }
+        val plugin =
+            AmplitudeExperimentPlugin(
+                applicationContext,
+                ExperimentConfig(
+                    debug = true,
+                    fetchOnStart = false,
+                    pollOnStart = false,
+                ),
+            )
+
+        plugin.setup(analyticsClient, createContext())
+
+        Assert.assertNotNull(plugin.experimentClient)
+        Assert.assertNull(plugin.experimentClient?.getUser())
+    }
+
+    @Test
+    fun `first start happens after identity and session become ready`() {
+        every { analyticsClient.sessionId } returns -1L
+        val plugin =
+            AmplitudeExperimentPlugin(
+                applicationContext,
+                ExperimentConfig(
+                    debug = true,
+                    fetchOnStart = false,
+                    pollOnStart = false,
+                ),
+            )
+
+        plugin.setup(analyticsClient, createContext())
+        Assert.assertNull(plugin.experimentClient?.getUser())
+
+        val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
+        setExperimentClient(plugin, spyClient)
+        every { analyticsClient.sessionId } returns 42L
+
+        plugin.onSessionIdChanged(42L)
+
+        verify { spyClient.start(any()) }
+        Assert.assertEquals("user-1", spyClient.getUser()?.userId)
+        Assert.assertEquals("device-1", spyClient.getUser()?.deviceId)
+    }
+
+    @Test
     fun `setup does not start when opted out`() {
         every { analyticsClient.optOut } returns true
         val plugin =
@@ -211,6 +281,33 @@ class AmplitudeExperimentPluginTest {
 
         Assert.assertNotNull(plugin.experimentClient)
         Assert.assertNull(plugin.experimentClient?.getUser())
+    }
+
+    @Test
+    fun `onIdentityChanged does not fetch when automatic fetch is off`() {
+        val plugin =
+            AmplitudeExperimentPlugin(
+                applicationContext,
+                ExperimentConfig(
+                    debug = true,
+                    fetchOnStart = false,
+                    pollOnStart = false,
+                ),
+            )
+
+        plugin.setup(analyticsClient, createContext())
+        val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
+        setExperimentClient(plugin, spyClient)
+
+        plugin.onIdentityChanged(
+            object : AnalyticsIdentity {
+                override val userId: String? = "user-2"
+                override val deviceId: String? = "device-2"
+            },
+        )
+
+        Assert.assertEquals("user-2", spyClient.getUser()?.userId)
+        verify(exactly = 0) { spyClient.fetch(any()) }
     }
 
     @Test
@@ -243,6 +340,33 @@ class AmplitudeExperimentPluginTest {
         Assert.assertEquals("user-2", spyClient.getUser()?.userId)
         Assert.assertEquals("device-2", spyClient.getUser()?.deviceId)
         verify { spyClient.fetch(any()) }
+    }
+
+    @Test
+    fun `connector identity listener does not fetch on user or device id change`() {
+        val instanceName = "no-double-fetch-instance"
+        val plugin =
+            AmplitudeExperimentPlugin(
+                applicationContext,
+                ExperimentConfig(
+                    debug = true,
+                    automaticFetchOnAmplitudeIdentityChange = true,
+                    fetchOnStart = false,
+                    pollOnStart = false,
+                ),
+            )
+
+        plugin.setup(analyticsClient, createContext(instanceName = instanceName))
+        val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
+        setExperimentClient(plugin, spyClient)
+
+        AnalyticsConnector.getInstance(instanceName).identityStore
+            .editIdentity()
+            .setUserId("user-2")
+            .setDeviceId("device-2")
+            .commit()
+
+        verify(exactly = 0) { spyClient.fetch(any()) }
     }
 
     @Test
@@ -312,7 +436,7 @@ class AmplitudeExperimentPluginTest {
     }
 
     @Test
-    fun `onReset clears cached variants rebuilds user and fetches`() {
+    fun `onReset clears cached variants without fetch when automatic fetch is off`() {
         val plugin =
             AmplitudeExperimentPlugin(
                 applicationContext,
@@ -332,7 +456,34 @@ class AmplitudeExperimentPluginTest {
 
         verify { spyClient.clear() }
         verify { spyClient.setUser(match { it.userId == "user-1" && it.deviceId == "device-1" }) }
-        verify { spyClient.fetch(any()) }
+        verify(exactly = 0) { spyClient.fetch(any()) }
+    }
+
+    @Test
+    fun `onReset fetches after clear when automatic fetch is on`() {
+        val plugin =
+            AmplitudeExperimentPlugin(
+                applicationContext,
+                ExperimentConfig(
+                    debug = true,
+                    automaticFetchOnAmplitudeIdentityChange = true,
+                    fetchOnStart = false,
+                    pollOnStart = false,
+                ),
+            )
+
+        plugin.setup(analyticsClient, createContext())
+
+        val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
+        setExperimentClient(plugin, spyClient)
+
+        plugin.onReset()
+
+        verifyOrder {
+            spyClient.clear()
+            spyClient.setUser(any())
+            spyClient.fetch(any())
+        }
     }
 
     @Test
@@ -376,12 +527,30 @@ class AmplitudeExperimentPluginTest {
         plugin.teardown()
 
         Assert.assertNull(plugin.experimentClient)
+
+        plugin.teardown()
+        Assert.assertNull(plugin.experimentClient)
     }
 
     @Test
     fun `plugin exposes stable name`() {
         val plugin = AmplitudeExperimentPlugin(applicationContext)
         Assert.assertEquals(AmplitudeExperimentPlugin.PLUGIN_NAME, plugin.name)
+    }
+
+    @Test
+    fun `execute is a pass-through`() {
+        val plugin = AmplitudeExperimentPlugin(applicationContext)
+        val event =
+            object : com.amplitude.core.events.AnalyticsEvent {
+                override var userId: String? = "u"
+                override var deviceId: String? = "d"
+                override var timestamp: Long? = 1L
+                override var sessionId: Long? = 2L
+                override var eventType: String = "test"
+                override var eventProperties: MutableMap<String, Any?>? = null
+            }
+        Assert.assertSame(event, plugin.execute(event))
     }
 
     @Test
