@@ -7,6 +7,7 @@ import com.amplitude.core.AnalyticsClient
 import com.amplitude.core.AnalyticsIdentity
 import com.amplitude.core.RestrictedAmplitudeFeature
 import com.amplitude.core.diagnostics.DiagnosticsClient
+import com.amplitude.core.platform.PluginHost
 import com.amplitude.core.remoteconfig.RemoteConfigClient
 import com.amplitude.experiment.util.AmpLogger
 import com.amplitude.experiment.util.SystemLoggerProvider
@@ -641,6 +642,107 @@ class AmplitudeExperimentPluginTest {
         Assert.assertNull(firstPlugin.experimentClient)
         Assert.assertSame(secondClient, secondPlugin.experimentClient)
         Assert.assertEquals("user-1", secondPlugin.experimentClient?.getUser()?.userId)
+    }
+
+    @Test
+    fun `wrapping an existing client preserves its configuration and lifecycle`() {
+        val experiment = mockk<ExperimentClient>(relaxed = true)
+        val plugin = AmplitudeExperimentPlugin(experiment)
+
+        Assert.assertSame(experiment, plugin.experimentClient)
+        Assert.assertNull(plugin.name)
+
+        plugin.setup(analyticsClient, createContext())
+        plugin.onIdentityChanged(identity)
+        plugin.onSessionIdChanged(42L)
+        plugin.onOptOutChanged(true)
+        plugin.onReset()
+        plugin.teardown()
+
+        Assert.assertSame(experiment, plugin.experimentClient)
+        verify(exactly = 0) {
+            experiment.setUser(any())
+            experiment.start(any())
+            experiment.fetch(any())
+            experiment.clear()
+            experiment.stop()
+        }
+    }
+
+    @Test
+    fun `wrapping a default client uses its deployment key for plugin lookup`() {
+        val experiment =
+            Experiment.createClient(
+                applicationContext,
+                "wrapped-key",
+                ExperimentConfig(fetchOnStart = false, pollOnStart = false),
+            )
+
+        val wrappedPlugin = AmplitudeExperimentPlugin(experiment)
+
+        Assert.assertEquals("${AmplitudeExperimentPlugin.PLUGIN_NAME}_wrapped-key", wrappedPlugin.name)
+        Assert.assertSame(experiment, wrappedPlugin.experimentClient)
+    }
+
+    @Test
+    fun `plugin host exposes the only Experiment client`() {
+        val plugin =
+            AmplitudeExperimentPlugin(
+                context = applicationContext,
+                config = ExperimentConfig(fetchOnStart = false, pollOnStart = false),
+                deploymentKey = "deployment-key",
+            )
+        plugin.setup(analyticsClient, createContext(instanceName = "single-host-plugin"))
+        val host = mockk<PluginHost>()
+        every { host.plugins(AmplitudeExperimentPlugin::class.java) } returns listOf(plugin)
+        every { host.plugin("${AmplitudeExperimentPlugin.PLUGIN_NAME}_deployment-key") } returns plugin
+
+        Assert.assertSame(plugin.experimentClient, host.experiment)
+        Assert.assertSame(plugin.experimentClient, host.experiment("deployment-key"))
+    }
+
+    @Test
+    fun `plugin host requires deployment key when multiple Experiment clients are attached`() {
+        val firstPlugin =
+            AmplitudeExperimentPlugin(
+                context = applicationContext,
+                config = ExperimentConfig(fetchOnStart = false, pollOnStart = false),
+                deploymentKey = "first-key",
+            )
+        val secondPlugin =
+            AmplitudeExperimentPlugin(
+                context = applicationContext,
+                config = ExperimentConfig(fetchOnStart = false, pollOnStart = false),
+                deploymentKey = "second-key",
+            )
+        firstPlugin.setup(analyticsClient, createContext(instanceName = "first-host-plugin"))
+        secondPlugin.setup(analyticsClient, createContext(instanceName = "second-host-plugin"))
+        val host = mockk<PluginHost>()
+        every {
+            host.plugins(AmplitudeExperimentPlugin::class.java)
+        } returns listOf(firstPlugin, secondPlugin)
+        every { host.plugin("${AmplitudeExperimentPlugin.PLUGIN_NAME}_second-key") } returns secondPlugin
+
+        Assert.assertNull(host.experiment)
+        Assert.assertSame(secondPlugin.experimentClient, host.experiment("second-key"))
+    }
+
+    @Test
+    fun `plugin host discovers wrapped Experiment client`() {
+        val experiment = mockk<ExperimentClient>(relaxed = true)
+        val plugin = AmplitudeExperimentPlugin(experiment)
+        val host = mockk<PluginHost>()
+        every { host.plugins(AmplitudeExperimentPlugin::class.java) } returns listOf(plugin)
+
+        Assert.assertSame(experiment, host.experiment)
+    }
+
+    @Test
+    fun `plugin host returns null when deployment key is not found`() {
+        val host = mockk<PluginHost>()
+        every { host.plugin(any()) } returns null
+
+        Assert.assertNull(host.experiment("missing-key"))
     }
 
     @Test
