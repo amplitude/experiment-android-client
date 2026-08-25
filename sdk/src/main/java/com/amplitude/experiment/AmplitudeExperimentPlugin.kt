@@ -9,7 +9,6 @@ import com.amplitude.core.AnalyticsClient
 import com.amplitude.core.AnalyticsIdentity
 import com.amplitude.core.events.AnalyticsEvent
 import com.amplitude.core.platform.UniversalPlugin
-import com.amplitude.experiment.storage.SharedPrefsStorage
 import com.amplitude.experiment.util.AmpLogger
 import com.amplitude.core.ServerZone as CoreServerZone
 
@@ -187,14 +186,7 @@ class AmplitudeExperimentPlugin
         private fun createExperimentClient(
             apiKey: String,
             experimentConfig: ExperimentConfig,
-        ): ExperimentClient =
-            DefaultExperimentClient(
-                apiKey,
-                experimentConfig,
-                Experiment.httpClient,
-                SharedPrefsStorage(applicationContext),
-                Experiment.executorService,
-            )
+        ): ExperimentClient = Experiment.createClient(applicationContext, apiKey, experimentConfig)
 
         private fun maybeStartLocked(): Boolean {
             if (started || stoppedDueToOptOut) {
