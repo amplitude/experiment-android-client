@@ -191,6 +191,41 @@ class AmplitudeExperimentPluginTest {
     }
 
     @Test
+    fun `connector property updates while opted out do not refetch on opt-in`() {
+        val instanceName = "connector-opt-out-snapshot-instance"
+        val plugin =
+            AmplitudeExperimentPlugin(
+                applicationContext,
+                ExperimentConfig(
+                    debug = true,
+                    automaticFetchOnAmplitudeIdentityChange = true,
+                    fetchOnStart = false,
+                    pollOnStart = false,
+                ),
+            )
+
+        plugin.setup(analyticsClient, createContext(instanceName = instanceName))
+        val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
+        setExperimentClient(plugin, spyClient)
+
+        plugin.onOptOutChanged(true)
+        AnalyticsConnector.getInstance(instanceName).identityStore
+            .editIdentity()
+            .setUserProperties(mapOf("plan" to "enterprise"))
+            .commit()
+        verify(exactly = 0) { spyClient.fetch(any()) }
+
+        plugin.onOptOutChanged(false)
+        verify { spyClient.start(any()) }
+
+        AnalyticsConnector.getInstance(instanceName).identityStore
+            .editIdentity()
+            .setUserProperties(mapOf("plan" to "enterprise"))
+            .commit()
+        verify(exactly = 0) { spyClient.fetch(any()) }
+    }
+
+    @Test
     fun `teardown removes connector identity listener`() {
         val instanceName = "teardown-listener-instance"
         val plugin =

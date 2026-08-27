@@ -38,6 +38,10 @@ object Experiment {
      * Initializes a singleton [ExperimentClient] identified by the configured
      * instance name.
      *
+     * Do not call this for the same instance name and API key as an
+     * [AmplitudeExperimentPlugin]. The plugin does not register in the
+     * singleton map, so both clients would fetch, poll, and track exposure.
+     *
      * @param application The Android Application context
      * @param apiKey  The API key. This can be found in the Experiment settings
      * and should not be null or empty.
@@ -78,6 +82,10 @@ object Experiment {
      *
      * You must be using Amplitude-Android SDK version 2.36.0+ or
      * Amplitude-Kotlin 1.5.0+ for this integration to work.
+     *
+     * Do not call this for the same instance name and API key as an
+     * [AmplitudeExperimentPlugin]. The plugin does not register in the
+     * singleton map, so both clients would fetch, poll, and track exposure.
      *
      * @param application The Android Application context
      * @param apiKey  The API key. This can be found in the Experiment settings

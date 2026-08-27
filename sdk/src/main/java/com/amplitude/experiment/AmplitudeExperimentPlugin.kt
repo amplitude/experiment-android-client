@@ -15,16 +15,19 @@ import com.amplitude.core.ServerZone as CoreServerZone
 /**
  * A [UniversalPlugin] that hosts Experiment inside a unified Amplitude analytics client.
  *
- * Register with `amplitude.add(plugin)` on the unified client. Because [AmplitudeContext] does
- * not carry an Android [Context], pass an application [Context] to this plugin's constructor for
- * Experiment storage and device metadata.
+ * Register with `amplitude.add(plugin)`. Pass an application [Context] for storage and
+ * device metadata; [AmplitudeContext] does not include one.
  *
- * This is an additive entry point that parallels [Experiment.initializeWithAmplitudeAnalytics]
- * without replacing it. Behavior matches the iOS Experiment plugin: initialize during [setup]
- * and start only after the host identity and session are ready. There is no remote-config gate.
+ * Creates the Experiment client in [setup] and calls [ExperimentClient.start] once the
+ * host has a device id and session. Stops polling on opt-out and starts again on opt-in.
+ * Clears assignments on host reset. [teardown] stops and drops the client.
  *
- * [ExperimentClient.stop] only stops flag polling; [ExperimentClient.variant] still evaluates
- * locally while the host is opted out.
+ * Do not also call [Experiment.initialize] or [Experiment.initializeWithAmplitudeAnalytics]
+ * for the same instance name and API key. That starts a second client and duplicates
+ * fetches, polling, and exposure tracking.
+ *
+ * [ExperimentClient.stop] only stops flag polling; [ExperimentClient.variant] still
+ * evaluates locally while the host is opted out.
  */
 class AmplitudeExperimentPlugin
     @JvmOverloads
@@ -153,12 +156,14 @@ class AmplitudeExperimentPlugin
                     experimentClient?.stop()
                     stoppedDueToOptOut = true
                     started = false
+                    connectorInstanceName?.let { snapshotConnectorIdentity(it) }
                     return
                 }
                 if (!stoppedDueToOptOut) {
                     return
                 }
                 stoppedDueToOptOut = false
+                connectorInstanceName?.let { snapshotConnectorIdentity(it) }
                 maybeStartLocked()
             }
         }
@@ -224,14 +229,14 @@ class AmplitudeExperimentPlugin
         }
 
         private fun handleConnectorIdentity(identity: Identity) {
-            if (!started || stoppedDueToOptOut) return
-            val client = experimentClient ?: return
             val userIdChanged = identity.userId != lastConnectorUserId
             val deviceIdChanged = identity.deviceId != lastConnectorDeviceId
             val propertiesChanged = identity.userProperties != lastConnectorUserProperties
             lastConnectorUserId = identity.userId
             lastConnectorDeviceId = identity.deviceId
             lastConnectorUserProperties = identity.userProperties.toMap()
+            if (!started || stoppedDueToOptOut) return
+            val client = experimentClient ?: return
             // User/device id changes are handled by UniversalPlugin.onIdentityChanged.
             if (userIdChanged || deviceIdChanged || !propertiesChanged) {
                 return
