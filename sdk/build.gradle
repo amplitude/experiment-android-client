@@ -40,8 +40,9 @@ android {
     }
     kotlinOptions {
         jvmTarget = '1.8'
-        // Match analytics-core so UniversalPlugin default methods dispatch on ART.
-        freeCompilerArgs += ['-Xjvm-default=all']
+        // UniversalPlugin default methods need jvm-default; all-compatibility also
+        // keeps ExperimentClient/FlagApi DefaultImpls for callers compiled against 1.16.1.
+        freeCompilerArgs += ['-Xjvm-default=all-compatibility']
     }
     namespace 'com.amplitude.experiment'
 }
