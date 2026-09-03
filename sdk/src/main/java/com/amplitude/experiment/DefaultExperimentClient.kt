@@ -50,7 +50,7 @@ private const val EU_FLAGS_SERVER_URL = "https://flag.lab.eu.amplitude.com/"
 private const val MIN_FLAG_POLLING_INTERVAL_MILLIS: Long = 60000
 
 internal class DefaultExperimentClient internal constructor(
-    private val apiKey: String,
+    internal val apiKey: String,
     private val config: ExperimentConfig,
     private val httpClient: OkHttpClient,
     storage: Storage,
