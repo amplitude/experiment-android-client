@@ -24,6 +24,7 @@ import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
+import java.util.concurrent.ScheduledThreadPoolExecutor
 
 private const val API_KEY = "client-DvWljIjiiuqLbyjqdvBaLFfEBrAvGuA3"
 private const val SERVER_API_KEY = "server-qz35UwzJ5akieoAdIgzM4m9MIiOLXLoz"
@@ -49,6 +50,10 @@ fun assertVariantEquals(
 }
 
 class ExperimentClientTest {
+    companion object {
+        private val executorService = ScheduledThreadPoolExecutor(4)
+    }
+
     init {
         AmpLogger.loggerProvider = SystemLoggerProvider(true)
     }
@@ -83,7 +88,7 @@ class ExperimentClientTest {
             ),
             OkHttpClient(),
             mockStorage,
-            Experiment.executorService,
+            executorService,
         )
 
     private val timeoutClient =
@@ -97,7 +102,7 @@ class ExperimentClientTest {
             ),
             OkHttpClient(),
             mockStorage,
-            Experiment.executorService,
+            executorService,
         )
 
     private val initialVariantSourceClient =
@@ -110,7 +115,7 @@ class ExperimentClientTest {
             ),
             OkHttpClient(),
             mockStorage,
-            Experiment.executorService,
+            executorService,
         )
 
     private val generalClient =
@@ -121,7 +126,7 @@ class ExperimentClientTest {
             ),
             OkHttpClient(),
             mockStorage,
-            Experiment.executorService,
+            executorService,
         )
 
     @Before
@@ -302,7 +307,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         analyticsProviderClient.fetch(testUser).get()
         analyticsProviderClient.variant(KEY)
@@ -347,7 +352,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         analyticsProviderClient.fetch(testUser).get()
         analyticsProviderClient.variant("asdf")
@@ -391,7 +396,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         analyticsProviderClient.fetch(testUser).get()
         analyticsProviderClient.variant(INITIAL_KEY)
@@ -433,7 +438,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         analyticsProviderClient.fetch(testUser).get()
         analyticsProviderClient.variant(KEY)
@@ -471,7 +476,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         client.variant("flagKey")
         Assert.assertTrue(didTrack)
@@ -485,7 +490,7 @@ class ExperimentClientTest {
                 ExperimentConfig(),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         Assert.assertEquals("https://api.lab.amplitude.com/".toHttpUrl(), client.serverUrl)
         Assert.assertEquals("https://flag.lab.amplitude.com/".toHttpUrl(), client.flagsServerUrl)
@@ -499,7 +504,7 @@ class ExperimentClientTest {
                 ExperimentConfig(serverZone = ServerZone.US),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         Assert.assertEquals("https://api.lab.amplitude.com/".toHttpUrl(), client.serverUrl)
         Assert.assertEquals("https://flag.lab.amplitude.com/".toHttpUrl(), client.flagsServerUrl)
@@ -517,7 +522,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         Assert.assertEquals("https://experiment.company.com".toHttpUrl(), client.serverUrl)
         Assert.assertEquals("https://flags.company.com".toHttpUrl(), client.flagsServerUrl)
@@ -531,7 +536,7 @@ class ExperimentClientTest {
                 ExperimentConfig(serverZone = ServerZone.EU),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         Assert.assertEquals("https://api.lab.eu.amplitude.com/".toHttpUrl(), client.serverUrl)
         Assert.assertEquals("https://flag.lab.eu.amplitude.com/".toHttpUrl(), client.flagsServerUrl)
@@ -549,7 +554,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         Assert.assertEquals("https://experiment.company.com".toHttpUrl(), client.serverUrl)
         Assert.assertEquals("https://flags.company.com".toHttpUrl(), client.flagsServerUrl)
@@ -563,7 +568,7 @@ class ExperimentClientTest {
                 ExperimentConfig(fetchOnStart = true),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         client.start(ExperimentUser(deviceId = "test_device")).get()
         Assert.assertEquals("sdk-ci-test-local", client.allFlags()["sdk-ci-test-local"]?.key)
@@ -578,7 +583,7 @@ class ExperimentClientTest {
                 ExperimentConfig(fetchOnStart = true),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         client.start(ExperimentUser(deviceId = "test_device")).get()
         var variant = client.variant("sdk-ci-test-local")
@@ -599,7 +604,7 @@ class ExperimentClientTest {
                 ExperimentConfig(fetchOnStart = false),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         val user = ExperimentUser(userId = "test_user", deviceId = "test_device")
         client.start(user).get()
@@ -629,7 +634,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test")
@@ -662,7 +667,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test", inlineVariant)
@@ -693,7 +698,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test")
@@ -724,7 +729,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test")
@@ -754,7 +759,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test")
@@ -787,7 +792,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test")
@@ -818,7 +823,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test", inlineVariant)
@@ -851,7 +856,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test", inlineVariant)
@@ -882,7 +887,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test")
@@ -912,7 +917,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test")
@@ -943,7 +948,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test-local", inlineVariant)
@@ -976,7 +981,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test-local", inlineVariant)
@@ -1007,7 +1012,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test-local")
@@ -1038,7 +1043,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test-local")
@@ -1067,7 +1072,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         client.start(user).get()
         val variant = client.variant("sdk-ci-test-local")
@@ -1101,7 +1106,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         client.start(user).get()
         val allVariants = client.all()
@@ -1133,7 +1138,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         client.start(user).get()
         val allVariants = client.all()
@@ -1154,7 +1159,7 @@ class ExperimentClientTest {
                 ExperimentConfig(),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         val spyClient = spyk(client)
         spyClient.start(null).get()
@@ -1169,7 +1174,7 @@ class ExperimentClientTest {
                 ExperimentConfig(),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         val spyClient = spyk(client)
         every { spyClient.allFlags() } returns emptyMap()
@@ -1185,7 +1190,7 @@ class ExperimentClientTest {
                 ExperimentConfig(fetchOnStart = true),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         val spyClient = spyk(client)
         every { spyClient.allFlags() } returns emptyMap()
@@ -1201,7 +1206,7 @@ class ExperimentClientTest {
                 ExperimentConfig(fetchOnStart = false),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         val spyClient = spyk(client)
         spyClient.start(null).get()
@@ -1224,7 +1229,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         client.start(user).get()
         var variant = client.variant("sdk-payload-ci-test")
@@ -1259,7 +1264,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 storage,
-                Experiment.executorService,
+                executorService,
             )
         val user = ExperimentUser(userId = "user_id", deviceId = "device_id")
         client.setUser(user)
@@ -1282,7 +1287,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 storage,
-                Experiment.executorService,
+                executorService,
             )
         // Storage flag should take precedent over initial flag
         variant = client.variant("sdk-ci-test-local")
@@ -1312,7 +1317,7 @@ class ExperimentClientTest {
                         ExperimentConfig(retryFetchOnFailure = true),
                         OkHttpClient(),
                         storage,
-                        Experiment.executorService,
+                        executorService,
                     ),
                     recordPrivateCalls = true,
                 )
@@ -1356,7 +1361,7 @@ class ExperimentClientTest {
                 ExperimentConfig(),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         Assert.assertEquals(300000, client.flagConfigPollingIntervalMillis)
     }
@@ -1371,7 +1376,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         Assert.assertEquals(60000, client.flagConfigPollingIntervalMillis)
     }
@@ -1386,7 +1391,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         Assert.assertEquals(900000, client.flagConfigPollingIntervalMillis)
     }
@@ -1400,7 +1405,7 @@ class ExperimentClientTest {
                 ExperimentConfig(),
                 OkHttpClient(),
                 storage,
-                Experiment.executorService,
+                executorService,
             )
 
         // Test that setTracksAssignment returns the client for chaining
@@ -1423,7 +1428,7 @@ class ExperimentClientTest {
                 ExperimentConfig(),
                 OkHttpClient(),
                 storage,
-                Experiment.executorService,
+                executorService,
             )
 
         // Create second client with same storage
@@ -1433,7 +1438,7 @@ class ExperimentClientTest {
                 ExperimentConfig(),
                 OkHttpClient(),
                 storage,
-                Experiment.executorService,
+                executorService,
             )
 
         // Set track assignment event on first client
@@ -1454,7 +1459,7 @@ class ExperimentClientTest {
                 ExperimentConfig(),
                 OkHttpClient(),
                 storage,
-                Experiment.executorService,
+                executorService,
             )
 
         // Set track assignment event to true, then false
@@ -1476,7 +1481,7 @@ class ExperimentClientTest {
                 ExperimentConfig(),
                 OkHttpClient(),
                 storage,
-                Experiment.executorService,
+                executorService,
             )
 
         // Set track assignment event to true
@@ -1514,7 +1519,7 @@ class ExperimentClientTest {
                 ),
                 mockHttpClient,
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
 
         try {
@@ -1562,7 +1567,7 @@ class ExperimentClientTest {
                 ),
                 mockHttpClient,
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
 
         try {
@@ -1604,7 +1609,7 @@ class ExperimentClientTest {
                 ),
                 mockHttpClient,
                 mockStorage,
-                Experiment.executorService,
+                executorService,
             )
         return client to mockHttpClient
     }
@@ -1662,7 +1667,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 MockStorage(),
-                Experiment.executorService,
+                executorService,
             )
 
         client.setUser(ExperimentUser(userId = "user-a"))
@@ -1698,7 +1703,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 MockStorage(),
-                Experiment.executorService,
+                executorService,
             )
 
         client.setUser(ExperimentUser(deviceId = "device-a"))
@@ -1725,7 +1730,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 MockStorage(),
-                Experiment.executorService,
+                executorService,
             )
 
         client.setUser(ExperimentUser(userId = "user-a"))
@@ -1748,7 +1753,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 MockStorage(),
-                Experiment.executorService,
+                executorService,
             )
 
         client.setUser(ExperimentUser(userId = "user-a", deviceId = "device-a"))
@@ -1775,7 +1780,7 @@ class ExperimentClientTest {
                 ),
                 OkHttpClient(),
                 MockStorage(),
-                Experiment.executorService,
+                executorService,
             )
 
         // anonymous user — device id only, no user id yet

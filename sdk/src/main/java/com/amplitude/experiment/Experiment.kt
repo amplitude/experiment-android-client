@@ -1,6 +1,7 @@
 package com.amplitude.experiment
 
 import android.app.Application
+import android.content.Context
 import com.amplitude.analytics.connector.AnalyticsConnector
 import com.amplitude.experiment.storage.SharedPrefsStorage
 import com.amplitude.experiment.util.AmpLogger
@@ -16,14 +17,30 @@ object Experiment {
                 isDaemon = true
             }
         }
-    internal val executorService = ScheduledThreadPoolExecutor(4, daemonThreadFactory)
-
+    private val executorService = ScheduledThreadPoolExecutor(4, daemonThreadFactory)
     private val httpClient = OkHttpClient()
     private val instances = mutableMapOf<String, ExperimentClient>()
+
+    internal fun createClient(
+        context: Context,
+        apiKey: String,
+        config: ExperimentConfig,
+    ): DefaultExperimentClient =
+        DefaultExperimentClient(
+            apiKey,
+            config,
+            httpClient,
+            SharedPrefsStorage(context),
+            executorService,
+        )
 
     /**
      * Initializes a singleton [ExperimentClient] identified by the configured
      * instance name.
+     *
+     * Do not call this for the same instance name and API key as an
+     * [AmplitudeExperimentPlugin]. The plugin does not register in the
+     * singleton map, so both clients would fetch, poll, and track exposure.
      *
      * @param application The Android Application context
      * @param apiKey  The API key. This can be found in the Experiment settings
@@ -50,14 +67,7 @@ object Experiment {
                                 .userProvider(DefaultUserProvider(application))
                                 .build()
                     }
-                    val newInstance =
-                        DefaultExperimentClient(
-                            apiKey,
-                            mergedConfig,
-                            httpClient,
-                            SharedPrefsStorage(application),
-                            executorService,
-                        )
+                    val newInstance = createClient(application, apiKey, mergedConfig)
                     instances[instanceKey] = newInstance
                     newInstance
                 }
@@ -72,6 +82,10 @@ object Experiment {
      *
      * You must be using Amplitude-Android SDK version 2.36.0+ or
      * Amplitude-Kotlin 1.5.0+ for this integration to work.
+     *
+     * Do not call this for the same instance name and API key as an
+     * [AmplitudeExperimentPlugin]. The plugin does not register in the
+     * singleton map, so both clients would fetch, poll, and track exposure.
      *
      * @param application The Android Application context
      * @param apiKey  The API key. This can be found in the Experiment settings
@@ -103,14 +117,7 @@ object Experiment {
                                 ConnectorExposureTrackingProvider(connector.eventBridge),
                             )
                         }
-                        val newInstance =
-                            DefaultExperimentClient(
-                                apiKey,
-                                configBuilder.build(),
-                                httpClient,
-                                SharedPrefsStorage(application),
-                                executorService,
-                            )
+                        val newInstance = createClient(application, apiKey, configBuilder.build())
                         instances[instanceKey] = newInstance
                         if (config.automaticFetchOnAmplitudeIdentityChange) {
                             connector.identityStore.addIdentityListener {
