@@ -171,14 +171,11 @@ class AmplitudeExperimentPlugin
         override fun onReset() {
             synchronized(lifecycleLock) {
                 val experiment = experimentClient ?: return
-                // Host reset notifies onIdentityChanged then onReset. Clear assignments that
-                // belonged to the previous user; fetch only when automatic identity fetch is on.
+                // Host reset notifies onIdentityChanged before onReset. The identity callback
+                // already handles automatic fetching, so only clear the previous assignments here.
                 experiment.clear()
                 val user = buildUser(analyticsClient?.identity, analyticsClient?.sessionId)
                 experiment.setUser(user)
-                if (config.automaticFetchOnAmplitudeIdentityChange && !stoppedDueToOptOut) {
-                    experiment.fetch(user)
-                }
             }
         }
 

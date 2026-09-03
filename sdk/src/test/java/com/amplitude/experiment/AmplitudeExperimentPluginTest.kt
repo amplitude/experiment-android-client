@@ -14,7 +14,6 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
-import io.mockk.verifyOrder
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -533,7 +532,7 @@ class AmplitudeExperimentPluginTest {
     }
 
     @Test
-    fun `onReset fetches after clear when automatic fetch is on`() {
+    fun `onReset does not duplicate automatic identity fetch`() {
         val plugin =
             AmplitudeExperimentPlugin(
                 applicationContext,
@@ -550,13 +549,11 @@ class AmplitudeExperimentPluginTest {
         val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
         setExperimentClient(plugin, spyClient)
 
+        plugin.onIdentityChanged(identity)
         plugin.onReset()
 
-        verifyOrder {
-            spyClient.clear()
-            spyClient.setUser(any())
-            spyClient.fetch(any())
-        }
+        verify { spyClient.clear() }
+        verify(exactly = 1) { spyClient.fetch(any()) }
     }
 
     @Test
