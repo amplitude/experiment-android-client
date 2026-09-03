@@ -10,6 +10,7 @@ import com.amplitude.core.AnalyticsIdentity
 import com.amplitude.core.events.AnalyticsEvent
 import com.amplitude.core.platform.UniversalPlugin
 import com.amplitude.experiment.util.AmpLogger
+import java.util.concurrent.Future
 import com.amplitude.core.ServerZone as CoreServerZone
 
 /**
@@ -83,6 +84,8 @@ class AmplitudeExperimentPlugin private constructor(
 
     @Volatile
     private var started: Boolean = false
+
+    private var inFlightOperation: Future<ExperimentClient>? = null
 
     @Volatile
     private var connectorInstanceName: String? = null
@@ -168,7 +171,7 @@ class AmplitudeExperimentPlugin private constructor(
                 started &&
                 !stoppedDueToOptOut
             ) {
-                client.fetch(user)
+                replaceInFlightOperationLocked { client.fetch(user) }
             }
         }
     }
@@ -188,6 +191,7 @@ class AmplitudeExperimentPlugin private constructor(
         synchronized(lifecycleLock) {
             if (!ownsExperimentClient) return
             if (optOut) {
+                cancelInFlightOperationLocked()
                 experimentClient?.stop()
                 stoppedDueToOptOut = true
                 started = false
@@ -213,7 +217,7 @@ class AmplitudeExperimentPlugin private constructor(
             val user = buildUser(analyticsClient?.identity, analyticsClient?.sessionId)
             experiment.setUser(user)
             if (config?.automaticFetchOnAmplitudeIdentityChange == true && !stoppedDueToOptOut) {
-                experiment.fetch(user)
+                replaceInFlightOperationLocked { experiment.fetch(user) }
             }
         }
     }
@@ -242,7 +246,7 @@ class AmplitudeExperimentPlugin private constructor(
         provider.sessionId = analytics.sessionId
         val user = buildUser(analytics.identity, analytics.sessionId)
         experiment.setUser(user)
-        experiment.start(user)
+        replaceInFlightOperationLocked { experiment.start(user) }
         started = true
         return true
     }
@@ -279,7 +283,18 @@ class AmplitudeExperimentPlugin private constructor(
         }
         val user = buildUser(analyticsClient?.identity, analyticsClient?.sessionId)
         client.setUser(user)
-        client.fetch(user)
+        replaceInFlightOperationLocked { client.fetch(user) }
+    }
+
+    private fun replaceInFlightOperationLocked(operation: () -> Future<ExperimentClient>) {
+        cancelInFlightOperationLocked()
+        inFlightOperation = operation()
+    }
+
+    private fun cancelInFlightOperationLocked() {
+        inFlightOperation?.cancel(true)
+        inFlightOperation = null
+        (experimentClient as? DefaultExperimentClient)?.cancelPendingFetches()
     }
 
     private fun teardownLocked() {
@@ -296,6 +311,7 @@ class AmplitudeExperimentPlugin private constructor(
         lastConnectorDeviceId = null
         lastConnectorUserProperties = emptyMap()
         if (ownsExperimentClient) {
+            cancelInFlightOperationLocked()
             experimentClient?.stop()
             experimentClient = null
         } else {

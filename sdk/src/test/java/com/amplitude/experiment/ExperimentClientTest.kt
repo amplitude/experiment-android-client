@@ -16,15 +16,22 @@ import io.mockk.spyk
 import io.mockk.verify
 import io.mockk.verifyOrder
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
+import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 private const val API_KEY = "client-DvWljIjiiuqLbyjqdvBaLFfEBrAvGuA3"
 private const val SERVER_API_KEY = "server-qz35UwzJ5akieoAdIgzM4m9MIiOLXLoz"
@@ -140,6 +147,56 @@ class ExperimentClientTest {
         val variant = client.variant(KEY)
         Assert.assertNotNull(variant)
         assertVariantEquals(serverVariant, variant)
+    }
+
+    @Test
+    fun `newer fetch response wins when older response arrives last`() {
+        val firstRequestStarted = CountDownLatch(1)
+        val releaseFirstRequest = CountDownLatch(1)
+        val requestCount = AtomicInteger()
+        val httpClient =
+            OkHttpClient
+                .Builder()
+                .addInterceptor { chain ->
+                    val requestNumber = requestCount.incrementAndGet()
+                    if (requestNumber == 1) {
+                        firstRequestStarted.countDown()
+                        Assert.assertTrue(releaseFirstRequest.await(2, TimeUnit.SECONDS))
+                    }
+                    val variant = if (requestNumber == 1) "old" else "new"
+                    Response
+                        .Builder()
+                        .request(chain.request())
+                        .protocol(Protocol.HTTP_1_1)
+                        .code(200)
+                        .message("OK")
+                        .body(
+                            """{"$KEY":{"key":"$variant","value":"$variant"}}"""
+                                .toResponseBody("application/json".toMediaType()),
+                        ).build()
+                }.build()
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    serverUrl = "https://example.com",
+                    retryFetchOnFailure = false,
+                ),
+                httpClient,
+                MockStorage(),
+                executorService,
+            )
+
+        val olderFetch = client.fetch(ExperimentUser(userId = "old-user"))
+        Assert.assertTrue(firstRequestStarted.await(2, TimeUnit.SECONDS))
+        val newerFetch = client.fetch(ExperimentUser(userId = "new-user"))
+        newerFetch.get(2, TimeUnit.SECONDS)
+        Assert.assertEquals("new", client.variant(KEY).key)
+
+        releaseFirstRequest.countDown()
+        olderFetch.get(2, TimeUnit.SECONDS)
+
+        Assert.assertEquals("new", client.variant(KEY).key)
     }
 
     @Test
@@ -1163,7 +1220,7 @@ class ExperimentClientTest {
             )
         val spyClient = spyk(client)
         spyClient.start(null).get()
-        verify(exactly = 1) { spyClient.fetchInternal(any(), any(), any(), any()) }
+        verify(exactly = 1) { spyClient.fetchInternal(any(), any(), any(), any(), any()) }
     }
 
     @Test
@@ -1179,7 +1236,7 @@ class ExperimentClientTest {
         val spyClient = spyk(client)
         every { spyClient.allFlags() } returns emptyMap()
         spyClient.start(null).get()
-        verify(exactly = 1) { spyClient.fetchInternal(any(), any(), any(), any()) }
+        verify(exactly = 1) { spyClient.fetchInternal(any(), any(), any(), any(), any()) }
     }
 
     @Test
@@ -1195,7 +1252,7 @@ class ExperimentClientTest {
         val spyClient = spyk(client)
         every { spyClient.allFlags() } returns emptyMap()
         spyClient.start(null).get()
-        verify(exactly = 1) { spyClient.fetchInternal(any(), any(), any(), any()) }
+        verify(exactly = 1) { spyClient.fetchInternal(any(), any(), any(), any(), any()) }
     }
 
     @Test
@@ -1210,7 +1267,7 @@ class ExperimentClientTest {
             )
         val spyClient = spyk(client)
         spyClient.start(null).get()
-        verify(exactly = 0) { spyClient.fetchInternal(any(), any(), any(), any()) }
+        verify(exactly = 0) { spyClient.fetchInternal(any(), any(), any(), any(), any()) }
     }
 
     @Test
@@ -1348,6 +1405,7 @@ class ExperimentClientTest {
                 client["startRetries"](
                     any<ExperimentUser>(),
                     any<FetchOptions>(),
+                    any<Long>(),
                 )
             }
         }

@@ -19,6 +19,7 @@ import io.mockk.verifyOrder
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.Future
 import com.amplitude.core.ServerZone as CoreServerZone
 
 private const val API_KEY = "client-DvWljIjiiuqLbyjqdvBaLFfEBrAvGuA3"
@@ -414,6 +415,64 @@ class AmplitudeExperimentPluginTest {
         Assert.assertEquals("user-2", spyClient.getUser()?.userId)
         Assert.assertEquals("device-2", spyClient.getUser()?.deviceId)
         verify { spyClient.fetch(any()) }
+    }
+
+    @Test
+    fun `new identity cancels the previous automatic fetch`() {
+        val plugin =
+            AmplitudeExperimentPlugin(
+                applicationContext,
+                ExperimentConfig(
+                    debug = true,
+                    automaticFetchOnAmplitudeIdentityChange = true,
+                    fetchOnStart = false,
+                    pollOnStart = false,
+                ),
+            )
+
+        plugin.setup(analyticsClient, createContext())
+        val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
+        setExperimentClient(plugin, spyClient)
+        val firstFetch = mockk<Future<ExperimentClient>>(relaxed = true)
+        val secondFetch = mockk<Future<ExperimentClient>>(relaxed = true)
+        every { spyClient.fetch(any()) } returnsMany listOf(firstFetch, secondFetch)
+
+        plugin.onIdentityChanged(identityFor("user-2", "device-2"))
+        plugin.onIdentityChanged(identityFor("user-3", "device-3"))
+
+        verify { firstFetch.cancel(true) }
+    }
+
+    @Test
+    fun `opt out and teardown cancel automatic fetches`() {
+        val plugin =
+            AmplitudeExperimentPlugin(
+                applicationContext,
+                ExperimentConfig(
+                    debug = true,
+                    automaticFetchOnAmplitudeIdentityChange = true,
+                    fetchOnStart = false,
+                    pollOnStart = false,
+                ),
+            )
+
+        plugin.setup(analyticsClient, createContext())
+        val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
+        setExperimentClient(plugin, spyClient)
+        val optOutFetch = mockk<Future<ExperimentClient>>(relaxed = true)
+        val teardownFetch = mockk<Future<ExperimentClient>>(relaxed = true)
+        every { spyClient.fetch(any()) } returnsMany listOf(optOutFetch, teardownFetch)
+
+        plugin.onIdentityChanged(identityFor("user-2", "device-2"))
+        plugin.onOptOutChanged(true)
+
+        verify { optOutFetch.cancel(true) }
+
+        plugin.onOptOutChanged(false)
+        plugin.onIdentityChanged(identityFor("user-3", "device-3"))
+        plugin.teardown()
+
+        verify { teardownFetch.cancel(true) }
     }
 
     @Test
@@ -814,6 +873,15 @@ class AmplitudeExperimentPluginTest {
             diagnosticsClient = diagnosticsClient,
         )
     }
+
+    private fun identityFor(
+        userId: String,
+        deviceId: String,
+    ): AnalyticsIdentity =
+        object : AnalyticsIdentity {
+            override val userId: String = userId
+            override val deviceId: String = deviceId
+        }
 
     private fun setExperimentClient(
         plugin: AmplitudeExperimentPlugin,

@@ -99,6 +99,8 @@ internal class DefaultExperimentClient internal constructor(
 
     private val backoffLock = Any()
     private var backoff: Backoff? = null
+    private val fetchStateLock = Any()
+    private var fetchGeneration = 0L
     private val fetchBackoffTimeoutMillis = 10000L
     private val backoffConfig =
         BackoffConfig(
@@ -173,19 +175,25 @@ internal class DefaultExperimentClient internal constructor(
                 this.poller.start()
             }
         }
+        val generation = nextFetchGeneration()
         return this.executorService.submit(
             Callable {
                 val flagsFuture = doFlags()
-                if (config.fetchOnStart) {
-                    fetchInternal(
-                        getUserMergedWithProviderOrWait(10000),
-                        config.fetchTimeoutMillis,
-                        config.retryFetchOnFailure,
-                        null,
-                    )
+                try {
+                    if (config.fetchOnStart) {
+                        fetchInternal(
+                            getUserMergedWithProviderOrWait(10000),
+                            config.fetchTimeoutMillis,
+                            config.retryFetchOnFailure,
+                            null,
+                            generation,
+                        )
+                    }
                     flagsFuture.get()
-                } else {
-                    flagsFuture.get()
+                } catch (e: InterruptedException) {
+                    flagsFuture.cancel(true)
+                    Thread.currentThread().interrupt()
+                    throw e
                 }
                 this
             },
@@ -212,10 +220,11 @@ internal class DefaultExperimentClient internal constructor(
         options: FetchOptions?,
     ): Future<ExperimentClient> {
         this.user = user ?: this.user
+        val generation = nextFetchGeneration()
         return executorService.submit(
             Callable {
                 val fetchUser = getUserMergedWithProviderOrWait(10000)
-                fetchInternal(fetchUser, config.fetchTimeoutMillis, config.retryFetchOnFailure, options)
+                fetchInternal(fetchUser, config.fetchTimeoutMillis, config.retryFetchOnFailure, options, generation)
                 this
             },
         )
@@ -347,16 +356,22 @@ internal class DefaultExperimentClient internal constructor(
         timeoutMillis: Long,
         retry: Boolean,
         options: FetchOptions?,
+        generation: Long = nextFetchGeneration(),
     ) {
-        if (retry) {
+        if (retry && isCurrentFetch(generation)) {
             stopRetries()
         }
+        val variantsFuture = doFetch(user, timeoutMillis, options)
         try {
-            val variants = doFetch(user, timeoutMillis, options).get()
-            storeVariants(variants, options)
+            val variants = variantsFuture.get()
+            storeVariantsIfCurrent(generation, variants, options)
         } catch (e: Exception) {
+            if (e is InterruptedException) {
+                variantsFuture.cancel(true)
+                Thread.currentThread().interrupt()
+            }
             if (retry && shouldRetryFetch(e)) {
-                startRetries(user, options)
+                startRetries(user, options, generation)
             }
             throw e
         }
@@ -469,12 +484,47 @@ internal class DefaultExperimentClient internal constructor(
     private fun startRetries(
         user: ExperimentUser,
         options: FetchOptions?,
-    ) = synchronized(backoffLock) {
-        backoff?.cancel()
-        backoff =
-            executorService.backoff(backoffConfig) {
-                fetchInternal(user, fetchBackoffTimeoutMillis, false, options)
+        generation: Long,
+    ) = synchronized(fetchStateLock) {
+        if (generation != fetchGeneration) {
+            return@synchronized
+        }
+        synchronized(backoffLock) {
+            backoff?.cancel()
+            backoff =
+                executorService.backoff(backoffConfig) {
+                    fetchInternal(user, fetchBackoffTimeoutMillis, false, options, generation)
+                }
+        }
+    }
+
+    internal fun cancelPendingFetches() {
+        synchronized(fetchStateLock) {
+            fetchGeneration++
+        }
+        stopRetries()
+    }
+
+    private fun nextFetchGeneration(): Long =
+        synchronized(fetchStateLock) {
+            ++fetchGeneration
+        }
+
+    private fun isCurrentFetch(generation: Long): Boolean =
+        synchronized(fetchStateLock) {
+            generation == fetchGeneration
+        }
+
+    private fun storeVariantsIfCurrent(
+        generation: Long,
+        variants: Map<String, Variant>,
+        options: FetchOptions?,
+    ) {
+        synchronized(fetchStateLock) {
+            if (generation == fetchGeneration) {
+                storeVariants(variants, options)
             }
+        }
     }
 
     private fun stopRetries() =
@@ -783,6 +833,9 @@ internal class DefaultExperimentClient internal constructor(
     }
 
     private fun shouldRetryFetch(e: Exception): Boolean {
+        if (e is InterruptedException || Thread.currentThread().isInterrupted) {
+            return false
+        }
         if (e is ExecutionException && e.cause is FetchException) {
             val fetchException = e.cause as FetchException
             return fetchException.statusCode < 400 || fetchException.statusCode >= 500 || fetchException.statusCode == 429
