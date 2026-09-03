@@ -476,6 +476,36 @@ class AmplitudeExperimentPluginTest {
     }
 
     @Test
+    fun `reset cancels the previous fetch before clearing assignments`() {
+        val plugin =
+            AmplitudeExperimentPlugin(
+                applicationContext,
+                ExperimentConfig(
+                    debug = true,
+                    automaticFetchOnAmplitudeIdentityChange = true,
+                    fetchOnStart = false,
+                    pollOnStart = false,
+                ),
+            )
+
+        plugin.setup(analyticsClient, createContext())
+        val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
+        setExperimentClient(plugin, spyClient)
+        val identityFetch = mockk<Future<ExperimentClient>>(relaxed = true)
+        val resetFetch = mockk<Future<ExperimentClient>>(relaxed = true)
+        every { spyClient.fetch(any()) } returnsMany listOf(identityFetch, resetFetch)
+
+        plugin.onIdentityChanged(identityFor("user-2", "device-2"))
+        plugin.onReset()
+
+        verifyOrder {
+            identityFetch.cancel(true)
+            spyClient.clear()
+            spyClient.fetch(any())
+        }
+    }
+
+    @Test
     fun `connector identity listener does not fetch on user or device id change`() {
         val instanceName = "no-double-fetch-instance"
         val plugin =

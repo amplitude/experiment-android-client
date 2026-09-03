@@ -213,11 +213,12 @@ class AmplitudeExperimentPlugin private constructor(
             val experiment = experimentClient ?: return
             // Host reset notifies onIdentityChanged then onReset. Clear assignments that
             // belonged to the previous user; fetch only when automatic identity fetch is on.
+            cancelInFlightOperationLocked()
             experiment.clear()
             val user = buildUser(analyticsClient?.identity, analyticsClient?.sessionId)
             experiment.setUser(user)
             if (config?.automaticFetchOnAmplitudeIdentityChange == true && !stoppedDueToOptOut) {
-                replaceInFlightOperationLocked { experiment.fetch(user) }
+                inFlightOperation = experiment.fetch(user)
             }
         }
     }
