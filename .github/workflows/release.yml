@@ -14,10 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ${{ github.actor }} permission check to do a release
-        uses: octokit/request-action@89a1754fe82ca777b044ca8e79e9881a42f15a93 # v2.1.7
+        uses: "lannonbr/repo-permission-check-action@2bb8c89ba8bf115c4bfab344d6a6f442b24c9a1f" # 2.0.2
         with:
-          route: GET /repos/:repository/collaborators/${{ github.actor }}
-          repository: ${{ github.repository }}
+          permission: "write"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
