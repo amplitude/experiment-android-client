@@ -1,3 +1,11 @@
+# [1.17.0](https://github.com/amplitude/experiment-android-client/compare/1.16.1...1.17.0) (2026-09-08)
+
+
+### Features
+
+* add AmplitudeExperimentPlugin on UniversalPlugin ([#80](https://github.com/amplitude/experiment-android-client/issues/80)) ([a2bafe5](https://github.com/amplitude/experiment-android-client/commit/a2bafe5ef24e99183fd3b29c1ee91d52e3f3ff67))
+* **experiment:** add existing-client plugin accessors ([#81](https://github.com/amplitude/experiment-android-client/issues/81)) ([ffe1bbc](https://github.com/amplitude/experiment-android-client/commit/ffe1bbc14d13f8b95515e97b4bba353cd14ed5d2))
+
 ## [1.16.1](https://github.com/amplitude/experiment-android-client/compare/1.16.0...1.16.1) (2026-05-19)
 
 
