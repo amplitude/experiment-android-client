@@ -1793,4 +1793,61 @@ class ExperimentClientTest {
         client.variant(flagKey)
         Assert.assertEquals(2, provider.trackCount)
     }
+
+    @Test
+    fun `exposure dedup resets after TTL expires`() {
+        val provider = TestExposureTrackingProvider()
+        val flagKey = "test-flag"
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = provider,
+                    fetchOnStart = false,
+                    source = Source.INITIAL_VARIANTS,
+                    initialVariants = mapOf(flagKey to Variant(key = "on", value = "on")),
+                    exposureDedupCacheTtlMillis = 1L,
+                ),
+                OkHttpClient(),
+                MockStorage(),
+                Experiment.executorService,
+            )
+
+        client.setUser(ExperimentUser(userId = "user-a"))
+        client.variant(flagKey)
+        Assert.assertEquals(1, provider.trackCount)
+
+        // still deduped before TTL expires
+        client.variant(flagKey)
+        Assert.assertEquals(1, provider.trackCount)
+
+        // wait for TTL to expire, then exposure must fire again
+        Thread.sleep(10)
+        client.variant(flagKey)
+        Assert.assertEquals(2, provider.trackCount)
+    }
+
+    @Test
+    fun `exposure dedup does not reset before TTL expires`() {
+        val provider = TestExposureTrackingProvider()
+        val flagKey = "test-flag"
+        val client =
+            DefaultExperimentClient(
+                API_KEY,
+                ExperimentConfig(
+                    exposureTrackingProvider = provider,
+                    fetchOnStart = false,
+                    source = Source.INITIAL_VARIANTS,
+                    initialVariants = mapOf(flagKey to Variant(key = "on", value = "on")),
+                    exposureDedupCacheTtlMillis = ExperimentConfig.Defaults.EXPOSURE_DEDUP_CACHE_TTL_MILLIS,
+                ),
+                OkHttpClient(),
+                MockStorage(),
+                Experiment.executorService,
+            )
+
+        client.setUser(ExperimentUser(userId = "user-a"))
+        repeat(5) { client.variant(flagKey) }
+        Assert.assertEquals(1, provider.trackCount)
+    }
 }
