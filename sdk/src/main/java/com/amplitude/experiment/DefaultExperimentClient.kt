@@ -142,7 +142,8 @@ internal class DefaultExperimentClient internal constructor(
             config.flagsServerUrl.toHttpUrl()
         }
 
-    private val flagApi = SdkFlagApi(this.apiKey, flagsServerUrl, httpClient)
+    private val callFactory: Call.Factory = config.callFactory ?: httpClient
+    private val flagApi = SdkFlagApi(this.apiKey, flagsServerUrl, callFactory)
 
     @Deprecated("moved to experiment config")
     private var userProvider: ExperimentUserProvider? = config.userProvider
@@ -416,7 +417,7 @@ internal class DefaultExperimentClient internal constructor(
             builder.addHeader("X-Amp-Exp-Track", trackingOptionValue)
         }
         val request = builder.build()
-        val call = httpClient.newCall(request)
+        val call = callFactory.newCall(request)
         call.timeout().timeout(timeoutMillis, TimeUnit.MILLISECONDS)
         val future = AsyncFuture<Map<String, Variant>>(call)
         // Execute request and handle response
