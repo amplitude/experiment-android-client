@@ -4,7 +4,6 @@ import com.amplitude.experiment.analytics.ExperimentAnalyticsProvider
 import com.amplitude.experiment.util.AndroidLoggerProvider
 import com.amplitude.experiment.util.LogLevel
 import com.amplitude.experiment.util.LoggerProvider
-import okhttp3.Call
 
 enum class Source {
     LOCAL_STORAGE,
@@ -69,12 +68,6 @@ class ExperimentConfig internal constructor(
     @JvmField
     val customRequestHeaders: (() -> Map<String, String>)? = Defaults.CUSTOM_REQUEST_HEADERS,
 ) {
-    private var callFactoryValue: Call.Factory? = Defaults.CALL_FACTORY
-
-    /** Caller-owned factory used for both variant and flag requests, if supplied. */
-    val callFactory: Call.Factory?
-        get() = callFactoryValue
-
     /**
      * Construct the default [ExperimentConfig].
      */
@@ -194,9 +187,6 @@ class ExperimentConfig internal constructor(
          * null
          */
         val CUSTOM_REQUEST_HEADERS: (() -> Map<String, String>)? = null
-
-        /** Use the shared Experiment HTTP client. */
-        val CALL_FACTORY: Call.Factory? = null
     }
 
     companion object {
@@ -227,7 +217,6 @@ class ExperimentConfig internal constructor(
         private var analyticsProvider = Defaults.ANALYTICS_PROVIDER
         private var exposureTrackingProvider = Defaults.EXPOSURE_TRACKING_PROVIDER
         private var customRequestHeaders = Defaults.CUSTOM_REQUEST_HEADERS
-        private var callFactory = Defaults.CALL_FACTORY
 
         fun debug(debug: Boolean) =
             apply {
@@ -348,16 +337,6 @@ class ExperimentConfig internal constructor(
                 this.customRequestHeaders = customRequestHeaders
             }
 
-        /**
-         * Use a caller-owned HTTP call factory for variant and flag requests. An [okhttp3.OkHttpClient]
-         * can be supplied here to customize DNS, proxies, or other connection settings. The SDK
-         * neither modifies nor closes it. Set this before initializing an Experiment instance.
-         */
-        fun callFactory(callFactory: Call.Factory?) =
-            apply {
-                this.callFactory = callFactory
-            }
-
         fun build(): ExperimentConfig =
             ExperimentConfig(
                 debug = debug,
@@ -382,7 +361,7 @@ class ExperimentConfig internal constructor(
                 analyticsProvider = analyticsProvider,
                 exposureTrackingProvider = exposureTrackingProvider,
                 customRequestHeaders = customRequestHeaders,
-            ).also { it.callFactoryValue = callFactory }
+            )
     }
 
     internal fun copyToBuilder(): Builder =
@@ -409,5 +388,4 @@ class ExperimentConfig internal constructor(
             .analyticsProvider(analyticsProvider)
             .exposureTrackingProvider(exposureTrackingProvider)
             .customRequestHeaders(customRequestHeaders)
-            .callFactory(callFactory)
 }

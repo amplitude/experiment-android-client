@@ -34,15 +34,8 @@ internal interface FlagApi {
 internal class SdkFlagApi(
     private val deploymentKey: String,
     private val serverUrl: HttpUrl,
-    private val callFactory: Call.Factory,
+    private val httpClient: OkHttpClient,
 ) : FlagApi {
-    // Keep the constructor used by clients compiled against earlier SDK releases.
-    internal constructor(
-        deploymentKey: String,
-        serverUrl: HttpUrl,
-        httpClient: OkHttpClient,
-    ) : this(deploymentKey, serverUrl, httpClient as Call.Factory)
-
     override fun getFlags(
         options: GetFlagsOptions?,
         customRequestHeaders: Map<String, String>,
@@ -74,7 +67,7 @@ internal class SdkFlagApi(
         }
 
         val request = builder.build()
-        val call = callFactory.newCall(request)
+        val call = httpClient.newCall(request)
         if (options != null) {
             call.timeout().timeout(options.timeoutMillis, TimeUnit.MILLISECONDS)
         }
