@@ -269,6 +269,27 @@ class AmplitudeExperimentPluginTest {
     }
 
     @Test
+    fun `owned plugin preserves configured call factory`() {
+        val factory = mockk<okhttp3.Call.Factory>()
+        val config =
+            ExperimentConfig
+                .builder()
+                .callFactory(factory)
+                .fetchOnStart(false)
+                .pollOnStart(false)
+                .build()
+        val plugin = AmplitudeExperimentPlugin(applicationContext, config)
+
+        plugin.setup(analyticsClient, createContext(instanceName = "call-factory-plugin"))
+
+        val client = plugin.experimentClient as DefaultExperimentClient
+        val field = DefaultExperimentClient::class.java.getDeclaredField("callFactory")
+        field.isAccessible = true
+        Assert.assertSame(factory, field.get(client))
+        plugin.teardown()
+    }
+
+    @Test
     fun `setup does not start when host session is uninitialized`() {
         every { analyticsClient.sessionId } returns -1L
         val plugin =
