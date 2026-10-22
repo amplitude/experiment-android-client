@@ -1,3 +1,15 @@
+# [1.18.0](https://github.com/amplitude/experiment-android-client/compare/1.17.0...1.18.0) (2026-10-22)
+
+
+### Features
+
+* consume shared Analytics identity in Experiment plugin ([#88](https://github.com/amplitude/experiment-android-client/issues/88)) ([afaa065](https://github.com/amplitude/experiment-android-client/commit/afaa0658b3d29829627a03258f7071ea3d702ec5))
+
+
+### Reverts
+
+* Revert "Add optional HTTP call factory to Experiment config ([#85](https://github.com/amplitude/experiment-android-client/issues/85))" ([#86](https://github.com/amplitude/experiment-android-client/issues/86)) ([9e88dca](https://github.com/amplitude/experiment-android-client/commit/9e88dcabc46be3db59df0ad3cce06ebd5ba1a5fc))
+
 # [1.17.0](https://github.com/amplitude/experiment-android-client/compare/1.16.1...1.17.0) (2026-09-08)
 
 
