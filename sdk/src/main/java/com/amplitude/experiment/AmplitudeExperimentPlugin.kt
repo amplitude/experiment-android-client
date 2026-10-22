@@ -1,9 +1,6 @@
 package com.amplitude.experiment
 
 import android.content.Context
-import com.amplitude.analytics.connector.AnalyticsConnector
-import com.amplitude.analytics.connector.Identity
-import com.amplitude.analytics.connector.IdentityListener
 import com.amplitude.core.AmplitudeContext
 import com.amplitude.core.AnalyticsClient
 import com.amplitude.core.AnalyticsIdentity
@@ -84,21 +81,6 @@ class AmplitudeExperimentPlugin private constructor(
     @Volatile
     private var started: Boolean = false
 
-    @Volatile
-    private var connectorInstanceName: String? = null
-
-    @Volatile
-    private var connectorIdentityListener: IdentityListener? = null
-
-    @Volatile
-    private var lastConnectorUserId: String? = null
-
-    @Volatile
-    private var lastConnectorDeviceId: String? = null
-
-    @Volatile
-    private var lastConnectorUserProperties: Map<String, Any?> = emptyMap()
-
     override fun setup(
         client: AnalyticsClient,
         context: AmplitudeContext,
@@ -113,12 +95,10 @@ class AmplitudeExperimentPlugin private constructor(
             val applicationContext = checkNotNull(applicationContext)
             val config = checkNotNull(config)
             stoppedDueToOptOut = client.optOut
-            connectorInstanceName = context.instanceName
             val provider =
                 AnalyticsClientUserProvider(
                     applicationContext,
                     { analyticsClient },
-                    context.instanceName,
                 ).also {
                     it.sessionId = client.sessionId.takeUnless { sessionId -> sessionId == UNINITIALIZED_SESSION_ID }
                     userProvider = it
@@ -137,20 +117,6 @@ class AmplitudeExperimentPlugin private constructor(
                     )
                     .build()
             experimentClient = createExperimentClient(apiKey, experimentConfig)
-            if (config.automaticFetchOnAmplitudeIdentityChange) {
-                // Identify $set updates commit to the connector only; UniversalPlugin
-                // onIdentityChanged does not receive user-property maps on Amplitude-Kotlin.
-                snapshotConnectorIdentity(context.instanceName)
-                val listener: IdentityListener = { identity: Identity ->
-                    synchronized(lifecycleLock) {
-                        handleConnectorIdentity(identity)
-                    }
-                }
-                connectorIdentityListener = listener
-                AnalyticsConnector.getInstance(context.instanceName)
-                    .identityStore
-                    .addIdentityListener(listener)
-            }
             maybeStartLocked()
         }
     }
@@ -191,14 +157,12 @@ class AmplitudeExperimentPlugin private constructor(
                 experimentClient?.stop()
                 stoppedDueToOptOut = true
                 started = false
-                connectorInstanceName?.let { snapshotConnectorIdentity(it) }
                 return
             }
             if (!stoppedDueToOptOut) {
                 return
             }
             stoppedDueToOptOut = false
-            connectorInstanceName?.let { snapshotConnectorIdentity(it) }
             maybeStartLocked()
         }
     }
@@ -249,49 +213,7 @@ class AmplitudeExperimentPlugin private constructor(
         return !deviceId.isNullOrEmpty() && client.sessionId != UNINITIALIZED_SESSION_ID
     }
 
-    private fun snapshotConnectorIdentity(instanceName: String) {
-        val identity =
-            try {
-                AnalyticsConnector.getInstance(instanceName).identityStore.getIdentity()
-            } catch (_: Exception) {
-                return
-            }
-        lastConnectorUserId = identity.userId
-        lastConnectorDeviceId = identity.deviceId
-        lastConnectorUserProperties = identity.userProperties.toMap()
-    }
-
-    private fun handleConnectorIdentity(identity: Identity) {
-        val userIdChanged = identity.userId != lastConnectorUserId
-        val deviceIdChanged = identity.deviceId != lastConnectorDeviceId
-        val propertiesChanged = identity.userProperties != lastConnectorUserProperties
-        lastConnectorUserId = identity.userId
-        lastConnectorDeviceId = identity.deviceId
-        lastConnectorUserProperties = identity.userProperties.toMap()
-        if (!started || stoppedDueToOptOut) return
-        val client = experimentClient ?: return
-        // User/device id changes are handled by UniversalPlugin.onIdentityChanged.
-        if (userIdChanged || deviceIdChanged || !propertiesChanged) {
-            return
-        }
-        val user = buildUser(analyticsClient?.identity, analyticsClient?.sessionId)
-        client.setUser(user)
-        client.fetch(user)
-    }
-
     private fun teardownLocked() {
-        val listener = connectorIdentityListener
-        val instanceName = connectorInstanceName
-        if (listener != null && instanceName != null) {
-            AnalyticsConnector.getInstance(instanceName)
-                .identityStore
-                .removeIdentityListener(listener)
-        }
-        connectorIdentityListener = null
-        connectorInstanceName = null
-        lastConnectorUserId = null
-        lastConnectorDeviceId = null
-        lastConnectorUserProperties = emptyMap()
         if (ownsExperimentClient) {
             experimentClient?.stop()
             experimentClient = null
@@ -312,14 +234,10 @@ class AmplitudeExperimentPlugin private constructor(
             (sessionId ?: analyticsClient?.sessionId)
                 ?.takeUnless { it == UNINITIALIZED_SESSION_ID }
         resolvedSessionId?.let { userProvider?.sessionId = it }
-        // Prefer the user provider so connector-backed user properties are preserved when
-        // AnalyticsIdentity.userProperties is empty (Amplitude-Kotlin today).
         val builder = (userProvider?.getUser() ?: ExperimentUser()).copyToBuilder()
         if (identity != null) {
             builder.userId(identity.userId).deviceId(identity.deviceId)
-            if (identity.userProperties.isNotEmpty()) {
-                builder.userProperties(identity.userProperties)
-            }
+            builder.userProperties(identity.userProperties)
         }
         resolvedSessionId?.let {
             builder.userProperty(AnalyticsClientUserProvider.SESSION_ID_USER_PROPERTY, it)

@@ -51,7 +51,7 @@ class AmplitudeExperimentPluginTest {
     }
 
     @Test
-    fun `user provider falls back to connector user properties when identity map is empty`() {
+    fun `user provider treats an empty host property map as authoritative`() {
         val instanceName = "connector-props-instance"
         val emptyIdentity =
             object : AnalyticsIdentity {
@@ -71,16 +71,15 @@ class AmplitudeExperimentPluginTest {
             AnalyticsClientUserProvider(
                 applicationContext,
                 { analyticsClient },
-                instanceName,
             )
 
         val user = provider.getUser()
 
-        Assert.assertEquals("enterprise", user.userProperties?.get("plan"))
+        Assert.assertNull(user.userProperties?.get("plan"))
     }
 
     @Test
-    fun `user provider prefers identity user properties over connector`() {
+    fun `user provider reads identity user properties`() {
         val instanceName = "identity-props-instance"
         AnalyticsConnector.getInstance(instanceName).identityStore
             .editIdentity()
@@ -91,7 +90,6 @@ class AmplitudeExperimentPluginTest {
             AnalyticsClientUserProvider(
                 applicationContext,
                 { analyticsClient },
-                instanceName,
             )
 
         val user = provider.getUser()
@@ -126,7 +124,7 @@ class AmplitudeExperimentPluginTest {
     }
 
     @Test
-    fun `automatic fetch registers connector identity listener for property updates`() {
+    fun `identity property update fetches once with the host properties`() {
         val instanceName = "auto-fetch-instance"
         val plugin =
             AmplitudeExperimentPlugin(
@@ -143,18 +141,52 @@ class AmplitudeExperimentPluginTest {
         val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
         setExperimentClient(plugin, spyClient)
 
-        AnalyticsConnector.getInstance(instanceName).identityStore
-            .editIdentity()
-            .setUserProperties(mapOf("plan" to "enterprise"))
-            .commit()
+        plugin.onIdentityChanged(
+            object : AnalyticsIdentity {
+                override val userId: String? = "user-1"
+                override val deviceId: String? = "device-1"
+                override val userProperties: Map<String, Any?> = mapOf("plan" to "enterprise")
+            },
+        )
 
-        verify(timeout = 1_000) { spyClient.setUser(any()) }
-        verify(timeout = 1_000) { spyClient.fetch(any()) }
+        Assert.assertEquals("enterprise", spyClient.getUser()?.userProperties?.get("plan"))
+        verify(exactly = 1) {
+            spyClient.fetch(match { it.userProperties?.get("plan") == "enterprise" })
+        }
     }
 
     @Test
-    fun `connector property update does not fetch before experiment starts`() {
-        val instanceName = "connector-before-start-instance"
+    fun `empty host property map clears previous properties`() {
+        val plugin =
+            AmplitudeExperimentPlugin(
+                applicationContext,
+                ExperimentConfig(
+                    debug = true,
+                    automaticFetchOnAmplitudeIdentityChange = true,
+                    fetchOnStart = false,
+                    pollOnStart = false,
+                ),
+            )
+
+        plugin.setup(analyticsClient, createContext())
+        val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
+        setExperimentClient(plugin, spyClient)
+
+        plugin.onIdentityChanged(
+            object : AnalyticsIdentity {
+                override val userId: String? = "user-1"
+                override val deviceId: String? = "device-1"
+                override val userProperties: Map<String, Any?> = emptyMap()
+            },
+        )
+
+        Assert.assertNull(spyClient.getUser()?.userProperties?.get("plan"))
+        verify(exactly = 1) { spyClient.fetch(match { it.userProperties?.get("plan") == null }) }
+    }
+
+    @Test
+    fun `identity property update does not fetch before experiment starts`() {
+        val instanceName = "identity-before-start-instance"
         every { analyticsClient.sessionId } returns -1L
         every { analyticsClient.identity } returns
             object : AnalyticsIdentity {
@@ -176,10 +208,14 @@ class AmplitudeExperimentPluginTest {
         val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
         setExperimentClient(plugin, spyClient)
 
-        AnalyticsConnector.getInstance(instanceName).identityStore
-            .editIdentity()
-            .setUserProperties(mapOf("plan" to "enterprise"))
-            .commit()
+        val updatedIdentity =
+            object : AnalyticsIdentity {
+                override val userId: String? = "user-1"
+                override val deviceId: String? = "device-1"
+                override val userProperties: Map<String, Any?> = mapOf("plan" to "enterprise")
+            }
+        every { analyticsClient.identity } returns updatedIdentity
+        plugin.onIdentityChanged(updatedIdentity)
 
         verify(exactly = 0) { spyClient.fetch(any()) }
 
@@ -191,8 +227,8 @@ class AmplitudeExperimentPluginTest {
     }
 
     @Test
-    fun `connector property updates while opted out do not refetch on opt-in`() {
-        val instanceName = "connector-opt-out-snapshot-instance"
+    fun `identity property updates while opted out do not refetch on opt-in`() {
+        val instanceName = "identity-opt-out-instance"
         val plugin =
             AmplitudeExperimentPlugin(
                 applicationContext,
@@ -209,25 +245,26 @@ class AmplitudeExperimentPluginTest {
         setExperimentClient(plugin, spyClient)
 
         plugin.onOptOutChanged(true)
-        AnalyticsConnector.getInstance(instanceName).identityStore
-            .editIdentity()
-            .setUserProperties(mapOf("plan" to "enterprise"))
-            .commit()
+        val updatedIdentity =
+            object : AnalyticsIdentity {
+                override val userId: String? = "user-1"
+                override val deviceId: String? = "device-1"
+                override val userProperties: Map<String, Any?> = mapOf("plan" to "enterprise")
+            }
+        every { analyticsClient.identity } returns updatedIdentity
+        plugin.onIdentityChanged(updatedIdentity)
         verify(exactly = 0) { spyClient.fetch(any()) }
 
         plugin.onOptOutChanged(false)
         verify { spyClient.start(any()) }
 
-        AnalyticsConnector.getInstance(instanceName).identityStore
-            .editIdentity()
-            .setUserProperties(mapOf("plan" to "enterprise"))
-            .commit()
+        Assert.assertEquals("enterprise", spyClient.getUser()?.userProperties?.get("plan"))
         verify(exactly = 0) { spyClient.fetch(any()) }
     }
 
     @Test
-    fun `teardown removes connector identity listener`() {
-        val instanceName = "teardown-listener-instance"
+    fun `connector updates do not trigger owned plugin fetches`() {
+        val instanceName = "connector-is-not-a-source-instance"
         val plugin =
             AmplitudeExperimentPlugin(
                 applicationContext,
@@ -240,12 +277,16 @@ class AmplitudeExperimentPluginTest {
             )
 
         plugin.setup(analyticsClient, createContext(instanceName = instanceName))
-        Assert.assertNotNull(getPrivateField(plugin, "connectorIdentityListener"))
+        val spyClient = spyk(plugin.experimentClient as DefaultExperimentClient)
+        setExperimentClient(plugin, spyClient)
 
-        plugin.teardown()
+        AnalyticsConnector.getInstance(instanceName).identityStore
+            .editIdentity()
+            .setUserProperties(mapOf("plan" to "connector"))
+            .commit()
 
-        Assert.assertNull(plugin.experimentClient)
-        Assert.assertNull(getPrivateField(plugin, "connectorIdentityListener"))
+        verify(exactly = 0) { spyClient.fetch(any()) }
+        Assert.assertEquals("pro", spyClient.getUser()?.userProperties?.get("plan"))
     }
 
     @Test
@@ -416,7 +457,7 @@ class AmplitudeExperimentPluginTest {
     }
 
     @Test
-    fun `connector identity listener does not fetch on user or device id change`() {
+    fun `connector id changes do not trigger a fetch`() {
         val instanceName = "no-double-fetch-instance"
         val plugin =
             AmplitudeExperimentPlugin(
@@ -819,14 +860,5 @@ class AmplitudeExperimentPluginTest {
         val field = AmplitudeExperimentPlugin::class.java.getDeclaredField("experimentClient")
         field.isAccessible = true
         field.set(plugin, client)
-    }
-
-    private fun getPrivateField(
-        plugin: AmplitudeExperimentPlugin,
-        name: String,
-    ): Any? {
-        val field = AmplitudeExperimentPlugin::class.java.getDeclaredField(name)
-        field.isAccessible = true
-        return field.get(plugin)
     }
 }
