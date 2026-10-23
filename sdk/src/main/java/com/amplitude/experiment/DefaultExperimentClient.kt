@@ -153,7 +153,7 @@ internal class DefaultExperimentClient internal constructor(
         }
     private val userSessionExposureTracker: UserSessionExposureTracker? =
         config.exposureTrackingProvider?.let {
-            UserSessionExposureTracker(it)
+            UserSessionExposureTracker(it, config.exposureDedupCacheTtlMillis)
         }
 
     private val isRunningLock = Any()
