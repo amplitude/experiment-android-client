@@ -1,3 +1,10 @@
+# [1.19.0](https://github.com/amplitude/experiment-android-client/compare/1.18.0...1.19.0) (2026-10-27)
+
+
+### Features
+
+* **sdk:** add optional HTTP call factory to ExperimentConfig ([#87](https://github.com/amplitude/experiment-android-client/issues/87)) ([adffe42](https://github.com/amplitude/experiment-android-client/commit/adffe42902312ef581571799b005262029234126)), closes [#85](https://github.com/amplitude/experiment-android-client/issues/85)
+
 # [1.18.0](https://github.com/amplitude/experiment-android-client/compare/1.17.0...1.18.0) (2026-10-22)
 
 
